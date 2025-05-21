@@ -1,76 +1,171 @@
-import React from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+// Remove panHandlers from Animated.View wrapping bottomHalf,
+// and add them only to dragHandleContainer.
 
-export default function NewsCard() {
+import React, { useRef } from 'react';
+import {
+  Animated,
+  Dimensions,
+  Image,
+  PanResponder,
+  StyleSheet,
+  Text,
+  View,
+  ScrollView,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+
+const { height } = Dimensions.get('window');
+
+export default function NewsComponent({ imageSource, headline, content }) {
+  const expandedHeight = height * 0.75; // full-ish screen height
+  const collapsedTranslateY = expandedHeight / 2; // bottom half visible
+
+  const pan = useRef(new Animated.Value(collapsedTranslateY)).current;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dy) > 5;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        let newVal = gestureState.moveY - gestureState.y0 + pan._offset;
+
+        if (newVal < 0) newVal = 0;
+        if (newVal > collapsedTranslateY) newVal = collapsedTranslateY;
+
+        pan.setValue(newVal);
+      },
+      onPanResponderGrant: () => {
+        pan.setOffset(pan._value);
+        pan.setValue(0);
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        pan.flattenOffset();
+
+        if (gestureState.dy < -50) {
+          Animated.spring(pan, {
+            toValue: 0,
+            useNativeDriver: true,
+            bounciness: 8,
+            speed: 15,
+          }).start();
+        } else if (gestureState.dy > 50) {
+          Animated.spring(pan, {
+            toValue: collapsedTranslateY,
+            useNativeDriver: true,
+            bounciness: 8,
+            speed: 15,
+          }).start();
+        } else {
+          const midpoint = collapsedTranslateY / 2;
+          Animated.spring(pan, {
+            toValue: pan._value < midpoint ? 0 : collapsedTranslateY,
+            useNativeDriver: true,
+            bounciness: 8,
+            speed: 15,
+          }).start();
+        }
+      },
+    })
+  ).current;
+
   return (
     <View style={styles.container}>
-      <Image source={require('../assets/images/warning.jpg')} style={styles.image} />
-      <View style={styles.textOverlay}>
-        <Text style={styles.headline}>
-          Warning of heavy rain, thunderstorm nationwide until 7pm
-        </Text>
+      <View style={styles.topHalf}>
+        <Image source={imageSource} style={styles.image} resizeMode="cover" />
+        <LinearGradient
+          colors={['transparent', 'rgba(0,0,0,0.55)']}
+          style={styles.headlineGradient}>
+          <Text style={styles.headlineText} numberOfLines={2}>
+            {headline}
+          </Text>
+        </LinearGradient>
       </View>
 
-      <View style={styles.card}>
-        <View style={styles.header}>
-          <View style={styles.logo}>
-            <Text style={styles.logoText}>B</Text>
-          </View>
-          <View>
-            <Text style={styles.title}>Bernama TV</Text>
-            <Text style={styles.timestamp}>Posted at 9:30 AM</Text>
-          </View>
-        </View>
+      <Animated.View
+        style={[
+          styles.bottomHalf,
+          {
+            height: expandedHeight,
+            transform: [{ translateY: pan }],
+          },
+        ]}
+      >
+        {/* Only this container controls drag */}
+        <Animated.View {...panResponder.panHandlers} style={styles.dragHandleContainer}>
+          <View style={styles.dragHandle} />
+        </Animated.View>
 
-        <Text style={styles.body}>
-          KUALA LUMPUR: The Malaysian Meteorological Department (MetMalaysia) has issued a warning of heavy rain, thunderstorms and strong winds in almost the whole country until 7 pm on Thursday (May 8). MetMalaysia, in a statement, said there are indications of thunderstorms with rainfall intensity exceeding 20 mm/hour expected to occur for more than an hour. The warning covered Kuala Lumpur and Putrajaya as well as Langkawi, Padang Terap, Pendang, Sik and Baling in Kedah; Hulu Perak, Kuala Kangsar, Kinta, Perak Tengah, Kampar, ...
-        </Text>
-      </View>
+        {/* ScrollView is scrollable, no panHandlers */}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          keyboardShouldPersistTaps="handled"
+          pointerEvents="box-none"
+        >
+          <Text style={styles.contentText}>{content}</Text>
+        </ScrollView>
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: 'white' },
-  image: { width: '100%', height: 240, resizeMode: 'cover' },
-  textOverlay: {
-    position: 'absolute',
-    bottom: 30,
-    left: 15,
-    right: 15,
+  container: {
+    flex: 1,
+    backgroundColor: '#f2f3f4',
   },
-  headline: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 18,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    padding: 8,
-    borderRadius: 4,
-  },
-  card: {
-    marginTop: -20,
+  topHalf: {
+    height: height / 1.9,
     backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 15,
-    shadowColor: "#000",
-    shadowOffset: {width: 0, height: -3},
+  },
+  image: {
+    flex: 1,
+    width: '100%',
+  },
+  headlineGradient: {
+    ...StyleSheet.absoluteFillObject,
+    justifyContent: 'flex-end',
+    paddingHorizontal: 15,
+    paddingVertical: 25,
+  },
+  headlineText: {
+    color: 'white',
+    fontSize: 25,
+    fontWeight: '600',
+  },
+  bottomHalf: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'white',
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingHorizontal: 20,
+    paddingTop: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.1,
     shadowRadius: 6,
-    elevation: 5,
+    elevation: 10,
   },
-  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  logo: {
-    backgroundColor: '#00AEEF',
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+  dragHandleContainer: {
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
   },
-  logoText: { color: 'white', fontWeight: 'bold', fontSize: 20 },
-  title: { fontWeight: 'bold', fontSize: 16 },
-  timestamp: { fontSize: 12, color: '#777' },
-  body: { fontSize: 14, color: '#333', lineHeight: 20 },
+  dragHandle: {
+    width: 40,
+    height: 5,
+    backgroundColor: '#bbb',
+    borderRadius: 3,
+  },
+  contentText: {
+    fontSize: 14,
+    lineHeight: 22,
+    color: '#222',
+    paddingBottom: 20,
+  },
 });

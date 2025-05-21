@@ -6,7 +6,10 @@ import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 
+
 // import NewsScreen from './screens/NewsScreen';
+
+
 
 export default function HomeScreen() {
   // return <NewsScreen />;
