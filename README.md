@@ -25,7 +25,6 @@
 | Database     | MongoDB Atlas          |
 | Hosting      | AWS EC2 (Ubuntu)       |
 | File Uploads | AWS S3 (Planned)       |
-| API Comm.    | RESTful API (JSON)     |
 
 ---
 
