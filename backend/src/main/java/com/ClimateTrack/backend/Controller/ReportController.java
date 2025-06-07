@@ -10,19 +10,19 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/reports")
+@RequestMapping("/reports")
 @RequiredArgsConstructor
 public class ReportController {
 
     private final ReportService reportService;
 
     @PostMapping
-    public ResponseEntity<ReportResponseDto> create(@RequestBody ReportRequestDto dto) {
-        return ResponseEntity.ok(reportService.createReport(dto));
+    public ResponseEntity<ReportResponseDto> submitReport(@RequestBody ReportRequestDto dto) {
+        return ResponseEntity.ok(reportService.saveReport(dto));
     }
 
     @GetMapping
-    public ResponseEntity<List<ReportResponseDto>> getAll() {
+    public ResponseEntity<List<ReportResponseDto>> getAllReports() {
         return ResponseEntity.ok(reportService.getAllReports());
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -16,35 +17,45 @@ public class ReportService {
 
     private final ReportRepository reportRepository;
 
-    public ReportResponseDto createReport(ReportRequestDto dto) {
+    public ReportResponseDto saveReport(ReportRequestDto dto) {
         Report report = Report.builder()
-                .title(dto.getTitle())
+                .reportId(dto.getReportId())
+                .disasterId(dto.getDisasterId())
+                .disasterType(dto.getDisasterType())
                 .description(dto.getDescription())
-                .location(dto.getLocation())
+                .photoUrl(dto.getPhotoUrl())
+                .locationName(dto.getLocationName())
                 .latitude(dto.getLatitude())
                 .longitude(dto.getLongitude())
-                .imageUrl(dto.getImageUrl())
-                .createdAt(LocalDateTime.now())
+                .reportedAt(LocalDateTime.now())
+                .status("pending")
                 .verified(false)
                 .build();
+
         Report saved = reportRepository.save(report);
         return mapToDto(saved);
     }
 
     public List<ReportResponseDto> getAllReports() {
-        return reportRepository.findAll().stream().map(this::mapToDto).toList();
+        return reportRepository.findAll()
+                .stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
     }
 
     private ReportResponseDto mapToDto(Report r) {
         return ReportResponseDto.builder()
                 .id(r.getId())
-                .title(r.getTitle())
+                .reportId(r.getReportId())
+                .disasterId(r.getDisasterId())
+                .disasterType(r.getDisasterType())
                 .description(r.getDescription())
-                .location(r.getLocation())
+                .photoUrl(r.getPhotoUrl())
+                .locationName(r.getLocationName())
                 .latitude(r.getLatitude())
                 .longitude(r.getLongitude())
-                .imageUrl(r.getImageUrl())
-                .createdAt(r.getCreatedAt())
+                .reportedAt(r.getReportedAt())
+                .status(r.getStatus())
                 .verified(r.isVerified())
                 .build();
     }

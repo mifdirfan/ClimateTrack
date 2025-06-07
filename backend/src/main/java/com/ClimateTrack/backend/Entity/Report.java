@@ -6,7 +6,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
 
-@Document(collection = "reports")
+@Document(collection = "user_reports")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -14,12 +14,17 @@ import java.time.LocalDateTime;
 public class Report {
     @Id
     private String id;
-    private String title;
+
+    private String reportId;
+    // private String userId;
+    private String disasterId;
+    private String disasterType;
     private String description;
-    private String location;
+    private String photoUrl;
+    private String locationName;
     private double latitude;
     private double longitude;
-    private String imageUrl;
-    private LocalDateTime createdAt;
+    private LocalDateTime reportedAt;
+    private String status;
     private boolean verified;
 }
