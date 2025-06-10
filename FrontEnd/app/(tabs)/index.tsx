@@ -1,3 +1,5 @@
+// HOMEPAGE!!
+
 import React, { useState } from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity, Image } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
