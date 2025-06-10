@@ -1,6 +1,6 @@
 // HOMEPAGE!!
 
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity, Image } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
@@ -9,11 +9,12 @@ import styles from '../../constants/homepageStyles';
 import GoogleMapWeb from "@/components/GoogleMap";
 
 type Disaster = {
-    id: number;
-    type: string;
-    title: string;
+    disasterId: string;
+    disasterType: string;
     description: string;
-    coordinate: { latitude: number; longitude: number; };
+    locationName: string;
+    latitude: number;
+    longitude: number;
 };
 
 type NewsItem = {
@@ -30,61 +31,40 @@ const DISASTER_TYPES = [
     { key: 'rain', label: 'Heavy Rain', color: '#2196F3', icon: 'cloud-rain' }
 ];
 
-const MOCK_DISASTERS = [
-    {
-        id: 1,
-        type: 'flood',
-        title: 'Flood in Kuala Lumpur',
-        description: 'Severe flooding reported',
-        coordinate: { latitude: 3.139, longitude: 101.6869 }
-    },
-    {
-        id: 2,
-        type: 'flood',
-        title: 'Flood in Johor Bahru',
-        description: 'Evacuations underway',
-        coordinate: { latitude: 1.4927, longitude: 103.7414 }
-    },
-    {
-        id: 3,
-        type: 'landslide',
-        title: 'Landslide in Penang',
-        description: 'Roads blocked',
-        coordinate: { latitude: 5.4164, longitude: 100.3327 }
-    },
-    {
-        id: 4,
-        type: 'rain',
-        title: 'Storm in Kota Bharu',
-        description: 'People advised to stay at home.',
-        coordinate: { latitude: 6.1251, longitude: 102.2379 }
-    }
-];
 
-const MOCK_NEWS = [
-    {
-        id: '1',
-        title: 'Massive Malaysia Floods',
-        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum...',
-        image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=400&q=80',
-        date: '6 minutes ago'
-    },
-    {
-        id: '2',
-        title: 'Landslide blocks highway',
-        description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum...',
-        image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?fit=crop&w=400&q=80',
-        date: '15 minutes ago'
-    }
-];
 
 export default function Index() {
     const [search, setSearch] = useState('');
     const [selectedType, setSelectedType] = useState<string | null>(null);
+    const [disasters, setDisasters] = useState<Disaster[]>([]);
+    const [disasterLoading, setDisasterLoading] = useState(true);
+
+
+    // 🌐 Fetch disaster events
+    useEffect(() => {
+        fetch('http://192.168.219.104:8080/api/events')
+            .then(res => res.json())
+            .then(data => {
+                const mapped = data.map((d: any) => ({
+                    disasterId: d.disasterId,
+                    disasterType: d.disasterType,
+                    description: d.description,
+                    locationName: d.locationName,
+                    latitude: parseFloat(d.latitude),
+                    longitude: parseFloat(d.longitude)
+                }));
+                setDisasters(mapped);
+                setDisasterLoading(false);
+            })
+            .catch(err => {
+                console.error('Failed to fetch disasters:', err);
+                setDisasterLoading(false);
+            });
+    }, []);
 
     const filteredDisasters = selectedType
-        ? MOCK_DISASTERS.filter(d => d.type === selectedType)
-        : MOCK_DISASTERS;
+        ? disasters.filter(d => d.disasterType === selectedType)
+        : disasters;
 
     const renderNewsItem = ({ item }: { item: NewsItem }) => (
         <TouchableOpacity style={styles.newsItem}>

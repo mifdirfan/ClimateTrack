@@ -20,4 +20,16 @@ public class NewsArticle {
     private String imageUrl;
     private String publishedAt;
     private String content;
+
+    public void setArticle_id(String string) {
+    }
+
+    public void setImage_url(String urlToImage) {
+    }
+
+    public void setPublished_at(String publishedAt) {
+    }
+
+    public void setSource_name(String text) {
+    }
 }
