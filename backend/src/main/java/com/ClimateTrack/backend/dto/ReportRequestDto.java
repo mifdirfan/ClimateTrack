@@ -13,5 +13,4 @@ public class ReportRequestDto{
     private String locationName;
     private double latitude;
     private double longitude;
-
 }

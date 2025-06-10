@@ -1,0 +1,18 @@
+{
+  "dependencies": {
+    "dotenv": "^16.5.0",
+    "expo": "^53.0.11",
+    "expo-constants": "~17.1.6",
+    "expo-image": "^2.2.0",
+    "expo-router": "^5.0.7",
+    "react-native-config": "^1.5.5",
+    "react-native-dotenv": "^3.4.11",
+    "react-native-maps": "^1.24.3",
+    "react-native-safe-area-context": "^5.4.1",
+    "expo-location": "~18.1.5"
+  },
+  "devDependencies": {
+    "@types/react": "~19.0.10",
+    "typescript": "~5.8.3"
+  }
+}

@@ -36,6 +36,11 @@ out/
 ### VS Code ###
 .vscode/
 
+### Node.js ###
+node_modules/
+
+### .env  ###
+.env
+
 # Ignore secret config
 application-secret.properties
-.env

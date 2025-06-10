@@ -1,10 +1,10 @@
 {
   "expo": {
-    "name": "Disaster-Alert-App",
-    "slug": "Disaster-Alert-App",
+    "name": "ClimateTrack",
+    "slug": "ClimateTrack",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/ClimateTrack_logo.png",
     "scheme": "disasteralertapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
