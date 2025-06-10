@@ -6,6 +6,7 @@ import MapView, { Marker } from 'react-native-maps';
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import styles from '../../constants/homepageStyles';
+import GoogleMapWeb from "@/components/GoogleMap";
 
 type Disaster = {
     id: number;
@@ -130,33 +131,35 @@ export default function Index() {
             </View>
 
             {/* Map */}
-            <MapView
-                style={styles.map}
-                initialRegion={{
-                    latitude: 4.2105,
-                    longitude: 101.9758,
-                    latitudeDelta: 5,
-                    longitudeDelta: 5,
-                }}
-            >
-                {filteredDisasters.map((disaster) => (
-                    <Marker
-                        key={disaster.id}
-                        coordinate={disaster.coordinate}
-                        title={disaster.title}
-                        description={disaster.description}
-                        pinColor={DISASTER_TYPES.find(t => t.key === disaster.type)?.color}
-                    >
-                        <View style={[styles.marker, { backgroundColor: DISASTER_TYPES.find(t => t.key === disaster.type)?.color }]}>
-                            <FontAwesome5
-                                name={DISASTER_TYPES.find(t => t.key === disaster.type)?.icon as any}
-                                size={20}
-                                color="#fff"
-                            />
-                        </View>
-                    </Marker>
-                ))}
-            </MapView>
+            <GoogleMapWeb disasters={filteredDisasters} />
+            {/*<MapView*/}
+            {/*    style={styles.map}*/}
+            {/*    initialRegion={{*/}
+            {/*        latitude: 4.2105,*/}
+            {/*        longitude: 101.9758,*/}
+            {/*        latitudeDelta: 5,*/}
+            {/*        longitudeDelta: 5,*/}
+            {/*    }}*/}
+            {/*>*/}
+            {/*    {filteredDisasters.map((disaster) => (*/}
+            {/*        <Marker*/}
+            {/*            key={disaster.id}*/}
+            {/*            coordinate={disaster.coordinate}*/}
+            {/*            title={disaster.title}*/}
+            {/*            description={disaster.description}*/}
+            {/*            pinColor={DISASTER_TYPES.find(t => t.key === disaster.type)?.color}*/}
+            {/*        >*/}
+            {/*            <View style={[styles.marker, { backgroundColor: DISASTER_TYPES.find(t => t.key === disaster.type)?.color }]}>*/}
+            {/*                <FontAwesome5*/}
+            {/*                    name={DISASTER_TYPES.find(t => t.key === disaster.type)?.icon as any}*/}
+            {/*                    size={20}*/}
+            {/*                    color="#fff"*/}
+            {/*                />*/}
+            {/*            </View>*/}
+            {/*        </Marker>*/}
+            {/*    ))}*/}
+            {/*</MapView>*/}
+
         </SafeAreaView>
     );
 }
