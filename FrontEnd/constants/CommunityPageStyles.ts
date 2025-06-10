@@ -78,8 +78,8 @@ export const styles = StyleSheet.create({
     writeButton: {
         position: 'absolute',
         right: 24,
-        bottom: 28,
-        backgroundColor: '#222',
+        bottom: 100,
+        backgroundColor: '#f3f3f3',
         borderRadius: 30,
         flexDirection: 'row',
         alignItems: 'center',

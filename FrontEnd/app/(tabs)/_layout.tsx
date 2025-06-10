@@ -10,6 +10,8 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 
 import { FontAwesome5 } from '@expo/vector-icons';
 
+
+
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
@@ -42,7 +44,9 @@ export default function TabLayout() {
           title: 'News Feed',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="newspaper.fill" color={color} />,
         }}
+
       />
+
     </Tabs>
   );
 }

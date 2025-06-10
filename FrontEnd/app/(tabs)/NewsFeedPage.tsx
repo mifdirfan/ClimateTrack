@@ -7,6 +7,7 @@ import styles, { TAB_LABELS } from '../../constants/NewsFeedPageStyles';
 
 import CommunityPage from '../screens/CommunityPage';
 
+
 type NewsItem = {
   id: string;
   title: string;

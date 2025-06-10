@@ -3,6 +3,9 @@ import { View, Text, TextInput, FlatList, TouchableOpacity, Image } from 'react-
 import { styles } from '../../constants/CommunityPageStyles';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
 
+import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
+
 const mockPosts = [
     {
         id: '1',
@@ -25,7 +28,9 @@ const mockPosts = [
     // Add more mock posts if needed
 ];
 
-export default function CommunityScreen({ navigation }: any) {
+export default function CommunityScreen() {
+    const router = useRouter();
+
     const [search, setSearch] = useState('');
 
     const filteredPosts = mockPosts.filter(
@@ -88,14 +93,13 @@ export default function CommunityScreen({ navigation }: any) {
             {/* Write Button */}
             <TouchableOpacity
                 style={styles.writeButton}
-                onPress={() => {
-                    // Handle write new post navigation
-                }}
+                onPress={() => router.push('/screens/WritePostPage')}
                 activeOpacity={0.8}
             >
                 <MaterialIcons name="edit" size={20} color="#fff" style={styles.pencilIcon} />
                 <Text style={styles.writeText}>Write</Text>
             </TouchableOpacity>
-        </View>
+
+        </View >
     );
 }
