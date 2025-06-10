@@ -1,109 +1,147 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  SafeAreaView,
-  TouchableOpacity,
-} from 'react-native';
-import NewsFeedItem from '@/components/NewsFeedItem';
+// NewsFeedPage.tsx -> to show news feed
 
-const newsData = [
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, FlatList, Image, Modal } from 'react-native';
+import { WebView } from 'react-native-webview';
+import styles, { TAB_LABELS } from '../../constants/NewsFeedPageStyles';
+
+import CommunityPage from '../screens/CommunityPage';
+
+type NewsItem = {
+  id: string;
+  title: string;
+  description: string,
+  source: string;
+  time: string;
+  image: string;
+  url: string;
+};
+
+const MOCK_NEWS: NewsItem[] = [
   {
     id: '1',
-    title: 'Warning of heavy rain, thunderstorm nationwide until 7pm',
-    description: `KUALA LUMPUR: The Malaysian Meteorological Department (MetMalaysia) has issued a warning of heavy rain, thunderstorms and strong winds in almost the whole country until 7 pm on Thursday (May 8).
-
-MetMalaysia, in a statement, said there are indications of thunderstorms with rainfall intensity exceeding 20 mm/hour expected to occur for more than an hour.`,
-    image: require('@/assets/images/warning.jpg'),
+    title: 'Massive Malaysia Floods',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum...',
+    source: 'BBC',
+    time: '6 minutes ago',
+    image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=400&q=80',
+    url: 'https://www.bbc.com/news/world-asia-56200108',
   },
   {
     id: '2',
-    title: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-    description:
-      'Vestibulum ante ipsum primis in faucibus orci luctus et ultrices.',
-    image: require('@/assets/images/news1.png'),
+    title: 'KL Faces Historic Flood',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum...',
+    source: 'CNN',
+    time: '15 minutes ago',
+    image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?fit=crop&w=400&q=80',
+    url: 'https://edition.cnn.com/asia/malaysia-floods',
   },
   {
     id: '3',
-    title: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-    description:
-      'Vestibulum ante ipsum primis in faucibus orci luctus et ultrices.',
-    image: require('@/assets/images/news1.png'),
+    title: 'Massive Malaysia Floods',
+    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum...',
+    source: 'BBC',
+    time: '40 minutes ago',
+    image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=400&q=80',
+    url: 'https://www.bbc.com/news/world-asia-56200108',
   },
+  // ...add more as you like
 ];
 
-export default function NewsFeedPage() {
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      {/* Top navigation buttons (non-functional now) */}
-      <View style={styles.buttonRow}>
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Chatrooms</Text>
-        </TouchableOpacity>
+// ----- TABS -----
+type TabKey = 'Community' | 'News' | 'Notifications';
 
-        <TouchableOpacity style={[styles.button, styles.activeButton]}>
-          <Text style={[styles.buttonText, styles.activeButtonText]}>News</Text>
-          <View style={styles.underline} />
-        </TouchableOpacity>
+function CommunityTab() {
+  return <CommunityPage />;
+}
 
-        <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>Notifications</Text>
-        </TouchableOpacity>
+function NotificationsTab() {
+  return <View style={styles.tabContent} />;
+}
+
+function NewsTab() {
+  const [webviewUrl, setWebviewUrl] = useState<string | null>(null);
+
+  const renderNewsItem = ({ item }: { item: NewsItem }) => (
+    <TouchableOpacity
+      style={styles.newsItem}
+      onPress={() => setWebviewUrl(item.url)}
+      activeOpacity={0.88}
+    >
+      <Image source={{ uri: item.image }} style={styles.newsImage} />
+      <View style={styles.newsContent}>
+        <Text style={styles.newsSource}>{item.source}</Text>
+        <Text numberOfLines={2} style={styles.newsTitle}>{item.title}</Text>
+        <Text style={styles.newsDesc} numberOfLines={2}>{item.description}</Text>
+        <Text style={styles.newsMeta}>{item.time}</Text>
       </View>
+    </TouchableOpacity>
+  );
 
-      {/* News list */}
+
+  return (
+    <View style={styles.newsTabWrapper}>
+      {/* <Text style={styles.header}>News Feed</Text> */}
       <FlatList
-        data={newsData}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => (
-          <TouchableOpacity>
-            <NewsFeedItem
-              title={item.title}
-              description={item.description}
-              image={item.image}
-            />
-          </TouchableOpacity>
-        )}
+        data={MOCK_NEWS}
+        renderItem={renderNewsItem}
+        keyExtractor={item => item.id}
+        contentContainerStyle={styles.newsListContainer}
+        showsVerticalScrollIndicator={false}
       />
-    </SafeAreaView>
+
+      <Modal visible={!!webviewUrl} animationType="slide" onRequestClose={() => setWebviewUrl(null)}>
+        <View style={{ flex: 1 }}>
+          <TouchableOpacity
+            style={styles.webviewCloseBtn}
+            onPress={() => setWebviewUrl(null)}
+          >
+            <Text style={styles.webviewCloseText}>Close</Text>
+          </TouchableOpacity>
+          {webviewUrl && <WebView source={{ uri: webviewUrl }} style={{ flex: 1 }} />}
+        </View>
+      </Modal>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#fff' },
+// -------- Main Component --------
+export default function NewsFeedPage() {
+  const [selectedTab, setSelectedTab] = useState<TabKey>('News');
 
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    borderBottomWidth: 1,
-    borderBottomColor: '#ddd',
-    backgroundColor: '#fff',
-    paddingVertical: 10,
-  },
-  button: {
-    alignItems: 'center',
-  },
-  buttonText: {
-    fontSize: 16,
-    color: '#444',
-  },
-  activeButton: {},
-  activeButtonText: {
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  underline: {
-    marginTop: 5,
-    height: 3,
-    width: 30,
-    backgroundColor: '#000',
-    borderRadius: 2,
-  },
+  function renderCurrentTab() {
+    switch (selectedTab) {
+      case 'Community':
+        return <CommunityTab />;
+      case 'Notifications':
+        return <NotificationsTab />;
+      case 'News':
+      default:
+        return <NewsTab />;
+    }
+  }
 
-  listContent: {
-    paddingBottom: 20,
-  },
-});
+  return (
+    <View style={styles.container}>
+      <View style={styles.tabRow}>
+        {TAB_LABELS.map(tab => (
+          <TouchableOpacity
+            key={tab}
+            style={styles.tabBtn}
+            onPress={() => setSelectedTab(tab as TabKey)}
+            activeOpacity={0.8}
+          >
+            <Text style={[
+              styles.tabLabel,
+              selectedTab === tab && styles.activeTabLabel,
+            ]}>
+              {tab}
+            </Text>
+            {selectedTab === tab && <View style={styles.underline} />}
+          </TouchableOpacity>
+        ))}
+      </View>
+      {renderCurrentTab()}
+    </View>
+  );
+}

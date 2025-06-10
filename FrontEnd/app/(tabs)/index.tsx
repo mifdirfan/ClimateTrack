@@ -5,7 +5,7 @@ import { View, Text, TextInput, FlatList, TouchableOpacity, Image } from 'react-
 import MapView, { Marker } from 'react-native-maps';
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import styles from './homepageStyles';
+import styles from '../../constants/homepageStyles';
 
 type Disaster = {
     id: number;
