@@ -157,17 +157,6 @@ export default function Index() {
                     </Marker>
                 ))}
             </MapView>
-
-            {/* News Section */}
-            <View style={styles.newsSection}>
-                <FlatList
-                    data={MOCK_NEWS}
-                    renderItem={renderNewsItem}
-                    keyExtractor={item => item.id}
-                    showsVerticalScrollIndicator={false}
-                    ListEmptyComponent={<Text>No news at this time.</Text>}
-                />
-            </View>
         </SafeAreaView>
     );
 }
