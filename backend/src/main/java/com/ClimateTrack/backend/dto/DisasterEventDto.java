@@ -1,16 +1,15 @@
 package com.ClimateTrack.backend.dto;
-
 import lombok.*;
 
 @Data
-public class ReportRequestDto{
-    private String reportId;
-    // private String userId;
+@Builder
+public class DisasterEventDto {
     private String disasterId;
     private String disasterType;
     private String description;
-    private String photoUrl;
     private String locationName;
-    private double latitude;
-    private double longitude;
+    private String latitude;
+    private String longitude;
+    private String reportedAt;
+    private String source;
 }
