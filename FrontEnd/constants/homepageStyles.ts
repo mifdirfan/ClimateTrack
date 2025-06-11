@@ -77,9 +77,6 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 22,
         elevation: 10,
         minHeight: 120,
-
-        maxHeight: 180,
-
         maxHeight: 200,
 
     },
@@ -111,6 +108,19 @@ const styles = StyleSheet.create({
         fontSize: 11,
         color: '#999',
         marginTop: 3,
+    },
+    webviewCloseBtn: {
+        padding: 16,
+        backgroundColor: '#fff',
+        zIndex: 1,
+        alignItems: 'flex-end',
+    },
+
+    webviewCloseText: {
+        color: '#222',
+        fontWeight: '500',
+        marginTop: 35,
+        fontSize: 20,
     },
 });
 

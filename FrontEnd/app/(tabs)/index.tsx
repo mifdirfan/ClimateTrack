@@ -1,12 +1,13 @@
 // HOMEPAGE!!
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import {View, Text, TextInput, FlatList, TouchableOpacity, Image, ActivityIndicator, Modal} from 'react-native';
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import styles from '../../constants/homepageStyles';
 
 import GoogleMapWeb from "@/components/GoogleMap";
+import {WebView} from "react-native-webview";
 
 type Disaster = {
     disasterId: string;
@@ -22,6 +23,7 @@ type NewsItem = {
     title: string;
     description: string;
     image: string;
+    url: string;
     date: string;
 };
 
@@ -32,6 +34,7 @@ const DISASTER_TYPES = [
 ];
 
 export default function Index() {
+    const [webviewUrl, setWebviewUrl] = useState<string | null>(null);
     const [search, setSearch] = useState('');
     const [selectedType, setSelectedType] = useState<string | null>(null);
     const [disasters, setDisasters] = useState<Disaster[]>([]);
@@ -42,7 +45,7 @@ export default function Index() {
 
     // 🌐 Fetch disaster events
     useEffect(() => {
-        fetch('http://192.168.219.104:8080/api/events')
+        fetch('http://192.168.219.101:8080/api/events')
             .then(res => res.json())
             .then(data => {
                 const mapped = data.map((d: any) => ({
@@ -64,7 +67,7 @@ export default function Index() {
 
     // 🌐 Fetch news
     useEffect(() => {
-        fetch('http://192.168.219.104:8080/api/news')
+        fetch('http://192.168.219.101:8080/api/news')
             .then(res => res.json())
             .then(data => {
                 const mapped = data.map((n: any) => ({
@@ -72,6 +75,7 @@ export default function Index() {
                     title: n.title,
                     description: n.description,
                     image: n.imageUrl,
+                    url: n.url,
                     date: new Date(n.publishedAt).toLocaleString()
                 }));
                 setNews(mapped);
@@ -88,7 +92,7 @@ export default function Index() {
         : disasters;
 
     const renderNewsItem = ({ item }: { item: NewsItem }) => (
-        <TouchableOpacity style={styles.newsItem}>
+        <TouchableOpacity style={styles.newsItem} onPress={() => setWebviewUrl(item.url)}>
             <Image source={{ uri: item.image }} style={styles.newsImage} />
             <View style={{ flex: 1 }}>
                 <Text style={styles.newsTitle}>{item.title}</Text>
@@ -154,7 +158,19 @@ export default function Index() {
                             : <Text>No news available.</Text>
                     }
                 />
+                <Modal visible={!!webviewUrl} animationType="slide" onRequestClose={() => setWebviewUrl(null)}>
+                    <View style={{ flex: 1 }}>
+                        <TouchableOpacity
+                            style={styles.webviewCloseBtn}
+                            onPress={() => setWebviewUrl(null)}
+                        >
+                            <Text style={styles.webviewCloseText}>Close</Text>
+                        </TouchableOpacity>
+                        {webviewUrl && <WebView source={{ uri: webviewUrl }} style={{ flex: 1 }} />}
+                    </View>
+                </Modal>
             </View>
+
         </SafeAreaView>
     );
 }

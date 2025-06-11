@@ -339,7 +339,7 @@ import Constants from 'expo-constants';
 const DISASTER_TYPES = [
     { key: 'flood', label: 'Flood', color: '#FF4747', icon: 'water' },
     { key: 'landslide', label: 'Landslide', color: '#FFC107', icon: 'mountain' },
-    { key: 'rain', label: 'Heavy Rain', color: '#2196F3', icon: 'cloud-rain' }
+    { key: 'heavy rain', label: 'Heavy Rain', color: '#2196F3', icon: 'cloud-rain' }
 ];
 
 const ICON_PATHS = {
