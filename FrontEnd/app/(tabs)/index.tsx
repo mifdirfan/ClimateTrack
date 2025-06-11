@@ -5,6 +5,7 @@ import { View, Text, TextInput, FlatList, TouchableOpacity, Image, ActivityIndic
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import styles from '../../constants/homepageStyles';
+
 import GoogleMapWeb from "@/components/GoogleMap";
 
 type Disaster = {

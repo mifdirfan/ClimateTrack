@@ -1,134 +1,105 @@
-// screens/CommunityScreen.tsx
+import React, { useState } from 'react';
+import { View, Text, TextInput, FlatList, TouchableOpacity, Image } from 'react-native';
+import { styles } from '../../constants/CommunityPageStyles';
+import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
 
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity } from 'react-native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
 
-interface Post {
-    id: string;
-    title: string;
-    description: string;
-    time: string;
-    comments: number;
-    author: string;
-    image: string;
-}
-
-const dummyPosts: Post[] = [
+const mockPosts = [
     {
         id: '1',
         title: 'Landslide at Taman Wira',
-        description:
-            'Major landslide at taman wira. The road is currently closed right now so if you are on the way here please stay alert! Help is coming but it may take time. They are not very fast in responding to...',
-        time: '17:14',
+        content: 'Major landslide at taman wira. The road is currently closed right now so if you are on the way here please stay alert! Help is coming but it may take time. They are not very fast in responding to...',
+        image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=400&q=80',
         comments: 3,
+        views: 1714,
         author: 'Anonymous',
-        image: 'https://via.placeholder.com/80',
     },
-    // Add more dummy posts if needed
+    {
+        id: '2',
+        title: 'Flood at Riverpark',
+        content: 'Flooding is occurring at Riverpark, please avoid the area and stay safe. Water levels are rising rapidly.',
+        image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?fit=crop&w=400&q=80',
+        comments: 1,
+        views: 842,
+        author: 'Anonymous',
+    },
+    // Add more mock posts if needed
 ];
 
-const CommunityScreen = () => {
-    const renderPost = ({ item }: { item: Post }) => (
-        <View style={styles.postContainer}>
-            <View style={styles.postText}>
-                <Text style={styles.title}>{item.title}</Text>
-                <Text numberOfLines={3} style={styles.description}>
-                    {item.description}
+export default function CommunityScreen() {
+    const router = useRouter();
+
+    const [search, setSearch] = useState('');
+
+    const filteredPosts = mockPosts.filter(
+        (post) =>
+            post.title.toLowerCase().includes(search.toLowerCase()) ||
+            post.content.toLowerCase().includes(search.toLowerCase())
+    );
+
+    const renderPost = ({ item }: { item: typeof mockPosts[0] }) => (
+        <View style={styles.postCard}>
+            <View style={styles.postInfo}>
+                <Text style={styles.postTitle}>{item.title}</Text>
+                <Text style={styles.postContent} numberOfLines={3}>
+                    {item.content}
                 </Text>
-                <View style={styles.meta}>
-                    <MaterialCommunityIcons name="comment-outline" size={14} color="gray" />
-                    <Text style={styles.metaText}>{item.comments}</Text>
-                    <Text style={styles.metaText}>• {item.time}</Text>
-                    <Text style={styles.metaText}>• {item.author}</Text>
+                <View style={styles.metaRow}>
+                    <View style={styles.metaItem}>
+                        <Feather name="message-circle" size={14} color="#d12a2a" />
+                        <Text style={styles.metaText}>{item.comments}</Text>
+                    </View>
+                    <View style={styles.metaItem}>
+                        <Ionicons name="eye-outline" size={14} color="#c0c0c0" />
+                        <Text style={styles.metaText}>{item.views}</Text>
+                    </View>
+                    <Text style={[styles.metaText, { marginLeft: 6 }]}>{item.author}</Text>
                 </View>
             </View>
-            <Image source={{ uri: item.image }} style={styles.postImage} />
+            <Image
+                source={{ uri: item.image }}
+                style={styles.postImage}
+                resizeMode="cover"
+            />
         </View>
     );
 
     return (
         <View style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity>
-                    <Ionicons name="arrow-back" size={24} color="black" />
-                </TouchableOpacity>
-                <Text style={styles.headerText}>Community</Text>
-                <View style={styles.headerIcons}>
-                    <Ionicons name="search" size={22} style={styles.icon} />
-                    <Ionicons name="menu" size={22} />
-                </View>
+
+            {/* Search Bar */}
+            <View style={styles.searchBar}>
+                <Ionicons name="search" size={20} color="#b0b0b0" />
+                <TextInput
+                    placeholder="Search"
+                    style={styles.searchInput}
+                    value={search}
+                    onChangeText={setSearch}
+                    placeholderTextColor="#b0b0b0"
+                />
             </View>
+
+            {/* Posts List */}
             <FlatList
-                data={dummyPosts}
+                data={filteredPosts}
                 keyExtractor={(item) => item.id}
                 renderItem={renderPost}
-                contentContainerStyle={{ paddingBottom: 20 }}
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
             />
-        </View>
+
+            {/* Write Button */}
+            <TouchableOpacity
+                style={styles.writeButton}
+                onPress={() => router.push('/screens/WritePostPage')}
+                activeOpacity={0.8}
+            >
+                <MaterialIcons name="edit" size={20} color="#fff" style={styles.pencilIcon} />
+                <Text style={styles.writeText}>Write</Text>
+            </TouchableOpacity>
+
+        </View >
     );
-};
-
-export default CommunityScreen;
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-        paddingHorizontal: 16,
-        paddingTop: 50,
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 16,
-    },
-    headerText: {
-        fontSize: 18,
-        fontWeight: '600',
-    },
-    headerIcons: {
-        flexDirection: 'row',
-        gap: 10,
-    },
-    icon: {
-        marginRight: 10,
-    },
-    postContainer: {
-        flexDirection: 'row',
-        backgroundColor: '#f8f8f8',
-        borderRadius: 8,
-        padding: 12,
-        marginBottom: 12,
-    },
-    postText: {
-        flex: 1,
-        paddingRight: 8,
-    },
-    title: {
-        fontWeight: '700',
-        fontSize: 15,
-        marginBottom: 4,
-    },
-    description: {
-        fontSize: 13,
-        color: '#333',
-        marginBottom: 6,
-    },
-    meta: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-    },
-    metaText: {
-        fontSize: 12,
-        color: 'gray',
-        marginLeft: 4,
-    },
-    postImage: {
-        width: 80,
-        height: 80,
-        borderRadius: 6,
-    },
-});
+}

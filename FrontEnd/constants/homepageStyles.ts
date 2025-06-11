@@ -77,7 +77,11 @@ const styles = StyleSheet.create({
         borderTopRightRadius: 22,
         elevation: 10,
         minHeight: 120,
+
+        maxHeight: 180,
+
         maxHeight: 200,
+
     },
     newsItem: {
         flexDirection: 'row',
