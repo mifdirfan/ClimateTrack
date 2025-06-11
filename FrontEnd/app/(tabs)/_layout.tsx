@@ -10,6 +10,8 @@ import { useColorScheme } from '@/hooks/useColorScheme';
 
 import { FontAwesome5 } from '@expo/vector-icons';
 
+
+
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
@@ -35,14 +37,22 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
         }}
       />
-
+      <Tabs.Screen
+        name="MapPage"
+        options={{
+            title: 'Map Page',
+            tabBarIcon: ({ color }) => <IconSymbol size={28} name="map.fill" color={color} />,
+        }}
+      />
       <Tabs.Screen
         name="NewsFeedPage"
         options={{
           title: 'News Feed',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="newspaper.fill" color={color} />,
         }}
+
       />
+
     </Tabs>
   );
 }

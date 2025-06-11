@@ -1,4 +1,5 @@
 package com.ClimateTrack.backend.Entity;
+
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.*;
@@ -19,4 +20,16 @@ public class NewsArticle {
     private String imageUrl;
     private String publishedAt;
     private String content;
+
+    public void setArticle_id(String string) {
+    }
+
+    public void setImage_url(String urlToImage) {
+    }
+
+    public void setPublished_at(String publishedAt) {
+    }
+
+    public void setSource_name(String text) {
+    }
 }
