@@ -12,7 +12,7 @@ type NewsItem = {
   id: string;
   title: string;
   description: string,
-  source: string;
+  sourceName: string;
   time: string;
   image: string;
   url: string;
@@ -67,14 +67,14 @@ function NewsTab() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://192.168.219.104:8080/api/news') // update to your IP
+    fetch('http://192.168.219.101:8080/api/news') // update to your IP
         .then(response => response.json())
         .then(data => {
           const mapped = data.map((n: any) => ({
             id: n.articleId || n.id,
             title: n.title,
             description: n.description,
-            source: n.source || 'Unknown',
+            source: n.sourceName || 'Unknown',
             time: new Date(n.publishedAt).toLocaleString(),
             image: n.imageUrl,
             url: n.url
@@ -93,7 +93,7 @@ function NewsTab() {
     >
       <Image source={{ uri: item.image }} style={styles.newsImage} />
       <View style={styles.newsContent}>
-        <Text style={styles.newsSource}>{item.source}</Text>
+        <Text style={styles.newsSource}>{item.sourceName}</Text>
         <Text numberOfLines={2} style={styles.newsTitle}>{item.title}</Text>
         <Text style={styles.newsDesc} numberOfLines={2}>{item.description}</Text>
         <Text style={styles.newsMeta}>{item.time}</Text>

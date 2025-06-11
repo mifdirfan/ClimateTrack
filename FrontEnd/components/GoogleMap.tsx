@@ -445,7 +445,7 @@ export default function GoogleMapWeb({ disasters = [] }: { disasters?: Disaster[
           function initMap() {
             map = new google.maps.Map(document.getElementById("map"), {
               center: { lat: 2.2105, lng: 101.9758 },
-              zoom: 7,
+              zoom: 6,
             });
 
             infoWindow = new google.maps.InfoWindow();
