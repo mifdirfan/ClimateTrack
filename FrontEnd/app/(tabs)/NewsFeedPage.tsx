@@ -1,6 +1,6 @@
 // NewsFeedPage.tsx -> to show news feed
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, FlatList, Image, Modal } from 'react-native';
 import { WebView } from 'react-native-webview';
 import styles, { TAB_LABELS } from '../../constants/NewsFeedPageStyles';
@@ -18,36 +18,36 @@ type NewsItem = {
   url: string;
 };
 
-const MOCK_NEWS: NewsItem[] = [
-  {
-    id: '1',
-    title: 'Massive Malaysia Floods',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum...',
-    source: 'BBC',
-    time: '6 minutes ago',
-    image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=400&q=80',
-    url: 'https://www.bbc.com/news/world-asia-56200108',
-  },
-  {
-    id: '2',
-    title: 'KL Faces Historic Flood',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum...',
-    source: 'CNN',
-    time: '15 minutes ago',
-    image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?fit=crop&w=400&q=80',
-    url: 'https://edition.cnn.com/asia/malaysia-floods',
-  },
-  {
-    id: '3',
-    title: 'Massive Malaysia Floods',
-    description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum...',
-    source: 'BBC',
-    time: '40 minutes ago',
-    image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=400&q=80',
-    url: 'https://www.bbc.com/news/world-asia-56200108',
-  },
-  // ...add more as you like
-];
+// const MOCK_NEWS: NewsItem[] = [
+//   {
+//     id: '1',
+//     title: 'Massive Malaysia Floods',
+//     description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum...',
+//     source: 'BBC',
+//     time: '6 minutes ago',
+//     image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=400&q=80',
+//     url: 'https://www.bbc.com/news/world-asia-56200108',
+//   },
+//   {
+//     id: '2',
+//     title: 'KL Faces Historic Flood',
+//     description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum...',
+//     source: 'CNN',
+//     time: '15 minutes ago',
+//     image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?fit=crop&w=400&q=80',
+//     url: 'https://edition.cnn.com/asia/malaysia-floods',
+//   },
+//   {
+//     id: '3',
+//     title: 'Massive Malaysia Floods',
+//     description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum...',
+//     source: 'BBC',
+//     time: '40 minutes ago',
+//     image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=400&q=80',
+//     url: 'https://www.bbc.com/news/world-asia-56200108',
+//   },
+//   // ...add more as you like
+// ];
 
 // ----- TABS -----
 type TabKey = 'Community' | 'News' | 'Notifications';
@@ -62,6 +62,28 @@ function NotificationsTab() {
 
 function NewsTab() {
   const [webviewUrl, setWebviewUrl] = useState<string | null>(null);
+
+  const [news, setNews] = useState<NewsItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('http://192.168.219.104:8080/api/news') // update to your IP
+        .then(response => response.json())
+        .then(data => {
+          const mapped = data.map((n: any) => ({
+            id: n.articleId || n.id,
+            title: n.title,
+            description: n.description,
+            source: n.source || 'Unknown',
+            time: new Date(n.publishedAt).toLocaleString(),
+            image: n.imageUrl,
+            url: n.url
+          }));
+          setNews(mapped);
+        })
+        .catch(err => console.error("Failed to fetch news:", err))
+        .finally(() => setLoading(false));
+  }, []);
 
   const renderNewsItem = ({ item }: { item: NewsItem }) => (
     <TouchableOpacity
@@ -83,8 +105,10 @@ function NewsTab() {
   return (
     <View style={styles.newsTabWrapper}>
       {/* <Text style={styles.header}>News Feed</Text> */}
+      {loading && <Text style={{ textAlign: 'center' }}>Loading news...</Text>}
+      {!loading && news.length === 0 && <Text style={{ textAlign: 'center' }}>No news found.</Text>}
       <FlatList
-        data={MOCK_NEWS}
+        data={news}
         renderItem={renderNewsItem}
         keyExtractor={item => item.id}
         contentContainerStyle={styles.newsListContainer}
