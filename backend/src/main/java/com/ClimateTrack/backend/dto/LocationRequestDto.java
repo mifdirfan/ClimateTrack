@@ -1,12 +1,13 @@
 package com.ClimateTrack.backend.dto;
 
+
 import lombok.Builder;
 import lombok.Data;
 
 @Data
 @Builder
-public class AuthRequestDto {
-    private String username;
-    private String password;
+public class LocationRequestDto {
 
+    private double latitude;
+    private double longitude;
 }

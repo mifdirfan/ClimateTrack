@@ -45,7 +45,7 @@ export default function Index() {
 
     // 🌐 Fetch disaster events
     useEffect(() => {
-        fetch('http://192.168.219.101:8080/api/events')
+        fetch('http://172.16.114.146:8080/api/events')
             .then(res => res.json())
             .then(data => {
                 const mapped = data.map((d: any) => ({
@@ -67,7 +67,7 @@ export default function Index() {
 
     // 🌐 Fetch news
     useEffect(() => {
-        fetch('http://192.168.219.101:8080/api/news')
+        fetch('http://172.16.114.146:8080/api/news')
             .then(res => res.json())
             .then(data => {
                 const mapped = data.map((n: any) => ({
