@@ -10,4 +10,5 @@ public class LocationRequestDto {
 
     private double latitude;
     private double longitude;
+    private String fcmToken; // Added for notifications
 }

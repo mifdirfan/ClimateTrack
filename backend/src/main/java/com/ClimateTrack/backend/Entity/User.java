@@ -35,6 +35,7 @@ public class User {
     private Date updatedAt;
     private double latitude;
     private double longitude;
+    private String fcmToken;
 
     public void setIsActive(boolean b) {
     }
