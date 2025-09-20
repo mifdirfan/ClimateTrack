@@ -4,12 +4,16 @@ package com.ClimateTrack.backend.Controller;
 import com.ClimateTrack.backend.Entity.User;
 import com.ClimateTrack.backend.Service.AuthService;
 import com.ClimateTrack.backend.dto.AuthRequestDto;
+import com.ClimateTrack.backend.dto.AuthResponseDto;
 import com.ClimateTrack.backend.dto.LocationRequestDto;
 import com.ClimateTrack.backend.dto.RegisterRequestDto;
+import com.ClimateTrack.backend.Security.JwtTokenProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Optional;
 
 
 @RestController
@@ -17,16 +21,16 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
     @Autowired
     private AuthService authService;
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(@RequestBody AuthRequestDto authRequest) {
-        // Delegate authentication logic to the service layer
-        if (authService.validateUser(authRequest)) {
-            // Authentication successful
-            // In a real app, you would generate and return a JWT token here.
-            return ResponseEntity.ok("Login successful");
+    public ResponseEntity<?> login(@RequestBody AuthRequestDto authRequest) {
+        Optional<User> userOptional = authService.validateUser(authRequest);
+        if (userOptional.isPresent()) {
+            String token = jwtTokenProvider.createToken(authRequest.getUsername());
+            return ResponseEntity.ok(AuthResponseDto.builder().token(token).build());
         } else {
-            // Authentication failed
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
         }
     }

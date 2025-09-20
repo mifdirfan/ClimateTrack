@@ -21,14 +21,15 @@ public class AuthService {
     @Autowired
     private PasswordEncoder passwordEncoder; // Spring will now inject the password encoder bean
 
-    public boolean validateUser(AuthRequestDto request) {
+    public Optional<User> validateUser(AuthRequestDto request) {
         Optional<User> userOptional = userRepository.findByUsername(request.getUsername());
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-            // Compare the plain-text password with the stored hash using the encoder
-            return passwordEncoder.matches(request.getPassword(), user.getPasswordHash());
+            if (passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
+                return Optional.of(user);
+            }
         }
-        return false;
+        return Optional.empty();
     }
 
     public User registerUser(RegisterRequestDto request) {
