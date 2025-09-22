@@ -53,6 +53,7 @@ public class ReportService {
                 .title(r.getTitle())
                 .description(r.getDescription())
                 .disasterType(r.getDisasterType())
+                .postedByUsername(r.getPostedByUsername())
                 .latitude(latitude)
                 .longitude(longitude)
                 .reportedAt(r.getReportedAt())

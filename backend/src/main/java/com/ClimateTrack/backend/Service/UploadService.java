@@ -1,4 +1,40 @@
 package com.ClimateTrack.backend.Service;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
+
+import java.time.Duration;
+
+@Service
 public class UploadService {
+
+    @Autowired
+    private S3Presigner s3Presigner;
+
+    @Value("${aws.s3.bucketName}")
+    private String bucketName;
+
+    public String generatePreSignedUrl(String filename, String filetype) {
+        // Define the S3 key, which includes the folder path
+        String s3Key = "uploads/" + filename;
+
+        // Create a PutObjectRequest to specify the bucket and key
+        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .bucket(bucketName)
+                .key(s3Key)
+                .contentType(filetype)
+                .build();
+
+        // Create the pre-signed URL request with a 10-minute expiration
+        PresignedPutObjectRequest presignedRequest = s3Presigner.presignPutObject(builder ->
+                builder.signatureDuration(Duration.ofMinutes(10))
+                        .putObjectRequest(putObjectRequest)
+        );
+
+        return presignedRequest.url().toString();
+    }
 }

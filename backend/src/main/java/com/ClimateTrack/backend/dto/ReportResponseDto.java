@@ -12,6 +12,7 @@ public class ReportResponseDto {
     private String title;
     private String description;
     private String disasterType;
+    private String postedByUsername;
     private String photoUrl;
     private double latitude;
     private double longitude;
