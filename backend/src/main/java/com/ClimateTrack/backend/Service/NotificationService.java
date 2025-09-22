@@ -1,13 +1,20 @@
 package com.ClimateTrack.backend.Service;
 
+import com.ClimateTrack.backend.Entity.User;
+import com.ClimateTrack.backend.Repository.UserRepository;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.Metrics;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.stereotype.Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 @Service
 public class NotificationService {
@@ -16,6 +23,8 @@ public class NotificationService {
 
     @Autowired
     private FirebaseMessaging firebaseMessaging;
+    @Autowired
+    private UserRepository userRepository; // NEW: Inject user repository
 
     /**
      * Sends a push notification to a specific device.
@@ -41,6 +50,19 @@ public class NotificationService {
             logger.info("Successfully sent message to token: {}. Response: {}", deviceToken, response);
         } catch (FirebaseMessagingException e) {
             logger.error("Failed to send message to token: {}. Error: {}", deviceToken, e.getMessage());
+        }
+    }
+    public void sendProximityNotification(GeoJsonPoint location, String authorId, String title, String body) {
+        Distance radius = new Distance(10, Metrics.KILOMETERS);
+        List<User> nearbyUsers = userRepository.findByLastKnownLocationNear(location, radius);
+
+        logger.info("Found {} users near the event location.", nearbyUsers.size());
+
+        for (User user : nearbyUsers) {
+            // Send notification if user has a token and is not the author
+            if (user.getFcmToken() != null && !user.getId().equals(authorId)) {
+                sendNotification(user.getFcmToken(), title, body);
+            }
         }
     }
 }

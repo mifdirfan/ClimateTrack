@@ -1,11 +1,15 @@
 package com.ClimateTrack.backend.Service;
 
 import com.ClimateTrack.backend.Entity.Report;
+import com.ClimateTrack.backend.Entity.User;
 import com.ClimateTrack.backend.Repository.ReportRepository;
+import com.ClimateTrack.backend.Repository.UserRepository;
 import com.ClimateTrack.backend.dto.ReportRequestDto;
 import com.ClimateTrack.backend.dto.ReportResponseDto;
 import lombok.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.Metrics;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +24,7 @@ public class ReportService {
 
     @Autowired
     private ReportRepository reportRepository;
+    private final NotificationService notificationService; // NEW: Inject notification service
 
     public Report createReport(ReportRequestDto reportRequest, String userId, String username) {
         Report report = new Report();
@@ -33,8 +38,20 @@ public class ReportService {
         report.setReportedAt(new Date());
         report.setPhotoUrl(reportRequest.getPhotoUrl());
 
-        return reportRepository.save(report);
+        Report savedReport = reportRepository.save(report);
+
+        // NEW: Send notifications to nearby users
+        notificationService.sendProximityNotification(
+                savedReport.getLocation(),
+                savedReport.getPostedByUserId(),
+                "New Climate Report Nearby",
+                "A new report '" + savedReport.getTitle() + "' was posted near you."
+        );
+
+        return savedReport;
     }
+
+
 
     public List<ReportResponseDto> getAllReports() {
         return reportRepository.findAll()
