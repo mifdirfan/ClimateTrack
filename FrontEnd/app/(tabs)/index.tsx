@@ -9,7 +9,7 @@ import homepageStyles from '../../constants/homepageStyles'; // Renamed to avoid
 
 import GoogleMapWeb from "@/components/GoogleMap";
 import {WebView} from "react-native-webview";
-import { DISASTER_TYPES, getWeatherIconUrl } from '../../constants/ui/weatherTypes';
+import { DISASTER_TYPES, getWeatherIconUrl } from '../../constants/weatherTypes';
 
 
 type Disaster = {
