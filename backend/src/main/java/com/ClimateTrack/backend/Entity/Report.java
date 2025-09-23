@@ -2,9 +2,11 @@ package com.ClimateTrack.backend.Entity;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Document(collection = "user_reports")
 @Data
@@ -13,18 +15,20 @@ import java.time.LocalDateTime;
 @Builder
 public class Report {
     @Id
-    private String id;
-
     private String reportId;
-    // private String userId;
-    private String disasterId;
-    private String disasterType;
+    private String title;
     private String description;
+
+    // private String userId;
+
+    private String disasterType;
+    private String postedByUserId;
+    private String postedByUsername;
+
+
     private String photoUrl;
     private String locationName;
-    private double latitude;
-    private double longitude;
-    private LocalDateTime reportedAt;
+    private GeoJsonPoint location;
+    private Date reportedAt;
     private String status;
-    private boolean verified;
 }

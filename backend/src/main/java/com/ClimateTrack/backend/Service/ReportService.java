@@ -1,13 +1,20 @@
 package com.ClimateTrack.backend.Service;
 
 import com.ClimateTrack.backend.Entity.Report;
+import com.ClimateTrack.backend.Entity.User;
 import com.ClimateTrack.backend.Repository.ReportRepository;
+import com.ClimateTrack.backend.Repository.UserRepository;
 import com.ClimateTrack.backend.dto.ReportRequestDto;
 import com.ClimateTrack.backend.dto.ReportResponseDto;
 import lombok.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.Metrics;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -15,28 +22,36 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ReportService {
 
-    private final ReportRepository reportRepository;
+    @Autowired
+    private ReportRepository reportRepository;
+    private final NotificationService notificationService; // NEW: Inject notification service
 
-    public ReportResponseDto saveReport(ReportRequestDto dto) {
-        Report report = Report.builder()
-                .reportId(dto.getReportId())
-                .disasterId(dto.getDisasterId())
-                .disasterType(dto.getDisasterType())
-                .description(dto.getDescription())
-                .photoUrl(dto.getPhotoUrl())
-                .locationName(dto.getLocationName())
-                .latitude(dto.getLatitude())
-                .longitude(dto.getLongitude())
-                .reportedAt(LocalDateTime.now())
-                .status("pending")
-                .verified(false)
-                .build();
+    public Report createReport(ReportRequestDto reportRequest, String userId, String username) {
+        Report report = new Report();
+        report.setTitle(reportRequest.getTitle());
+        report.setDescription(reportRequest.getDescription());
+        report.setDisasterType(reportRequest.getDisasterType());
+        // CORRECTED: Set the GeoJsonPoint from the DTO coordinates
+        report.setLocation(new GeoJsonPoint(reportRequest.getLongitude(), reportRequest.getLatitude()));
+        report.setPostedByUserId(userId);
+        report.setPostedByUsername(username);
+        report.setReportedAt(new Date());
+        report.setPhotoUrl(reportRequest.getPhotoUrl());
 
-        Report saved = reportRepository.save(report);
+        Report savedReport = reportRepository.save(report);
 
+        // NEW: Send notifications to nearby users
+        notificationService.sendProximityNotification(
+                savedReport.getLocation(),
+                savedReport.getPostedByUserId(),
+                "New Climate Report Nearby",
+                "A new report '" + savedReport.getTitle() + "' was posted near you."
+        );
 
-        return mapToDto(saved);
+        return savedReport;
     }
+
+
 
     public List<ReportResponseDto> getAllReports() {
         return reportRepository.findAll()
@@ -46,19 +61,20 @@ public class ReportService {
     }
 
     private ReportResponseDto mapToDto(Report r) {
+        // CORRECTED: Add null checks to prevent NullPointerException
+        double latitude = (r.getLocation() != null) ? r.getLocation().getY() : 0.0;
+        double longitude = (r.getLocation() != null) ? r.getLocation().getX() : 0.0;
+
         return ReportResponseDto.builder()
-                .id(r.getId())
                 .reportId(r.getReportId())
-                .disasterId(r.getDisasterId())
-                .disasterType(r.getDisasterType())
+                .title(r.getTitle())
                 .description(r.getDescription())
-                .photoUrl(r.getPhotoUrl())
-                .locationName(r.getLocationName())
-                .latitude(r.getLatitude())
-                .longitude(r.getLongitude())
+                .disasterType(r.getDisasterType())
+                .postedByUsername(r.getPostedByUsername())
+                .latitude(latitude)
+                .longitude(longitude)
                 .reportedAt(r.getReportedAt())
-                .status(r.getStatus())
-                .verified(r.isVerified())
+                .photoUrl(r.getPhotoUrl())
                 .build();
     }
 }

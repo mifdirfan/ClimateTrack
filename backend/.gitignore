@@ -43,4 +43,5 @@ node_modules/
 .env
 
 # Ignore secret config
+serviceAccountKey.json
 application-secret.properties

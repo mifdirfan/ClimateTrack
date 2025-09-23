@@ -6,6 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.core.mapping.Field;
 
@@ -35,6 +36,11 @@ public class User {
     private Date updatedAt;
     private double latitude;
     private double longitude;
+    private String fcmToken;
+    private GeoJsonPoint lastKnownLocation;
+
+    // New field to mark an anonymous user
+    private boolean isAnonymous;
 
     public void setIsActive(boolean b) {
     }
