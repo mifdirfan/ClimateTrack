@@ -1,41 +1,42 @@
 import { useState, useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import { Text, View, Button, Platform } from 'react-native';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 
+Notifications.setNotificationHandler({
+    handleNotification: async (): Promise<Notifications.NotificationBehavior> => ({
+        shouldShowAlert: true,
+        shouldPlaySound: false,
+        shouldSetBadge: false,
+    }),
+});
+
 export function useNotifications() {
-    const [expoPushToken, setExpoPushToken] = useState('');
+    const [expoPushToken, setExpoPushToken] = useState<string | undefined>('');
     const [notification, setNotification] = useState<Notifications.Notification | false>(false);
     const notificationListener = useRef<Notifications.Subscription>();
     const responseListener = useRef<Notifications.Subscription>();
 
     useEffect(() => {
         registerForPushNotificationsAsync().then(token => {
+            setExpoPushToken(token);
             if (token) {
-                setExpoPushToken(token);
                 // You can now send this token to your backend
                 console.log('Expo Push Token:', token);
 
-                // Example: sending token to backend
-                // Make sure to replace <YOUR_BACKEND_IP> and have a user context
-                // This is a simplified example. You'd likely do this after a user logs in.
-                const username = "testuser"; // Replace with actual logged-in username
-                fetch(`http://172.16.114.146:8080/api/auth/location/${username}`, { // Using the existing location endpoint to update the token
+                // Example: sending the token to your backend
+                // Make sure to replace 'your-backend-url' and 'username' with actual values
+                const username = "testuser"; // This should be dynamic based on logged-in user
+                fetch(`http://172.16.114.146:8080/api/auth/update-fcm-token/${username}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        latitude: 0, // You might want to send actual location data here
-                        longitude: 0,
-                        fcmToken: token
+                        fcmToken: token,
                     }),
-                })
-                    .then(response => response.text())
-                    .then(data => console.log('Token sent to backend:', data))
-                    .catch(err => console.error('Failed to send token to backend:', err));
-
+                }).catch(err => console.error("Failed to send FCM token to backend:", err));
             }
         });
 
@@ -48,10 +49,10 @@ export function useNotifications() {
         });
 
         return () => {
-            if(notificationListener.current) {
+            if (notificationListener.current) {
                 Notifications.removeNotificationSubscription(notificationListener.current);
             }
-            if(responseListener.current) {
+            if (responseListener.current) {
                 Notifications.removeNotificationSubscription(responseListener.current);
             }
         };
@@ -60,8 +61,6 @@ export function useNotifications() {
     return { expoPushToken, notification };
 }
 
-
-// --- Helper Function ---
 
 async function registerForPushNotificationsAsync() {
     let token;
@@ -86,12 +85,10 @@ async function registerForPushNotificationsAsync() {
             alert('Failed to get push token for push notification!');
             return;
         }
-        // Learn more about projectId: https://docs.expo.dev/push-notifications/push-notifications-setup/#configure-projectid
-        // This is where the projectId from app.json is used.
         try {
             const projectId = Constants.expoConfig?.extra?.eas?.projectId;
             if (!projectId) {
-                throw new Error("Expo project ID not found in app.json. Please run 'npx eas project:init'");
+                throw new Error('Expo project ID not found in app.json');
             }
             token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
         } catch (e) {
