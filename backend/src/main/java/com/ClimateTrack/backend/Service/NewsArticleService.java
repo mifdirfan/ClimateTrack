@@ -90,6 +90,7 @@ public class NewsArticleService {
                         .author(article.path("author").asText(null))
                         .url(article.path("url").asText())
                         .imageUrl(article.path("urlToImage").asText(null))
+                        .description(article.path("description").asText(null))
                         .publishedAt(Instant.parse(article.path("publishedAt").asText()))
                         .content(article.path("content").asText(null))
                         .sourceName(article.path("source").path("name").asText())
@@ -110,6 +111,7 @@ public class NewsArticleService {
                 .author(a.getAuthor())
                 .url(a.getUrl())
                 .imageUrl(a.getImageUrl())
+                .description(a.getContent()) // Map content to description
                 .publishedAt(a.getPublishedAt())
                 .content(a.getContent())
                 .build()
