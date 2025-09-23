@@ -1,6 +1,5 @@
 package com.ClimateTrack.backend.Entity;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -8,7 +7,6 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.util.Date;
 
@@ -20,28 +18,14 @@ import java.util.Date;
 public class User {
 
     @Id
-    private String id; // Maps to _id
-
-    private String userId;
+    private String id;
     private String email;
     private String username;
-    private String phoneNumber;
     private String passwordHash;
     private String fullName;
-    private String profilePicUrl;
-    private String languagePreference;
-    private Date lastLogin;
-    private boolean isActive;
     private Date createdAt;
     private Date updatedAt;
-    private double latitude;
-    private double longitude;
     private String fcmToken;
     private GeoJsonPoint lastKnownLocation;
-
-    // New field to mark an anonymous user
     private boolean isAnonymous;
-
-    public void setIsActive(boolean b) {
-    }
 }

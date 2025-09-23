@@ -7,9 +7,7 @@ import com.ClimateTrack.backend.Security.JwtTokenProvider;
 import com.ClimateTrack.backend.Service.ReportService;
 import com.ClimateTrack.backend.dto.ReportRequestDto;
 import com.ClimateTrack.backend.dto.ReportResponseDto;
-import com.ClimateTrack.backend.dto.SuccessResponse;
-import lombok.*;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,14 +20,9 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ReportController {
 
-    @Autowired
-    private ReportService reportService;
-
-    @Autowired
-    private JwtTokenProvider jwtTokenProvider;
-
-    @Autowired
-    private UserRepository userRepository;
+    private final ReportService reportService;
+    private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository userRepository;
 
     @PostMapping
     public ResponseEntity<Report> createReport(
