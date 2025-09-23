@@ -88,11 +88,16 @@ async function registerForPushNotificationsAsync(): Promise<string | undefined> 
             alert('Failed to get push token for push notification!');
             return;
         }
+
+        // Refactored to remove the "throw caught locally" warning
+        const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+        if (!projectId) {
+            // Instead of throwing, just log the error and return.
+            console.error('Expo project ID not found in app.json. Please run "npx expo login" and "npx eas project:init".');
+            return;
+        }
+
         try {
-            const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-            if (!projectId) {
-                throw new Error('Expo project ID not found in app.json. Please run "npx expo login" and "npx eas project:init".');
-            }
             token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
         } catch (e) {
             console.error("Error getting push token:", e);
