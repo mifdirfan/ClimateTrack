@@ -21,7 +21,6 @@ public class DisasterEvent {
     private String weatherIcon;
     private String locationName;
     private GeoJsonPoint location;
-    private String locationName;
     private double latitude;
     private double longitude;
     private Instant reportedAt;

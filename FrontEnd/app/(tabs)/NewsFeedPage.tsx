@@ -67,7 +67,7 @@ function NewsTab() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://172.16.114.146:8080/api/news') // update to your IP
+    fetch('http://192.168.219.101:8080/api/news') // update to your IP
         .then(response => response.json())
         .then(data => {
           const mapped = data.map((n: any) => ({
