@@ -73,8 +73,8 @@ function NewsTab() {
           const mapped = data.map((n: any) => ({
             id: n.articleId || n.id,
             title: n.title,
-            description: n.description,
-            source: n.sourceName || 'Unknown',
+            description: n.description || 'No description available.',
+            sourceName: n.sourceName || 'Unknown',
             time: new Date(n.publishedAt).toLocaleString(),
             image: n.imageUrl,
             url: n.url
