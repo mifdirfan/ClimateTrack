@@ -3,6 +3,7 @@ package com.ClimateTrack.backend.Service;
 import com.ClimateTrack.backend.Entity.User;
 import com.ClimateTrack.backend.Repository.UserRepository;
 import com.ClimateTrack.backend.dto.AuthRequestDto;
+import com.ClimateTrack.backend.dto.AuthResponseDto;
 import com.ClimateTrack.backend.dto.LocationRequestDto;
 import com.ClimateTrack.backend.dto.RegisterRequestDto;
 import lombok.RequiredArgsConstructor;
@@ -64,6 +65,15 @@ public class AuthService {
             userRepository.save(registeredUser);
             userRepository.delete(anonymousUser);
         }
+    }
+
+    public Optional<AuthResponseDto> getUserByUsername(String username) {
+        return userRepository.findByUsername(username)
+                .map(user -> AuthResponseDto.builder()
+                        .id(user.getId())
+                        .username(user.getUsername())
+                        .fullName(user.getFullName())
+                        .build());
     }
 
     public User updateLocation(String username, LocationRequestDto locationDto) {

@@ -2,16 +2,14 @@ package com.ClimateTrack.backend.Controller;
 
 import com.ClimateTrack.backend.Entity.User;
 import com.ClimateTrack.backend.Service.AuthService;
-import com.ClimateTrack.backend.dto.AuthRequestDto;
-import com.ClimateTrack.backend.dto.AuthResponseDto;
-import com.ClimateTrack.backend.dto.LocationRequestDto;
-import com.ClimateTrack.backend.dto.RegisterRequestDto;
+import com.ClimateTrack.backend.dto.*;
 import com.ClimateTrack.backend.Security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -20,6 +18,16 @@ import java.util.Optional;
 public class AuthController {
     private final AuthService authService;
     private final JwtTokenProvider jwtTokenProvider;
+
+    @GetMapping("/{username}")
+    public ResponseEntity<?> getUserProfile(@PathVariable String username) {
+        Optional<AuthResponseDto> userOptional = authService.getUserByUsername(username);
+        if (userOptional.isPresent()) {
+            return ResponseEntity.ok(userOptional.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+    }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequestDto authRequest) {
