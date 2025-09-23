@@ -1,6 +1,5 @@
 package com.ClimateTrack.backend.Repository;
 
-import com.ClimateTrack.backend.Entity.DisasterEvent;
 import com.ClimateTrack.backend.Entity.NewsArticle;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
