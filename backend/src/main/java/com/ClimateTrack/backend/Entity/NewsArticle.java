@@ -20,6 +20,7 @@ public class NewsArticle {
     private String author;
     private String url;
     private String imageUrl;
+    private String description;
     private Instant publishedAt;
     private String content;
 }
