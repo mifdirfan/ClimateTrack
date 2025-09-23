@@ -1,33 +1,36 @@
 import { useState, useEffect, useRef } from 'react';
-import { Text, View, Button, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
 
+// This handler determines how your app handles notifications when it's active
 Notifications.setNotificationHandler({
     handleNotification: async (): Promise<Notifications.NotificationBehavior> => ({
         shouldShowAlert: true,
         shouldPlaySound: false,
         shouldSetBadge: false,
+        // FIX: Add missing properties for iOS
+        shouldShowBanner: true,
+        shouldShowList: true,
     }),
 });
 
 export function useNotifications() {
     const [expoPushToken, setExpoPushToken] = useState<string | undefined>('');
     const [notification, setNotification] = useState<Notifications.Notification | false>(false);
-    const notificationListener = useRef<Notifications.Subscription>();
-    const responseListener = useRef<Notifications.Subscription>();
+    // FIX: useRef must be initialized with a value, even if it's undefined.
+    const notificationListener = useRef<Notifications.Subscription | undefined>(undefined);
+    const responseListener = useRef<Notifications.Subscription | undefined>(undefined);
 
     useEffect(() => {
         registerForPushNotificationsAsync().then(token => {
             setExpoPushToken(token);
             if (token) {
-                // You can now send this token to your backend
                 console.log('Expo Push Token:', token);
 
-                // Example: sending the token to your backend
-                // Make sure to replace 'your-backend-url' and 'username' with actual values
-                const username = "testuser"; // This should be dynamic based on logged-in user
+                // NOTE: This is a placeholder. You'll need a way to get the current user's username.
+                const username = "testuser"; // This should be dynamic based on the logged-in user
                 fetch(`http://172.16.114.146:8080/api/auth/update-fcm-token/${username}`, {
                     method: 'PUT',
                     headers: {
@@ -62,7 +65,7 @@ export function useNotifications() {
 }
 
 
-async function registerForPushNotificationsAsync() {
+async function registerForPushNotificationsAsync(): Promise<string | undefined> {
     let token;
 
     if (Platform.OS === 'android') {
@@ -88,7 +91,7 @@ async function registerForPushNotificationsAsync() {
         try {
             const projectId = Constants.expoConfig?.extra?.eas?.projectId;
             if (!projectId) {
-                throw new Error('Expo project ID not found in app.json');
+                throw new Error('Expo project ID not found in app.json. Please run "npx expo login" and "npx eas project:init".');
             }
             token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
         } catch (e) {
