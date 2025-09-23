@@ -8,7 +8,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import javax.xml.stream.events.Comment;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -25,10 +24,9 @@ public class CommunityPost {
     private String title;
     private String content;
 
-
+    private String photoKey;
     private String postedByUserId;
     private String postedByUsername;
-    private String photoUrl;
     private Date postedAt;
 
     private List<Comment> comments = new ArrayList<>();

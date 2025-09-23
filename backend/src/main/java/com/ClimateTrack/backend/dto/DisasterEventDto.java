@@ -9,6 +9,7 @@ public class DisasterEventDto {
     private String disasterType;
     private String description;
     private GeoJsonPoint location;
+    private String locationName;
     private double latitude;
     private double longitude;
     private String reportedAt;

@@ -23,6 +23,7 @@ public class DisasterEventService {
                 .disasterType(e.getDisasterType())
                 .description(e.getDescription())
                 .location(e.getLocation())
+                .locationName(e.getLocationName())
                 .latitude(e.getLatitude())
                 .longitude(e.getLongitude())
                 .reportedAt(e.getReportedAt())
@@ -42,6 +43,7 @@ public class DisasterEventService {
         newEvent.setLongitude(eventDto.getLongitude());
         newEvent.setReportedAt(eventDto.getReportedAt());
         newEvent.setSource(eventDto.getSource());
+        newEvent.setLocationName(eventDto.getLocationName());
         // Create the GeoJsonPoint for proximity searches
         newEvent.setLocation(new GeoJsonPoint(eventDto.getLongitude(), eventDto.getLatitude()));
 

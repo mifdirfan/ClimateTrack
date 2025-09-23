@@ -5,7 +5,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.LocalDateTime;
 import java.util.Date;
 
 @Document(collection = "user_reports")
@@ -18,17 +17,10 @@ public class Report {
     private String reportId;
     private String title;
     private String description;
-
-    // private String userId;
-
     private String disasterType;
     private String postedByUserId;
     private String postedByUsername;
-
-
     private String photoUrl;
-    private String locationName;
     private GeoJsonPoint location;
     private Date reportedAt;
-    private String status;
 }
