@@ -135,7 +135,7 @@ public class DisasterEventService {
                     .build();
 
             // Atomically delete old weather data and save the new entry
-            //disasterEventRepository.deleteBySource(WEATHER_SOURCE);
+            disasterEventRepository.deleteBySource(WEATHER_SOURCE);
             disasterEventRepository.save(weatherEvent);
             logger.info("Successfully saved current weather for {} as a disaster event.", weatherEvent.getLocationName());
         } catch (Exception e) {

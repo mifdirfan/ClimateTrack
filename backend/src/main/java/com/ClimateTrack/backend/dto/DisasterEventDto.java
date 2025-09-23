@@ -14,7 +14,6 @@ public class DisasterEventDto {
     private String weatherIcon;
     private String locationName;
     private GeoJsonPoint location;
-    private String locationName;
     private double latitude;
     private double longitude;
     @JsonFormat(shape = JsonFormat.Shape.STRING)
