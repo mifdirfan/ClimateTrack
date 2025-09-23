@@ -1,13 +1,16 @@
 // HOMEPAGE!!
 
+import { Link } from 'expo-router';
 import React, { useState, useEffect } from 'react';
-import {View, Text, TextInput, FlatList, TouchableOpacity, Image, ActivityIndicator, Modal} from 'react-native';
+import {View, Text, TextInput, FlatList, TouchableOpacity, Image, ActivityIndicator, Modal, StyleSheet} from 'react-native';
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import styles from '../../constants/homepageStyles';
+import homepageStyles from '../../constants/homepageStyles'; // Renamed to avoid conflict
 
 import GoogleMapWeb from "@/components/GoogleMap";
 import {WebView} from "react-native-webview";
+import { DISASTER_TYPES, getWeatherIconUrl } from '../../constants/weatherTypes';
+
 
 type Disaster = {
     disasterId: string;
@@ -26,12 +29,6 @@ type NewsItem = {
     url: string;
     date: string;
 };
-
-const DISASTER_TYPES = [
-    { key: 'flood', label: 'Flood', color: '#FF4747', icon: 'water' },
-    { key: 'landslide', label: 'Landslide', color: '#FFC107', icon: 'mountain' },
-    { key: 'heavy rain', label: 'Heavy Rain', color: '#2196F3', icon: 'cloud-rain' }
-];
 
 export default function Index() {
     const [webviewUrl, setWebviewUrl] = useState<string | null>(null);
@@ -92,36 +89,36 @@ export default function Index() {
         : disasters;
 
     const renderNewsItem = ({ item }: { item: NewsItem }) => (
-        <TouchableOpacity style={styles.newsItem} onPress={() => setWebviewUrl(item.url)}>
-            <Image source={{ uri: item.image }} style={styles.newsImage} />
+        <TouchableOpacity style={homepageStyles.newsItem} onPress={() => setWebviewUrl(item.url)}>
+            <Image source={{ uri: item.image }} style={homepageStyles.newsImage} />
             <View style={{ flex: 1 }}>
-                <Text style={styles.newsTitle}>{item.title}</Text>
-                <Text style={styles.newsDesc} numberOfLines={2}>{item.description}</Text>
-                <Text style={styles.newsDate}>{item.date}</Text>
+                <Text style={homepageStyles.newsTitle}>{item.title}</Text>
+                <Text style={homepageStyles.newsDesc} numberOfLines={2}>{item.description}</Text>
+                <Text style={homepageStyles.newsDate}>{item.date}</Text>
             </View>
         </TouchableOpacity>
     );
 
     return (
-        <SafeAreaView style={styles.container}>
-            {/* 🔍 Search Bar */}
-            <View style={styles.searchBar}>
+        <SafeAreaView style={homepageStyles.container}>
+            {/* Search Bar */}
+            <View style={homepageStyles.searchBar}>
                 <FontAwesome5 name="search" size={18} color="#888" style={{ marginRight: 8 }} />
                 <TextInput
                     placeholder="Search"
                     value={search}
                     onChangeText={setSearch}
-                    style={styles.searchInput}
+                    style={homepageStyles.searchInput}
                 />
             </View>
 
-            {/* 🔘 Disaster Filter Buttons */}
-            <View style={styles.filterRow}>
-                {DISASTER_TYPES.map((type) => (
+            {/* Disaster Filter Buttons */}
+            <View style={homepageStyles.filterRow}>
+                {DISASTER_TYPES.slice(0, 5).map((type) => ( // Show first 5 types for brevity
                     <TouchableOpacity
                         key={type.key}
                         style={[
-                            styles.filterBtn,
+                            homepageStyles.filterBtn,
                             {
                                 backgroundColor: type.color,
                                 opacity: selectedType === type.key || !selectedType ? 1 : 0.5
@@ -129,24 +126,29 @@ export default function Index() {
                         ]}
                         onPress={() => setSelectedType(selectedType === type.key ? null : type.key)}
                     >
-                        <FontAwesome5 name={type.icon as any} size={16} color="#fff" style={{ marginRight: 4 }} />
-                        <Text style={styles.filterBtnText}>{type.label}</Text>
+                        <Image source={{ uri: getWeatherIconUrl(type.iconCode) }} style={styles.filterIcon} />
+                        <Text style={homepageStyles.filterBtnText}>{type.label}</Text>
                     </TouchableOpacity>
                 ))}
-                <TouchableOpacity style={styles.filterMoreBtn}>
+                <TouchableOpacity style={homepageStyles.filterMoreBtn}>
                     <MaterialIcons name="filter-list" size={20} color="#222" />
                 </TouchableOpacity>
             </View>
 
-            {/* 🗺️ Map */}
+            {/* Map */}
             {disasterLoading ? (
                 <ActivityIndicator size="large" />
             ) : (
                 <GoogleMapWeb disasters={filteredDisasters} />
             )}
+            <Link href="/screens/CurrentLocationScreen" asChild>
+                <TouchableOpacity style={styles.locationButton}>
+                    <Text style={styles.locationButtonText}>View My Current Location</Text>
+                </TouchableOpacity>
+            </Link>
 
-            {/* 📰 News Section */}
-            <View style={styles.newsSection}>
+            {/* News Section */}
+            <View style={homepageStyles.newsSection}>
                 <FlatList
                     data={news}
                     renderItem={renderNewsItem}
@@ -161,10 +163,10 @@ export default function Index() {
                 <Modal visible={!!webviewUrl} animationType="slide" onRequestClose={() => setWebviewUrl(null)}>
                     <View style={{ flex: 1 }}>
                         <TouchableOpacity
-                            style={styles.webviewCloseBtn}
+                            style={homepageStyles.webviewCloseBtn}
                             onPress={() => setWebviewUrl(null)}
                         >
-                            <Text style={styles.webviewCloseText}>Close</Text>
+                            <Text style={homepageStyles.webviewCloseText}>Close</Text>
                         </TouchableOpacity>
                         {webviewUrl && <WebView source={{ uri: webviewUrl }} style={{ flex: 1 }} />}
                     </View>
@@ -175,52 +177,30 @@ export default function Index() {
     );
 }
 
+// Merged and new styles
+const styles = StyleSheet.create({
+    ...homepageStyles,
+    locationButton: {
+        backgroundColor: '#007AFF',
+        padding: 15,
+        borderRadius: 8,
+        marginHorizontal: 20,
+        marginBottom: 210, // Adjust to position above the news section
+        alignItems: 'center',
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+    },
+    locationButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    filterIcon: {
+        width: 20,
+        height: 20,
+        marginRight: 4,
+    }
+});
 
-
-// const MOCK_DISASTERS = [
-//     {
-//         id: 1,
-//         type: 'flood',
-//         title: 'Flood in Kuala Lumpur',
-//         description: 'Severe flooding reported',
-//         coordinate: { latitude: 3.139, longitude: 101.6869 }
-//     },
-//     {
-//         id: 2,
-//         type: 'flood',
-//         title: 'Flood in Johor Bahru',
-//         description: 'Evacuations underway',
-//         coordinate: { latitude: 1.4927, longitude: 103.7414 }
-//     },
-//     {
-//         id: 3,
-//         type: 'landslide',
-//         title: 'Landslide in Penang',
-//         description: 'Roads blocked',
-//         coordinate: { latitude: 5.4164, longitude: 100.3327 }
-//     },
-//     {
-//         id: 4,
-//         type: 'rain',
-//         title: 'Storm in Kota Bharu',
-//         description: 'People advised to stay at home.',
-//         coordinate: { latitude: 6.1251, longitude: 102.2379 }
-//     }
-// ];
-
-// const MOCK_NEWS = [
-//     {
-//         id: '1',
-//         title: 'Massive Malaysia Floods',
-//         description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum...',
-//         image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=400&q=80',
-//         date: '6 minutes ago'
-//     },
-//     {
-//         id: '2',
-//         title: 'Landslide blocks highway',
-//         description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum...',
-//         image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?fit=crop&w=400&q=80',
-//         date: '15 minutes ago'
-//     }
-// ];

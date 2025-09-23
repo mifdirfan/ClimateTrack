@@ -16,6 +16,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "googleServicesFile": "./google-services.json",
       "edgeToEdgeEnabled": true
     },
     "web": {
@@ -26,6 +27,7 @@
     "plugins": [
       "expo-router",
       "expo-location",
+      "expo-notifications",
       [
         "expo-splash-screen",
         {
@@ -38,6 +40,11 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "eas": {
+        "projectId": "87b0aa99-523d-44c8-8532-e211fe432562"
+      }
     }
   }
 }
