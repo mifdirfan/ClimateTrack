@@ -1,29 +1,37 @@
 package com.ClimateTrack.backend.Controller;
 
-
 import com.ClimateTrack.backend.Entity.User;
 import com.ClimateTrack.backend.Service.AuthService;
-import com.ClimateTrack.backend.dto.AuthRequestDto;
-import com.ClimateTrack.backend.dto.AuthResponseDto;
-import com.ClimateTrack.backend.dto.LocationRequestDto;
-import com.ClimateTrack.backend.dto.RegisterRequestDto;
+import com.ClimateTrack.backend.dto.*;
 import com.ClimateTrack.backend.Security.JwtTokenProvider;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
-import java.util.Optional;
 
+import java.util.Map;
+
+import java.util.List;
+
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
-    @Autowired
-    private AuthService authService;
-    @Autowired
-    private JwtTokenProvider jwtTokenProvider;
+    private final AuthService authService;
+    private final JwtTokenProvider jwtTokenProvider;
+
+    @GetMapping("/{username}")
+    public ResponseEntity<?> getUserProfile(@PathVariable String username) {
+        Optional<AuthResponseDto> userOptional = authService.getUserByUsername(username);
+        if (userOptional.isPresent()) {
+            return ResponseEntity.ok(userOptional.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+    }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequestDto authRequest) {
@@ -39,7 +47,6 @@ public class AuthController {
     @PostMapping("/signup")
     public ResponseEntity<?> signup(@RequestBody RegisterRequestDto registerRequest) {
         User newUser = authService.registerUser(registerRequest);
-
         if (newUser != null) {
             return ResponseEntity.status(HttpStatus.CREATED).body("User registered successfully");
         } else {
@@ -47,7 +54,7 @@ public class AuthController {
         }
     }
 
-    @PutMapping("/location/{username}") // New endpoint for updating user location
+    @PutMapping("/location/{username}")
     public ResponseEntity<?> updateLocation(
             @PathVariable String username,
             @RequestBody LocationRequestDto locationDto) {
@@ -74,4 +81,5 @@ public class AuthController {
         }
     }
 }
+
 

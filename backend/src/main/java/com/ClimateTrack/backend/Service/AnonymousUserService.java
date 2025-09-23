@@ -3,7 +3,7 @@ package com.ClimateTrack.backend.Service;
 import com.ClimateTrack.backend.Entity.User;
 import com.ClimateTrack.backend.Repository.UserRepository;
 import com.ClimateTrack.backend.dto.AnonymousLocationRequestDto;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.stereotype.Service;
 
@@ -11,10 +11,10 @@ import java.util.Date;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class AnonymousUserService {
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     public User updateOrCreateAnonymousUser(AnonymousLocationRequestDto request) {
         Optional<User> userOptional = userRepository.findById(request.getAnonymousId());

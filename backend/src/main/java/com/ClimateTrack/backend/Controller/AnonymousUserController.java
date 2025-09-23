@@ -3,7 +3,7 @@ package com.ClimateTrack.backend.Controller;
 import com.ClimateTrack.backend.Entity.User;
 import com.ClimateTrack.backend.Service.AnonymousUserService;
 import com.ClimateTrack.backend.dto.AnonymousLocationRequestDto;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/anonymous")
+@RequiredArgsConstructor
 public class AnonymousUserController {
 
-    @Autowired
-    private AnonymousUserService anonymousUserService;
+    private final AnonymousUserService anonymousUserService;
 
     @PutMapping("/location")
     public ResponseEntity<?> updateAnonymousLocation(@RequestBody AnonymousLocationRequestDto request) {
