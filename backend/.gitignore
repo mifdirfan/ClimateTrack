@@ -40,7 +40,7 @@ out/
 node_modules/
 
 # Ignore secret config
-serviceAccountKey.json
-
-# application-secret.properties
 application-secret.properties
+
+# Firebase service account key
+serviceAccountKey.json

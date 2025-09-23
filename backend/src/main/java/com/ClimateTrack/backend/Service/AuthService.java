@@ -85,4 +85,16 @@ public class AuthService {
         }
         return null;
     }
+
+    public User updateFcmToken(String username, String fcmToken) {
+        Optional<User> userOptional = userRepository.findByUsername(username);
+        if (userOptional.isPresent()) {
+            User user = userOptional.get();
+            user.setFcmToken(fcmToken);
+            user.setUpdatedAt(new Date()); // Update the timestamp
+            return userRepository.save(user);
+        }
+        return null; // User not found
+    }
 }
+
