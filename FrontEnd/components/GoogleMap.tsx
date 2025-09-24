@@ -1,9 +1,8 @@
-// components/GoogleMap.tsx
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { WebView } from 'react-native-webview';
 import Constants from 'expo-constants';
-import { DISASTER_TYPES, getWeatherIconUrl } from '../constants/weatherTypes';
+import { getWeatherDetails, getWeatherIconUrl } from '@/constants/weatherTypes';
 
 type Disaster = {
     disasterId: string;
@@ -14,7 +13,17 @@ type Disaster = {
     longitude: number;
 };
 
-export default function GoogleMapWeb({ disasters = [] }: { disasters?: Disaster[] }) {
+type UserLocation = {
+    latitude: number;
+    longitude: number;
+};
+
+type GoogleMapWebProps = {
+    disasters?: Disaster[];
+    userLocation?: UserLocation | null;
+};
+
+export default function GoogleMapWeb({ disasters = [], userLocation }: GoogleMapWebProps) {
     const apiKey = Constants.expoConfig?.extra?.googleMapsApiKey;
     const apiUrl = Constants.expoConfig?.extra?.googleMapsApiUrl || 'https://maps.googleapis.com/maps/api/js';
 
@@ -23,52 +32,61 @@ export default function GoogleMapWeb({ disasters = [] }: { disasters?: Disaster[
         return <View style={styles.container} />;
     }
 
-    const markersJS = disasters
+    const disasterMarkersJS = disasters
         .filter(d => d && typeof d.latitude === 'number' && typeof d.longitude === 'number')
         .map((d) => {
-            const disasterTypeInfo = DISASTER_TYPES.find(t => t.key === d.disasterType) || DISASTER_TYPES.find(t => t.key === 'Clouds'); // Default to 'Clouds'
-            if (!disasterTypeInfo) return ''; // Should not happen with the default
+            const weather = getWeatherDetails(d.disasterType);
+            const iconUrl = getWeatherIconUrl(weather.icon);
 
-            const iconUrl = getWeatherIconUrl(disasterTypeInfo.iconCode);
-
-            // Use an SVG to create a colored circle background for the PNG icon
             const iconSvg = `
               <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
-                <circle cx="20" cy="20" r="18" fill="${disasterTypeInfo.color}" stroke="#fff" stroke-width="1.5"/>
-                <image href="${iconUrl}" x="5" y="5" height="30" width="30" />
+                <circle cx="20" cy="20" r="18" fill="${weather.color}" stroke="#fff" stroke-width="1"/>
+                <image href="${iconUrl}" x="5" y="5" height="30" width="30"/>
               </svg>
             `.replace(/\s+/g, ' ').trim();
 
-            const encodedIconUrl = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(iconSvg)}`;
-
-            // Sanitize description for use in JavaScript string
-            const sanitizedDescription = d.description ? d.description.replace(/'/g, "\\'").replace(/\n/g, ' ') : 'No description available.';
+            const iconDataUrl = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(iconSvg)}`;
 
             return `
-        new google.maps.Marker({
-          position: { lat: ${d.latitude}, lng: ${d.longitude} },
-          map: map,
-          title: "${d.locationName}",
-          icon: {
-            url: "${encodedIconUrl}",
-            scaledSize: new google.maps.Size(40, 40),
-            anchor: new google.maps.Point(20, 20)
-          }
-        }).addListener('click', function() {
-          infoWindow.setContent(
-            '<div style="padding: 10px; min-width: 200px; max-width: 250px;">' +
-            '<h3 style="margin: 0 0 5px 0; color: ${disasterTypeInfo.color}; font-family: Arial, sans-serif;">${d.locationName}</h3>' +
-            '<p style="margin: 0; font-family: Arial, sans-serif;">${sanitizedDescription}</p>' +
-            '<div style="margin-top: 8px; display: flex; align-items: center;">' +
-            '<img src="${iconUrl}" style="width: 24px; height: 24px; margin-right: 8px;" />' +
-            '<span style="font-size: 14px; color: #333; font-family: Arial, sans-serif;">${disasterTypeInfo.label}</span>' +
-            '</div>' +
-            '</div>'
-          );
-          infoWindow.open(map, this);
-        });
-      `;
+              new google.maps.Marker({
+                position: { lat: ${d.latitude}, lng: ${d.longitude} },
+                map: map,
+                title: "${d.locationName}",
+                icon: {
+                  url: "${iconDataUrl}",
+                  scaledSize: new google.maps.Size(40, 40),
+                  anchor: new google.maps.Point(20, 40)
+                }
+              }).addListener('click', function() {
+                infoWindow.setContent(
+                  '<div style="padding: 10px; min-width: 200px;">' +
+                  '<h3 style="margin: 0 0 5px 0; color: ${weather.color}">${d.locationName}</h3>' +
+                  '<p style="margin: 0;">${d.description}</p>' +
+                  '</div>'
+                );
+                infoWindow.open(map, this);
+              });
+            `;
         }).join('\n');
+
+    const userMarkerJS = userLocation ? `
+      new google.maps.Marker({
+        position: { lat: ${userLocation.latitude}, lng: ${userLocation.longitude} },
+        map: map,
+        title: "Your Location",
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 8,
+          fillColor: '#007AFF',
+          fillOpacity: 1,
+          strokeColor: 'white',
+          strokeWeight: 2
+        }
+      });
+      map.setCenter({ lat: ${userLocation.latitude}, lng: ${userLocation.longitude} });
+      map.setZoom(14);
+    ` : '';
+
 
     const html = `
     <!DOCTYPE html>
@@ -77,7 +95,7 @@ export default function GoogleMapWeb({ disasters = [] }: { disasters?: Disaster[
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <style>
-          html, body, #map { height: 100%; margin: 0; padding: 0; }
+          html, body, #map { height: 100%; margin: 0; padding: 0; font-family: Arial, sans-serif; }
         </style>
         <script src="${apiUrl}?key=${apiKey}&libraries=places"></script>
         <script>
@@ -87,14 +105,15 @@ export default function GoogleMapWeb({ disasters = [] }: { disasters?: Disaster[
           function initMap() {
             map = new google.maps.Map(document.getElementById("map"), {
               center: { lat: 4.2105, lng: 101.9758 }, // Centered on Malaysia
-              zoom: 6,
-              mapTypeControl: false,
-              streetViewControl: false,
+              zoom: 7,
+              disableDefaultUI: true,
+              zoomControl: true
             });
 
             infoWindow = new google.maps.InfoWindow();
             
-            ${markersJS}
+            ${disasterMarkersJS}
+            ${userMarkerJS}
           }
           
           window.onload = initMap;
@@ -109,16 +128,12 @@ export default function GoogleMapWeb({ disasters = [] }: { disasters?: Disaster[
     return (
         <View style={styles.container}>
             <WebView
+                key={JSON.stringify(userLocation)} // Force re-render when location changes
                 originWhitelist={['*']}
                 source={{ html }}
                 style={{ flex: 1 }}
                 javaScriptEnabled
                 domStorageEnabled
-                mixedContentMode="always"
-                startInLoadingState
-                onError={({ nativeEvent }) => {
-                    console.warn('WebView error: ', nativeEvent);
-                }}
             />
         </View>
     );
@@ -127,7 +142,7 @@ export default function GoogleMapWeb({ disasters = [] }: { disasters?: Disaster[
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        height: 300,
         width: '100%',
     },
 });
+
