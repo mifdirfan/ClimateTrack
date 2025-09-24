@@ -31,7 +31,7 @@ export function useNotifications() {
 
                 // NOTE: This is a placeholder. You'll need a way to get the current user's username.
                 const username = "testuser"; // This should be dynamic based on the logged-in user
-                fetch(`http://172.16.114.146:8080/api/auth/update-fcm-token/${username}`, {
+                fetch(`http://172.30.1.90:8080/api/auth/update-fcm-token/${username}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
