@@ -9,7 +9,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+
+import java.util.Map;
+
 import java.util.List;
+
 import java.util.Optional;
 
 @RestController
@@ -61,4 +65,21 @@ public class AuthController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
     }
+
+    @PutMapping("/update-fcm-token/{username}")
+    public ResponseEntity<?> updateFcmToken(@PathVariable String username, @RequestBody Map<String, String> payload) {
+        String fcmToken = payload.get("fcmToken");
+        if (fcmToken == null || fcmToken.isEmpty()) {
+            return ResponseEntity.badRequest().body("FCM token is required.");
+        }
+
+        User updatedUser = authService.updateFcmToken(username, fcmToken);
+        if (updatedUser != null) {
+            return ResponseEntity.ok("FCM token updated successfully for user " + username);
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+        }
+    }
 }
+
+

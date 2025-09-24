@@ -39,9 +39,8 @@ out/
 ### Node.js ###
 node_modules/
 
-### .env  ###
-.env
-
 # Ignore secret config
-serviceAccountKey.json
 application-secret.properties
+
+# Firebase service account key
+serviceAccountKey.json

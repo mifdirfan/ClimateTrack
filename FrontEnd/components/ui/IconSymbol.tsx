@@ -24,7 +24,8 @@ const MAPPING = {
   'newspaper.fill': { name: 'article', family: 'MaterialIcons' },
   'chevron.left.forwardslash.chevron.right': { name: 'code', family: 'MaterialIcons' },
   'chevron.right': { name: 'chevron-right', family: 'MaterialIcons' },
-  'map.fill': { name: 'map', family: 'Foundation' },  // Foundation icon here
+  'map.fill': { name: 'map', family: 'Foundation' },
+  'person.3.fill': { name: 'groups', family: 'MaterialIcons'}, // New mapping
 } as const;
 
 /**
@@ -33,11 +34,11 @@ const MAPPING = {
  * Icon `name`s are based on SF Symbols and require manual mapping to Material Icons.
  */
 export function IconSymbol({
-  name,
-  size = 24,
-  color,
-  style,
-}: {
+                             name,
+                             size = 24,
+                             color,
+                             style,
+                           }: {
   name: IconSymbolName;
   size?: number;
   color: string | OpaqueColorValue;
@@ -47,9 +48,9 @@ export function IconSymbol({
   const icon = MAPPING[name];
 
   if (icon.family === 'Foundation') {
-    return <Foundation name={icon.name} size={size} color={color} style={style} />;
+    return <Foundation name={icon.name as any} size={size} color={color} style={style} />;
   }
 
   // Default to MaterialIcons
-  return <MaterialIcons name={icon.name} size={size} color={color} style={style} />;
+  return <MaterialIcons name={icon.name as any} size={size} color={color} style={style} />;
 }

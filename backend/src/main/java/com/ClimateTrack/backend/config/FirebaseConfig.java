@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 @Configuration
-@Service
+//@Service  // unnecessary, not a service
 public class FirebaseConfig {
 
     @Bean

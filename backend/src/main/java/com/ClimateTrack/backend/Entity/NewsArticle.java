@@ -2,13 +2,15 @@ package com.ClimateTrack.backend.Entity;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.*;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.Instant;
 
 @Document("news_articles")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class NewsArticle {
     @Id
     private String id;
@@ -18,18 +20,7 @@ public class NewsArticle {
     private String author;
     private String url;
     private String imageUrl;
-    private String publishedAt;
+    private String description;
+    private Instant publishedAt;
     private String content;
-
-    public void setArticle_id(String string) {
-    }
-
-    public void setImage_url(String urlToImage) {
-    }
-
-    public void setPublished_at(String publishedAt) {
-    }
-
-    public void setSource_name(String text) {
-    }
 }

@@ -1,24 +1,28 @@
 package com.ClimateTrack.backend.Entity;
+
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
-import org.springframework.data.mongodb.core.mapping.*;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.Instant;
 
 @Document("disaster_events")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class DisasterEvent {
     @Id
     private String id;
     private String disasterId;
     private String disasterType;
     private String description;
-    private GeoJsonPoint location;
+    private String weatherIcon;
     private String locationName;
+    private GeoJsonPoint location;
     private double latitude;
     private double longitude;
-    private String reportedAt;
+    private Instant reportedAt;
     private String source;
 }

@@ -4,6 +4,7 @@ import com.ClimateTrack.backend.Entity.DisasterEvent;
 import com.ClimateTrack.backend.Service.DisasterEventService;
 import com.ClimateTrack.backend.dto.DisasterEventDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,5 +27,11 @@ public class DisasterEventController {
             @RequestBody DisasterEventDto DisasterEvent){
         DisasterEvent newEvent = service.createDisasterEvent(DisasterEvent);
         return new ResponseEntity<>(newEvent, HttpStatus.CREATED);
+    }
+
+    @PostMapping("/fetch-current-weather")
+    public ResponseEntity<String> triggerWeatherFetch() {
+        service.fetchAndSaveCurrentWeather();
+        return ResponseEntity.ok("Weather fetch process triggered successfully.");
     }
 }

@@ -1,7 +1,7 @@
 package com.ClimateTrack.backend.dto;
 import lombok.*;
 
-
+import java.time.Instant;
 
 @Data
 @Builder
@@ -12,6 +12,7 @@ public class NewsArticleDto {
     private String author;
     private String url;
     private String imageUrl;
-    private String publishedAt;
+    private String description;
+    private Instant publishedAt;
     private String content;
 }

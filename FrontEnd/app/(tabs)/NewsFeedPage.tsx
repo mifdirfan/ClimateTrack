@@ -5,7 +5,7 @@ import { View, Text, TouchableOpacity, FlatList, Image, Modal } from 'react-nati
 import { WebView } from 'react-native-webview';
 import styles, { TAB_LABELS } from '../../constants/NewsFeedPageStyles';
 
-import CommunityPage from '../screens/CommunityPage';
+import CommunityPage from './CommunityPage';
 
 
 type NewsItem = {
@@ -14,40 +14,53 @@ type NewsItem = {
   description: string,
   sourceName: string;
   time: string;
+  publishedDate: string; // To store the formatted date
   image: string;
   url: string;
 };
 
-// const MOCK_NEWS: NewsItem[] = [
-//   {
-//     id: '1',
-//     title: 'Massive Malaysia Floods',
-//     description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum...',
-//     source: 'BBC',
-//     time: '6 minutes ago',
-//     image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=400&q=80',
-//     url: 'https://www.bbc.com/news/world-asia-56200108',
-//   },
-//   {
-//     id: '2',
-//     title: 'KL Faces Historic Flood',
-//     description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum...',
-//     source: 'CNN',
-//     time: '15 minutes ago',
-//     image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?fit=crop&w=400&q=80',
-//     url: 'https://edition.cnn.com/asia/malaysia-floods',
-//   },
-//   {
-//     id: '3',
-//     title: 'Massive Malaysia Floods',
-//     description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum...',
-//     source: 'BBC',
-//     time: '40 minutes ago',
-//     image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=400&q=80',
-//     url: 'https://www.bbc.com/news/world-asia-56200108',
-//   },
-//   // ...add more as you like
-// ];
+
+// -------- Helper function to format date/time --------
+function formatTimeAgo(dateString: string): string {
+  if (!dateString || new Date(dateString).toString() === 'Invalid Date') {
+    return 'Just now'; // Fallback for invalid dates
+  }
+  const date = new Date(dateString);
+  const now = new Date();
+  const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  let interval = seconds / 31536000; // years
+  if (interval > 1) {
+    return Math.floor(interval) + " years ago";
+  }
+  interval = seconds / 2592000; // months
+  if (interval > 1) {
+    return Math.floor(interval) + " months ago";
+  }
+  interval = seconds / 86400; // days
+  if (interval > 1) {
+    return Math.floor(interval) + " days ago";
+  }
+  interval = seconds / 3600; // hours
+  if (interval > 1) {
+    return Math.floor(interval) + " hours ago";
+  }
+  interval = seconds / 60; // minutes
+  if (interval > 1) {
+    return Math.floor(interval) + " minutes ago";
+  }
+  return Math.floor(seconds) + " seconds ago";
+}
+
+// -------- Helper function to format the publication date --------
+function formatPublishedDate(dateString: string): string {
+  if (!dateString || new Date(dateString).toString() === 'Invalid Date') {
+    return 'Date not available'; // Fallback for invalid dates
+  }
+  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'long', day: 'numeric' };
+  return new Date(dateString).toLocaleDateString('en-US', options);
+}
+
 
 // ----- TABS -----
 type TabKey = 'Community' | 'News' | 'Notifications';
@@ -67,15 +80,16 @@ function NewsTab() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://172.16.114.146:8080/api/news') // update to your IP
+    fetch('http://172.30.1.90:8080/api/news') // updated to your IP
         .then(response => response.json())
         .then(data => {
           const mapped = data.map((n: any) => ({
             id: n.articleId || n.id,
             title: n.title,
-            description: n.description,
-            source: n.sourceName || 'Unknown',
-            time: new Date(n.publishedAt).toLocaleString(),
+            description: n.content,
+            sourceName: n.sourceName || 'Unknown',
+            time: formatTimeAgo(n.publishedAt),
+            publishedDate: formatPublishedDate(n.publishedAt), // Add the formatted date
             image: n.imageUrl,
             url: n.url
           }));
@@ -86,47 +100,46 @@ function NewsTab() {
   }, []);
 
   const renderNewsItem = ({ item }: { item: NewsItem }) => (
-    <TouchableOpacity
-      style={styles.newsItem}
-      onPress={() => setWebviewUrl(item.url)}
-      activeOpacity={0.88}
-    >
-      <Image source={{ uri: item.image }} style={styles.newsImage} />
-      <View style={styles.newsContent}>
-        <Text style={styles.newsSource}>{item.sourceName}</Text>
-        <Text numberOfLines={2} style={styles.newsTitle}>{item.title}</Text>
-        <Text style={styles.newsDesc} numberOfLines={2}>{item.description}</Text>
-        <Text style={styles.newsMeta}>{item.time}</Text>
-      </View>
-    </TouchableOpacity>
+      <TouchableOpacity
+          style={styles.newsItem}
+          onPress={() => setWebviewUrl(item.url)}
+          activeOpacity={0.88}
+      >
+        <Image source={{ uri: item.image }} style={styles.newsImage} />
+        <View style={styles.newsContent}>
+          <Text style={styles.newsSource}>{item.sourceName} • {item.publishedDate}</Text>
+          <Text numberOfLines={2} style={styles.newsTitle}>{item.title}</Text>
+          <Text style={styles.newsDesc} numberOfLines={2}>{item.description}</Text>
+          <Text style={styles.newsMeta}>{item.time}</Text>
+        </View>
+      </TouchableOpacity>
   );
 
 
   return (
-    <View style={styles.newsTabWrapper}>
-      {/* <Text style={styles.header}>News Feed</Text> */}
-      {loading && <Text style={{ textAlign: 'center' }}>Loading news...</Text>}
-      {!loading && news.length === 0 && <Text style={{ textAlign: 'center' }}>No news found.</Text>}
-      <FlatList
-        data={news}
-        renderItem={renderNewsItem}
-        keyExtractor={item => item.id}
-        contentContainerStyle={styles.newsListContainer}
-        showsVerticalScrollIndicator={false}
-      />
+      <View style={styles.newsTabWrapper}>
+        {loading && <Text style={{ textAlign: 'center' }}>Loading news...</Text>}
+        {!loading && news.length === 0 && <Text style={{ textAlign: 'center' }}>No news found.</Text>}
+        <FlatList
+            data={news}
+            renderItem={renderNewsItem}
+            keyExtractor={item => item.id}
+            contentContainerStyle={styles.newsListContainer}
+            showsVerticalScrollIndicator={false}
+        />
 
-      <Modal visible={!!webviewUrl} animationType="slide" onRequestClose={() => setWebviewUrl(null)}>
-        <View style={{ flex: 1 }}>
-          <TouchableOpacity
-            style={styles.webviewCloseBtn}
-            onPress={() => setWebviewUrl(null)}
-          >
-            <Text style={styles.webviewCloseText}>Close</Text>
-          </TouchableOpacity>
-          {webviewUrl && <WebView source={{ uri: webviewUrl }} style={{ flex: 1 }} />}
-        </View>
-      </Modal>
-    </View>
+        <Modal visible={!!webviewUrl} animationType="slide" onRequestClose={() => setWebviewUrl(null)}>
+          <View style={{ flex: 1 }}>
+            <TouchableOpacity
+                style={styles.webviewCloseBtn}
+                onPress={() => setWebviewUrl(null)}
+            >
+              <Text style={styles.webviewCloseText}>Close</Text>
+            </TouchableOpacity>
+            {webviewUrl && <WebView source={{ uri: webviewUrl }} style={{ flex: 1 }} />}
+          </View>
+        </Modal>
+      </View>
   );
 }
 
@@ -147,26 +160,27 @@ export default function NewsFeedPage() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={styles.tabRow}>
-        {TAB_LABELS.map(tab => (
-          <TouchableOpacity
-            key={tab}
-            style={styles.tabBtn}
-            onPress={() => setSelectedTab(tab as TabKey)}
-            activeOpacity={0.8}
-          >
-            <Text style={[
-              styles.tabLabel,
-              selectedTab === tab && styles.activeTabLabel,
-            ]}>
-              {tab}
-            </Text>
-            {selectedTab === tab && <View style={styles.underline} />}
-          </TouchableOpacity>
-        ))}
+      <View style={styles.container}>
+        <View style={styles.tabRow}>
+          {TAB_LABELS.map(tab => (
+              <TouchableOpacity
+                  key={tab}
+                  style={styles.tabBtn}
+                  onPress={() => setSelectedTab(tab as TabKey)}
+                  activeOpacity={0.8}
+              >
+                <Text style={[
+                  styles.tabLabel,
+                  selectedTab === tab && styles.activeTabLabel,
+                ]}>
+                  {tab}
+                </Text>
+                {selectedTab === tab && <View style={styles.underline} />}
+              </TouchableOpacity>
+          ))}
+        </View>
+        {renderCurrentTab()}
       </View>
-      {renderCurrentTab()}
-    </View>
   );
 }
+

@@ -1,14 +1,15 @@
-// HOMEPAGE!!
-
 import React, { useState, useEffect } from 'react';
-import {View, Text, TextInput, FlatList, TouchableOpacity, Image, ActivityIndicator, Modal} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, ActivityIndicator, Modal, StyleSheet, ScrollView } from 'react-native';
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import styles from '../../constants/homepageStyles';
+import { WebView } from 'react-native-webview';
 
 import GoogleMapWeb from "@/components/GoogleMap";
-import {WebView} from "react-native-webview";
+import { useLocation } from '@/hooks/useLocation';
+import { weatherTypes } from '@/constants/weatherTypes';
+import homepageStyles from '../../constants/homepageStyles';
 
+// Type definitions
 type Disaster = {
     disasterId: string;
     disasterType: string;
@@ -27,11 +28,10 @@ type NewsItem = {
     date: string;
 };
 
-const DISASTER_TYPES = [
-    { key: 'flood', label: 'Flood', color: '#FF4747', icon: 'water' },
-    { key: 'landslide', label: 'Landslide', color: '#FFC107', icon: 'mountain' },
-    { key: 'heavy rain', label: 'Heavy Rain', color: '#2196F3', icon: 'cloud-rain' }
-];
+type UserLocation = {
+    latitude: number;
+    longitude: number;
+};
 
 export default function Index() {
     const [webviewUrl, setWebviewUrl] = useState<string | null>(null);
@@ -39,13 +39,16 @@ export default function Index() {
     const [selectedType, setSelectedType] = useState<string | null>(null);
     const [disasters, setDisasters] = useState<Disaster[]>([]);
     const [disasterLoading, setDisasterLoading] = useState(true);
-
     const [news, setNews] = useState<NewsItem[]>([]);
     const [newsLoading, setNewsLoading] = useState(true);
+    const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
 
-    // 🌐 Fetch disaster events
+    const { requestLocation, errorMsg } = useLocation();
+
+    // Fetch disaster events and news
     useEffect(() => {
-        fetch('http://172.16.114.146:8080/api/events')
+        // Fetch disasters
+        fetch('http://172.30.1.90:8080/api/events')
             .then(res => res.json())
             .then(data => {
                 const mapped = data.map((d: any) => ({
@@ -57,170 +60,110 @@ export default function Index() {
                     longitude: parseFloat(d.longitude)
                 }));
                 setDisasters(mapped);
-                setDisasterLoading(false);
             })
-            .catch(err => {
-                console.error('Failed to fetch disasters:', err);
-                setDisasterLoading(false);
-            });
+            .catch(err => console.error('Failed to fetch disasters:', err))
+            .finally(() => setDisasterLoading(false));
+
+        // // Fetch news
+        // fetch('http://172.30.1.90:8080/api/news')
+        //     .then(res => res.json())
+        //     .then(data => {
+        //         const mapped = data.map((n: any) => ({
+        //             id: n.articleId,
+        //             title: n.title,
+        //             description: n.description,
+        //             image: n.imageUrl,
+        //             url: n.url,
+        //             date: new Date(n.publishedAt).toLocaleString()
+        //         }));
+        //         setNews(mapped);
+        //     })
+        //     .catch(err => console.error('Failed to fetch news:', err))
+        //     .finally(() => setNewsLoading(false));
     }, []);
 
-    // 🌐 Fetch news
-    useEffect(() => {
-        fetch('http://172.16.114.146:8080/api/news')
-            .then(res => res.json())
-            .then(data => {
-                const mapped = data.map((n: any) => ({
-                    id: n.articleId,
-                    title: n.title,
-                    description: n.description,
-                    image: n.imageUrl,
-                    url: n.url,
-                    date: new Date(n.publishedAt).toLocaleString()
-                }));
-                setNews(mapped);
-                setNewsLoading(false);
-            })
-            .catch(err => {
-                console.error('Failed to fetch news:', err);
-                setNewsLoading(false);
+    const handleGetLocation = async () => {
+        const location = await requestLocation();
+        if (location) {
+            setUserLocation({
+                latitude: location.coords.latitude,
+                longitude: location.coords.longitude,
             });
-    }, []);
+        } else if (errorMsg) {
+            alert(errorMsg);
+        }
+    };
 
     const filteredDisasters = selectedType
         ? disasters.filter(d => d.disasterType === selectedType)
         : disasters;
 
-    const renderNewsItem = ({ item }: { item: NewsItem }) => (
-        <TouchableOpacity style={styles.newsItem} onPress={() => setWebviewUrl(item.url)}>
-            <Image source={{ uri: item.image }} style={styles.newsImage} />
-            <View style={{ flex: 1 }}>
-                <Text style={styles.newsTitle}>{item.title}</Text>
-                <Text style={styles.newsDesc} numberOfLines={2}>{item.description}</Text>
-                <Text style={styles.newsDate}>{item.date}</Text>
-            </View>
-        </TouchableOpacity>
-    );
-
     return (
-        <SafeAreaView style={styles.container}>
-            {/* 🔍 Search Bar */}
-            <View style={styles.searchBar}>
+        <SafeAreaView style={homepageStyles.container}>
+            <View style={homepageStyles.searchBar}>
                 <FontAwesome5 name="search" size={18} color="#888" style={{ marginRight: 8 }} />
                 <TextInput
                     placeholder="Search"
                     value={search}
                     onChangeText={setSearch}
-                    style={styles.searchInput}
+                    style={homepageStyles.searchInput}
                 />
             </View>
 
-            {/* 🔘 Disaster Filter Buttons */}
-            <View style={styles.filterRow}>
-                {DISASTER_TYPES.map((type) => (
-                    <TouchableOpacity
-                        key={type.key}
-                        style={[
-                            styles.filterBtn,
-                            {
-                                backgroundColor: type.color,
-                                opacity: selectedType === type.key || !selectedType ? 1 : 0.5
-                            }
-                        ]}
-                        onPress={() => setSelectedType(selectedType === type.key ? null : type.key)}
-                    >
-                        <FontAwesome5 name={type.icon as any} size={16} color="#fff" style={{ marginRight: 4 }} />
-                        <Text style={styles.filterBtnText}>{type.label}</Text>
-                    </TouchableOpacity>
-                ))}
-                <TouchableOpacity style={styles.filterMoreBtn}>
-                    <MaterialIcons name="filter-list" size={20} color="#222" />
-                </TouchableOpacity>
-            </View>
-
-            {/* 🗺️ Map */}
-            {disasterLoading ? (
-                <ActivityIndicator size="large" />
-            ) : (
-                <GoogleMapWeb disasters={filteredDisasters} />
-            )}
-
-            {/* 📰 News Section */}
-            <View style={styles.newsSection}>
-                <FlatList
-                    data={news}
-                    renderItem={renderNewsItem}
-                    keyExtractor={item => item.id}
-                    showsVerticalScrollIndicator={false}
-                    ListEmptyComponent={
-                        newsLoading
-                            ? <Text>Loading news...</Text>
-                            : <Text>No news available.</Text>
-                    }
-                />
-                <Modal visible={!!webviewUrl} animationType="slide" onRequestClose={() => setWebviewUrl(null)}>
-                    <View style={{ flex: 1 }}>
+            <View style={homepageStyles.filterRow}>
+                <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
+                    {weatherTypes.map((type) => (
                         <TouchableOpacity
-                            style={styles.webviewCloseBtn}
-                            onPress={() => setWebviewUrl(null)}
+                            key={type.key}
+                            style={[
+                                homepageStyles.filterBtn,
+                                {
+                                    backgroundColor: type.color,
+                                    opacity: selectedType === type.key || !selectedType ? 1 : 0.5
+                                }
+                            ]}
+                            onPress={() => setSelectedType(selectedType === type.key ? null : type.key)}
                         >
-                            <Text style={styles.webviewCloseText}>Close</Text>
+                            <Image source={{ uri: `https://openweathermap.org/img/wn/${type.icon}@2x.png` }} style={{ width: 20, height: 20, marginRight: 4 }} />
+                            <Text style={homepageStyles.filterBtnText}>{type.label}</Text>
                         </TouchableOpacity>
-                        {webviewUrl && <WebView source={{ uri: webviewUrl }} style={{ flex: 1 }} />}
-                    </View>
-                </Modal>
+                    ))}
+                </ScrollView>
+            </View>
+
+            <View style={styles.mapContainer}>
+                {disasterLoading ? (
+                    <ActivityIndicator size="large" />
+                ) : (
+                    <GoogleMapWeb disasters={filteredDisasters} userLocation={userLocation} />
+                )}
+                <TouchableOpacity style={styles.locationButton} onPress={handleGetLocation}>
+                    <MaterialIcons name="my-location" size={24} color="#007AFF" />
+                </TouchableOpacity>
             </View>
 
         </SafeAreaView>
     );
 }
 
+const styles = StyleSheet.create({
+    mapContainer: {
+        flex: 1,
+        position: 'relative',
+        marginBottom: 50, // Added to prevent map from going under the tab bar
+    },
+    locationButton: {
+        position: 'absolute',
+        bottom: 20,
+        left: 20,
+        backgroundColor: '#fff',
+        borderRadius: 30,
+        padding: 12,
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 3.84,
+    },
+});
 
-
-// const MOCK_DISASTERS = [
-//     {
-//         id: 1,
-//         type: 'flood',
-//         title: 'Flood in Kuala Lumpur',
-//         description: 'Severe flooding reported',
-//         coordinate: { latitude: 3.139, longitude: 101.6869 }
-//     },
-//     {
-//         id: 2,
-//         type: 'flood',
-//         title: 'Flood in Johor Bahru',
-//         description: 'Evacuations underway',
-//         coordinate: { latitude: 1.4927, longitude: 103.7414 }
-//     },
-//     {
-//         id: 3,
-//         type: 'landslide',
-//         title: 'Landslide in Penang',
-//         description: 'Roads blocked',
-//         coordinate: { latitude: 5.4164, longitude: 100.3327 }
-//     },
-//     {
-//         id: 4,
-//         type: 'rain',
-//         title: 'Storm in Kota Bharu',
-//         description: 'People advised to stay at home.',
-//         coordinate: { latitude: 6.1251, longitude: 102.2379 }
-//     }
-// ];
-
-// const MOCK_NEWS = [
-//     {
-//         id: '1',
-//         title: 'Massive Malaysia Floods',
-//         description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum...',
-//         image: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?fit=crop&w=400&q=80',
-//         date: '6 minutes ago'
-//     },
-//     {
-//         id: '2',
-//         title: 'Landslide blocks highway',
-//         description: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Vestibulum...',
-//         image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?fit=crop&w=400&q=80',
-//         date: '15 minutes ago'
-//     }
-// ];
