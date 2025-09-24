@@ -48,7 +48,7 @@ export default function Index() {
     // Fetch disaster events and news
     useEffect(() => {
         // Fetch disasters
-        fetch('http://172.30.1.90:8080/api/events')
+        fetch('http://172.16.107.201:8080/api/events')
             .then(res => res.json())
             .then(data => {
                 const mapped = data.map((d: any) => ({
