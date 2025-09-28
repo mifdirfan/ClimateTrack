@@ -9,6 +9,7 @@ import com.ClimateTrack.backend.dto.RegisterRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 
 import java.util.Date;
 import java.util.Optional;
@@ -80,21 +81,29 @@ public class AuthService {
         Optional<User> userOptional = userRepository.findByUsername(username);
         if (userOptional.isPresent()) {
             User user = userOptional.get();
-            user.setUpdatedAt(new Date());
-            return userRepository.save(user);
-        }
-        return null;
-    }
+            // CORRECTED: Set the GeoJsonPoint for location
+            user.setLastKnownLocation(new GeoJsonPoint(locationDto.getLongitude(), locationDto.getLatitude()));
 
-    public User updateFcmToken(String username, String fcmToken) {
-        Optional<User> userOptional = userRepository.findByUsername(username);
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            user.setFcmToken(fcmToken);
+            // Also update the FCM token if provided
+            if (locationDto.getFcmToken() != null) {
+                user.setFcmToken(locationDto.getFcmToken());
+            }
+
             user.setUpdatedAt(new Date()); // Update the timestamp
-            return userRepository.save(user);
+            return userRepository.save(user); // Save the changes
         }
         return null; // User not found
     }
+
+//    public User updateFcmToken(String username, String fcmToken) {
+//        Optional<User> userOptional = userRepository.findByUsername(username);
+//        if (userOptional.isPresent()) {
+//            User user = userOptional.get();
+//            user.setFcmToken(fcmToken);
+//            user.setUpdatedAt(new Date()); // Update the timestamp
+//            return userRepository.save(user);
+//        }
+//        return null; // User not found
+//    }
 }
 
