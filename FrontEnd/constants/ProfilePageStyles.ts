@@ -64,8 +64,8 @@ export const styles = StyleSheet.create({
         paddingHorizontal: 27,
     },
     reportsContainer: {
-        flexDirection: 'row',
-        paddingHorizontal: 21,
+        // Use paddingHorizontal for the first and last item's spacing
+        paddingHorizontal: 27,
         marginBottom: 26,
     },
     reportCard: {
@@ -74,9 +74,9 @@ export const styles = StyleSheet.create({
         borderRadius: 8,
         borderWidth: 1,
         padding: 16,
-        flex: 1,
-    },
-    reportCardMargin: {
+        // Give each card a defined width to work in a horizontal scroll
+        width: 220,
+        // Add margin to the right for spacing between cards
         marginRight: 12,
     },
     reportText: {

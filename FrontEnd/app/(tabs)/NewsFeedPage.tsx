@@ -147,6 +147,8 @@ function NewsTab() {
             data={news}
             renderItem={renderNewsItem}
             keyExtractor={item => item.articleId}
+            onRefresh={fetchNews}
+            refreshing={loading}
             contentContainerStyle={styles.newsListContainer}
             showsVerticalScrollIndicator={false}
         />
@@ -206,4 +208,3 @@ export default function NewsFeedPage() {
       </View>
   );
 }
-

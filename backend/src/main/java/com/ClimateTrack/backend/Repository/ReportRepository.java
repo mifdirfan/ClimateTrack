@@ -5,7 +5,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
 
-public interface ReportRepository extends MongoRepository<Report, Long> {
-    // Find all reports posted by a specific user ID
-    List<Report> findByPostedByUserId(String userId);
+public interface ReportRepository extends MongoRepository<Report, String> { // Corrected ID type to String
+    // Spring Data MongoDB will automatically create a query to find reports by the 'postedByUsername' field
+    List<Report> findByPostedByUsernameOrderByReportedAtDesc(String username);
 }

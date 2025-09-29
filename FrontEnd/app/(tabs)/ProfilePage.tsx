@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert, RefreshControl, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { styles } from '../../constants/ProfilePageStyles';
@@ -23,7 +23,8 @@ type Report = {
     photoUrl?: string;
     latitude: number;
     longitude: number;
-    reportedAt: Date;
+    // Backend sends Instant as a string (ISO 8601 format)
+    reportedAt: string;
 
 };
 
@@ -49,42 +50,60 @@ export default function ProfilePage() {
 
     const [reports, setReports] = useState<Report[]>([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
 
-    useEffect(() => {
-        // In a real app, you would get this token from secure storage after login
-        const authToken = "YOUR_JWT_TOKEN_HERE";
-
-        fetch(`${API_BASE_URL}/api/reports/my-reports`, {
-            headers: {
-                'Authorization': `Bearer ${authToken}`
-            }
-        })
+    const fetchUserReports = () => {
+        // FOR TESTING: Use the insecure endpoint to fetch reports by username directly.
+        // In production, you would switch back to the secure '/my-reports' endpoint.
+        const testUsername = userData.username;
+        fetch(`${API_BASE_URL}/api/reports/user/${testUsername}`)
+        // // In a real app, you would get this token from secure storage after login
+        // // TODO: Replace this with a dynamic token from your auth context or secure storage
+        // const authToken = "YOUR_JWT_TOKEN_HERE";
+        //
+        // fetch(`${API_BASE_URL}/api/reports/my-reports`, {
+        //     headers: {
+        //         'Authorization': `Bearer ${authToken}`
+        //     }
+        // })
             .then(res => {
                 if (!res.ok) {
                     throw new Error('Failed to fetch reports');
                 }
                 return res.json();
             })
-            .then(data => {
+            .then((data: Report[]) => {
+                // The backend already sorts by date, so we can use the data directly
                 setReports(data);
             })
             .catch(err => {
                 console.error('Failed to fetch user reports:', err);
+                Alert.alert("Error", "Could not load your reports. Please try again later.");
             })
             .finally(() => {
                 setLoading(false);
+                setRefreshing(false);
             });
+    };
+
+    useEffect(() => {
+        setLoading(true);
+        fetchUserReports();
     }, []);
+
+    const onRefresh = () => {
+        setRefreshing(true);
+        fetchUserReports();
+    };
 
     return (
         <SafeAreaView style={styles.container}>
-            <ScrollView style={styles.container} contentContainerStyle={styles.listContainer}>
+            <ScrollView
+                style={styles.container}
+                contentContainerStyle={styles.listContainer}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            >
                 {/* Header */}
-                <Image
-                    source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/u2F1jVXr2j/0v5zlit6_expires_30_days.png" }}
-                    resizeMode="stretch"
-                    style={styles.headerImage}
-                />
                 <View style={styles.headerRow}>
                     <Ionicons name="menu" size={24} color="black" />
                     <Text style={styles.headerTitle}>ClimateTrack</Text>
@@ -109,23 +128,25 @@ export default function ProfilePage() {
                 {loading ? (
                     <ActivityIndicator size="large" style={{ marginTop: 20 }} />
                 ) : (
-                    <View style={styles.reportsContainer}>
-                        {reports.length > 0 ? (
-                            reports.map((report, index) => (
-                                <TouchableOpacity
-                                    key={report.reportId}
-                                    style={[styles.reportCard, index > 0 && { marginLeft: 12 }]}
-                                >
-                                    <Text style={styles.reportText} numberOfLines={2}>{report.title}</Text>
-                                    {report.photoUrl && (
-                                        <Image source={{ uri: report.photoUrl }} style={styles.reportImage} resizeMode="cover" />
+                    reports.length > 0 ? (
+                        <FlatList
+                            horizontal
+                            data={reports}
+                            keyExtractor={(item) => item.reportId}
+                            renderItem={({ item }) => (
+                                <TouchableOpacity style={styles.reportCard}>
+                                    <Text style={styles.reportText} numberOfLines={2}>{item.title}</Text>
+                                    {item.photoUrl && (
+                                        <Image source={{ uri: item.photoUrl }} style={styles.reportImage} resizeMode="cover" />
                                     )}
                                 </TouchableOpacity>
-                            ))
-                        ) : (
-                            <Text style={{ paddingHorizontal: 27, color: '#666' }}>No reports found.</Text>
-                        )}
-                    </View>
+                            )}
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.reportsContainer}
+                        />
+                    ) : (
+                        <Text style={{ paddingHorizontal: 27, color: '#666' }}>No reports found.</Text>
+                    )
                 )}
 
                 {/* Settings */}

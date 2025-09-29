@@ -91,11 +91,6 @@ export default function ReportPage() {
     return (
         <SafeAreaView style={styles.container}>
             <ScrollView  style={styles.scrollView}>
-                <Image
-                    source = {{uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/u2F1jVXr2j/78lwq0oj_expires_30_days.png"}}
-                    resizeMode = {"stretch"}
-                    style={styles.image}
-                />
                 <View style={styles.column}>
                     <View style={styles.row}>
                         <Image

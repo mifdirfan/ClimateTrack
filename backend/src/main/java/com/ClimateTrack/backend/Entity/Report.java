@@ -5,7 +5,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.Date;
+import java.time.Instant;
 
 @Document(collection = "user_reports")
 @Data
@@ -22,5 +22,5 @@ public class Report {
     private String postedByUsername;
     private String photoUrl;
     private GeoJsonPoint location;
-    private Date reportedAt;
+    private Instant reportedAt;
 }
