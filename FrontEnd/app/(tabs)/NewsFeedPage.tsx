@@ -1,7 +1,7 @@
 // NewsFeedPage.tsx -> to show news feed
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList, Image, Modal } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, Image, Modal, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 import styles, { TAB_LABELS } from '../../constants/NewsFeedPageStyles';
 
@@ -82,8 +82,11 @@ function NewsTab() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetch(`${API_BASE_URL}/api/news`) // updated to your IP
+  const fetchNews = () => {
+    setLoading(true);
+    setError(null);
+
+    fetch(`${API_BASE_URL}/api/news`)
         .then(response => {
           if (!response.ok) {
             throw new Error('Failed to fetch news. Please try again later.');
@@ -109,6 +112,10 @@ function NewsTab() {
         })
         .catch(err => setError(err.message || 'An unexpected error occurred.'))
         .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchNews();
   }, []);
 
   const renderNewsItem = ({ item }: { item: NewsItem }) => (
@@ -133,7 +140,7 @@ function NewsTab() {
 
   return (
       <View style={styles.newsTabWrapper}>
-        {loading && <Text style={{ textAlign: 'center' }}>Loading news...</Text>}
+        {loading && <ActivityIndicator size="large" style={{ marginTop: 20 }} />}
         {error && <Text style={{ textAlign: 'center', color: 'red' }}>{error}</Text>}
         {!loading && !error && news.length === 0 && <Text style={{ textAlign: 'center' }}>No news found.</Text>}
         <FlatList

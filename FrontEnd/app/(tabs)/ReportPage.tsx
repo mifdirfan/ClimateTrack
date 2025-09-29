@@ -177,12 +177,6 @@ export default function ReportPage() {
                         <Text style={localStyles.submitButtonText}>Submit Report</Text>
                     )}
                 </TouchableOpacity>
-
-                <Image
-                    source = {{uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/u2F1jVXr2j/4xm6bmnz_expires_30_days.png"}}
-                    resizeMode = {"stretch"}
-                    style={styles.image3}
-                />
             </ScrollView>
         </SafeAreaView>
         // <SafeAreaView style={styles.container}>

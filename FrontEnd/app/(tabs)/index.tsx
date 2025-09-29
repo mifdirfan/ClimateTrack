@@ -39,6 +39,7 @@ export default function Index() {
     const [selectedType, setSelectedType] = useState<string | null>(null);
     const [disasters, setDisasters] = useState<Disaster[]>([]);
     const [disasterLoading, setDisasterLoading] = useState(true);
+    const [disasterError, setDisasterError] = useState<string | null>(null);
     const [news, setNews] = useState<NewsItem[]>([]);
     const [newsLoading, setNewsLoading] = useState(true);
     const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
@@ -48,20 +49,28 @@ export default function Index() {
     // Fetch disaster events and news
     useEffect(() => {
         // Fetch disasters
+        setDisasterError(null);
         fetch(`${API_BASE_URL}/api/events`)
-            .then(res => res.json())
-            .then(data => {
-                const mapped = data.map((d: any) => ({
-                    disasterId: d.disasterId,
-                    disasterType: d.disasterType,
-                    description: d.description,
-                    locationName: d.locationName,
-                    latitude: parseFloat(d.latitude),
-                    longitude: parseFloat(d.longitude)
-                }));
-                setDisasters(mapped);
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('Failed to load disaster events. The server might be unavailable.');
+                }
+                return res.json();
             })
-            .catch(err => console.error('Failed to fetch disasters:', err))
+            .then(data => {
+                if (Array.isArray(data)) {
+                    const mapped = data.map((d: any) => ({
+                        disasterId: d.disasterId,
+                        disasterType: d.disasterType,
+                        description: d.description,
+                        locationName: d.locationName,
+                        latitude: parseFloat(d.latitude),
+                        longitude: parseFloat(d.longitude)
+                    }));
+                    setDisasters(mapped);
+                }
+            })
+            .catch(err => setDisasterError(err.message || 'An unknown error occurred.'))
             .finally(() => setDisasterLoading(false));
 
 
@@ -119,6 +128,11 @@ export default function Index() {
             <View style={styles.mapContainer}>
                 {disasterLoading ? (
                     <ActivityIndicator size="large" />
+                ) : disasterError ? (
+                    <View style={styles.errorContainer}>
+                        <Text style={styles.errorText}>{disasterError}</Text>
+                        <Text style={styles.errorHint}>Please ensure the backend server is running and the IP in ApiConfig.ts is correct.</Text>
+                    </View>
                 ) : (
                     <GoogleMapWeb disasters={disasters} userLocation={userLocation} />
                 )}
@@ -149,6 +163,25 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
+    },
+    errorContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+        backgroundColor: '#f8d7da',
+    },
+    errorText: {
+        color: '#721c24',
+        textAlign: 'center',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    errorHint: {
+        color: '#721c24',
+        textAlign: 'center',
+        fontSize: 14,
+        marginTop: 10,
     },
 });
 
