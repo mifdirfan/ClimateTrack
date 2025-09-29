@@ -2,8 +2,7 @@ package com.ClimateTrack.backend.dto;
 
 import lombok.*;
 
-import java.time.LocalDateTime;
-import java.util.Date;
+import java.time.Instant;
 
 @Data
 @Builder
@@ -16,8 +15,6 @@ public class ReportResponseDto {
     private String photoUrl;
     private double latitude;
     private double longitude;
-    private Date reportedAt;
-
-
-
+    // Using Instant for modern, timezone-aware date handling
+    private Instant reportedAt;
 }

@@ -2,16 +2,19 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 // import { WebView } from 'react-native-webview';
 // import { useAuth } from '@/context/AuthContext';
+
 import GoogleMapWeb from "@/components/GoogleMap";
 import { useLocation } from '@/hooks/useLocation';
 import { weatherTypes } from '@/constants/weatherTypes';
 import homepageStyles from '../../constants/homepageStyles';
+
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
+import API_BASE_URL from '../../constants/ApiConfig';
 
-const API_BASE_URL = 'http://192.168.219.104:8080';
 
 // Type definitions
 type Disaster = {
@@ -63,6 +66,11 @@ export default function Index() {
     const [selectedType, setSelectedType] = useState<string | null>(null);
     const [disasters, setDisasters] = useState<Disaster[]>([]);
     const [disasterLoading, setDisasterLoading] = useState(true);
+
+    const [disasterError, setDisasterError] = useState<string | null>(null);
+    const [news, setNews] = useState<NewsItem[]>([]);
+    const [newsLoading, setNewsLoading] = useState(true);
+
     const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
 
     // const { token, username } = useAuth();
@@ -106,23 +114,34 @@ export default function Index() {
     // Fetch disaster events and news
     useEffect(() => {
         // Fetch disasters
+
+        setDisasterError(null);
         fetch(`${API_BASE_URL}/api/events`)
-            .then(res => res.json())
-            .then(data => {
-                const mapped = data.map((d: any) => ({
-                    disasterId: d.disasterId,
-                    disasterType: d.disasterType,
-                    description: d.description,
-                    locationName: d.locationName,
-                    latitude: parseFloat(d.latitude),
-                    longitude: parseFloat(d.longitude)
-                }));
-                setDisasters(mapped);
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('Failed to load disaster events. The server might be unavailable.');
+                }
+                return res.json();
             })
-            .catch(err => console.error('Failed to fetch disasters:', err))
+            .then(data => {
+                if (Array.isArray(data)) {
+                    const mapped = data.map((d: any) => ({
+                        disasterId: d.disasterId,
+                        disasterType: d.disasterType,
+                        description: d.description,
+                        locationName: d.locationName,
+                        latitude: parseFloat(d.latitude),
+                        longitude: parseFloat(d.longitude)
+                    }));
+                    setDisasters(mapped);
+                }
+            })
+            .catch(err => setDisasterError(err.message || 'An unknown error occurred.'))
             .finally(() => setDisasterLoading(false));
 
+
         handleGetLocation();
+
 
     }, []);
 
@@ -140,9 +159,9 @@ export default function Index() {
         }
     }, [requestLocation, errorMsg, sendLocationToBackend]);
 
-    const filteredDisasters = selectedType
+    /*const filteredDisasters = selectedType
         ? disasters.filter(d => d.disasterType === selectedType)
-        : disasters;
+        : disasters;*/
 
     return (
         <SafeAreaView style={homepageStyles.container}>
@@ -156,7 +175,7 @@ export default function Index() {
                 />
             </View>
 
-            <View style={homepageStyles.filterRow}>
+            {/*<View style={homepageStyles.filterRow}>
                 <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
                     {weatherTypes.map((type) => (
                         <TouchableOpacity
@@ -175,13 +194,18 @@ export default function Index() {
                         </TouchableOpacity>
                     ))}
                 </ScrollView>
-            </View>
+            </View>*/}
 
             <View style={styles.mapContainer}>
                 {disasterLoading ? (
                     <ActivityIndicator size="large" />
+                ) : disasterError ? (
+                    <View style={styles.errorContainer}>
+                        <Text style={styles.errorText}>{disasterError}</Text>
+                        <Text style={styles.errorHint}>Please ensure the backend server is running and the IP in ApiConfig.ts is correct.</Text>
+                    </View>
                 ) : (
-                    <GoogleMapWeb disasters={filteredDisasters} userLocation={userLocation} />
+                    <GoogleMapWeb disasters={disasters} userLocation={userLocation} />
                 )}
                 <TouchableOpacity style={styles.locationButton} onPress={handleGetLocation}>
                     <MaterialIcons name="my-location" size={24} color="#007AFF" />
@@ -210,6 +234,25 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
+    },
+    errorContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+        backgroundColor: '#f8d7da',
+    },
+    errorText: {
+        color: '#721c24',
+        textAlign: 'center',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    errorHint: {
+        color: '#721c24',
+        textAlign: 'center',
+        fontSize: 14,
+        marginTop: 10,
     },
 });
 

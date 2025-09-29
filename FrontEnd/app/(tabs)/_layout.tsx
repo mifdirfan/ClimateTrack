@@ -41,10 +41,24 @@ export default function TabLayout() {
                 }}
             />
             <Tabs.Screen
+                name="ReportPage"
+                options={{
+                    title: 'Report',
+                    tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+                }}
+            />
+            <Tabs.Screen
                 name="NewsFeedPage"
                 options={{
                     title: 'News Feed',
                     tabBarIcon: ({ color }) => <IconSymbol size={28} name="newspaper.fill" color={color} />,
+                }}
+            />
+            <Tabs.Screen
+                name="ProfilePage"
+                options={{
+                    title: 'Profile',
+                    tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
                 }}
             />
         </Tabs>

@@ -8,6 +8,7 @@ import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
 
@@ -31,7 +32,7 @@ public class DisasterEventController {
 
     @PostMapping("/fetch-current-weather")
     public ResponseEntity<String> triggerWeatherFetch() {
-        service.fetchAndSaveCurrentWeather();
+        service.fetchAndSaveCurrentAlerts();
         return ResponseEntity.ok("Weather fetch process triggered successfully.");
     }
 }
