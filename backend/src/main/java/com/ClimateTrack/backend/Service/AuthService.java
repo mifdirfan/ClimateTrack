@@ -26,7 +26,7 @@ public class AuthService {
         if (userOptional.isPresent()) {
             User user = userOptional.get();
             if (passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-                mergeAnonymousUser(request.getAnonymousId(), user);
+                // mergeAnonymousUser(request.getAnonymousId(), user);
                 return Optional.of(user);
             }
         }
@@ -49,24 +49,24 @@ public class AuthService {
         newUser.setUpdatedAt(now);
 
         User savedUser = userRepository.save(newUser);
-        mergeAnonymousUser(request.getAnonymousId(), savedUser);
+        // mergeAnonymousUser(request.getAnonymousId(), savedUser);
         return savedUser;
     }
 
-    private void mergeAnonymousUser(String anonymousId, User registeredUser) {
-        if (anonymousId == null || anonymousId.isEmpty()) {
-            return;
-        }
-
-        Optional<User> anonymousUserOptional = userRepository.findById(anonymousId);
-        if (anonymousUserOptional.isPresent()) {
-            User anonymousUser = anonymousUserOptional.get();
-            registeredUser.setFcmToken(anonymousUser.getFcmToken());
-            registeredUser.setLastKnownLocation(anonymousUser.getLastKnownLocation());
-            userRepository.save(registeredUser);
-            userRepository.delete(anonymousUser);
-        }
-    }
+//    private void mergeAnonymousUser(String anonymousId, User registeredUser) {
+//        if (anonymousId == null || anonymousId.isEmpty()) {
+//            return;
+//        }
+//
+//        Optional<User> anonymousUserOptional = userRepository.findById(anonymousId);
+//        if (anonymousUserOptional.isPresent()) {
+//            User anonymousUser = anonymousUserOptional.get();
+//            registeredUser.setFcmToken(anonymousUser.getFcmToken());
+//            registeredUser.setLastKnownLocation(anonymousUser.getLastKnownLocation());
+//            userRepository.save(registeredUser);
+//            userRepository.delete(anonymousUser);
+//        }
+//    }
 
     public Optional<AuthResponseDto> getUserByUsername(String username) {
         return userRepository.findByUsername(username)

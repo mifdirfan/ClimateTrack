@@ -1,16 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, ActivityIndicator, Modal, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, TextInput, TouchableOpacity, Image, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 // import { WebView } from 'react-native-webview';
-
+// import { useAuth } from '@/context/AuthContext';
 import GoogleMapWeb from "@/components/GoogleMap";
 import { useLocation } from '@/hooks/useLocation';
 import { weatherTypes } from '@/constants/weatherTypes';
 import homepageStyles from '../../constants/homepageStyles';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
 
 const API_BASE_URL = 'http://192.168.219.104:8080';
 
@@ -24,31 +23,13 @@ type Disaster = {
     longitude: number;
 };
 
-// type NewsItem = {
-//     id: string;
-//     title: string;
-//     description: string;
-//     image: string;
-//     url: string;
-//     date: string;
-// };
 
 type UserLocation = {
     latitude: number;
     longitude: number;
 };
 
-// You will need to get the auth state from your app's context or storage
-// This is a placeholder for your actual authentication logic
-const getAuthState = () => {
-    // In a real app, you would get this from AsyncStorage or a global state
-    // For testing, you can hardcode it:
-    // return {
-    //     token: "your_jwt_token_here", // The token you get after logging in
-    //     username: "testuser"          // The username of the logged-in user
-    // };
-    return { token: null, username: null }; // Return this if the user is not logged in
-};
+
 
 // Helper function to get the push token
 async function getPushToken() {
@@ -82,57 +63,45 @@ export default function Index() {
     const [selectedType, setSelectedType] = useState<string | null>(null);
     const [disasters, setDisasters] = useState<Disaster[]>([]);
     const [disasterLoading, setDisasterLoading] = useState(true);
-    //const [news, setNews] = useState<NewsItem[]>([]);
-    //const [newsLoading, setNewsLoading] = useState(true);
     const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
+
+    // const { token, username } = useAuth();
+    // For now, we'll use a placeholder for testing:
+    const { token, username } = { token: "your_jwt_token", username: "testuser" }; // Replace with your real auth state
 
     const { requestLocation, errorMsg } = useLocation();
 
-    const sendLocationToBackend = async (location: { coords: { latitude: number; longitude: number; } }) => {
-        const { token, username } = getAuthState();
-        const fcmToken = await getPushToken(); // Get the FCM token
 
-        if (token && username) {
-            // --- LOGGED-IN USER FLOW ---
-            console.log(`Sending location for logged-in user: ${username}`);
-            try {
-                await fetch(`${API_BASE_URL}/api/auth/location/${username}`, { //
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        latitude: location.coords.latitude,
-                        longitude: location.coords.longitude,
-                        fcmToken: fcmToken // ADDED: Send the FCM token
-                    }),
-                });
-                console.log('Logged-in user location and token updated');
-            } catch (error) {
-                // ...
-            }
-        } else {
-            // --- ANONYMOUS USER FLOW ---
-            const anonymousId = Device.osInternalBuildId || Math.random().toString(36).substring(2);
-            console.log(`Sending location for anonymous user: ${anonymousId}`);
-            try {
-                await fetch(`${API_BASE_URL}/api/anonymous/location`, { //
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        anonymousId: anonymousId,
-                        latitude: location.coords.latitude,
-                        longitude: location.coords.longitude,
-                        fcmToken: fcmToken // ADDED: Send the FCM token
-                    }),
-                });
-                console.log('Anonymous location and token updated');
-            } catch (error) {
-                // ...
-            }
+    const sendLocationToBackend = useCallback(async (location: { coords: { latitude: number; longitude: number; } }) => {
+        // Only proceed if we have a token and username
+        if (!token || !username) {
+            console.log("User is not logged in. Skipping location update.");
+            return;
         }
-    };
+
+        console.log(`Sending location for logged-in user: ${username}`);
+        try {
+            // Note: getPushToken will only work in a development build
+            const fcmToken = await getPushToken();
+
+            await fetch(`${API_BASE_URL}/api/auth/location/${username}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    latitude: location.coords.latitude,
+                    longitude: location.coords.longitude,
+                    fcmToken: fcmToken
+                }),
+            });
+            console.log('Logged-in user location and token updated');
+        } catch (error) {
+            console.error('Failed to send location for logged-in user:', error);
+        }
+    }, [token, username]); // Dependency array ensures this function updates when the user logs in/out
+
 
     // Fetch disaster events and news
     useEffect(() => {
@@ -155,36 +124,21 @@ export default function Index() {
 
         handleGetLocation();
 
-        // // Fetch news
-        // fetch('http://172.30.1.90:8080/api/news')
-        //     .then(res => res.json())
-        //     .then(data => {
-        //         const mapped = data.map((n: any) => ({
-        //             id: n.articleId,
-        //             title: n.title,
-        //             description: n.description,
-        //             image: n.imageUrl,
-        //             url: n.url,
-        //             date: new Date(n.publishedAt).toLocaleString()
-        //         }));
-        //         setNews(mapped);
-        //     })
-        //     .catch(err => console.error('Failed to fetch news:', err))
-        //     .finally(() => setNewsLoading(false));
     }, []);
 
-    const handleGetLocation = async () => {
+    const handleGetLocation = useCallback(async () => {
         const location = await requestLocation();
         if (location) {
             setUserLocation({
                 latitude: location.coords.latitude,
                 longitude: location.coords.longitude,
             });
+            // This will now correctly check if the user is logged in before sending
             await sendLocationToBackend(location);
         } else if (errorMsg) {
             alert(errorMsg);
         }
-    };
+    }, [requestLocation, errorMsg, sendLocationToBackend]);
 
     const filteredDisasters = selectedType
         ? disasters.filter(d => d.disasterType === selectedType)

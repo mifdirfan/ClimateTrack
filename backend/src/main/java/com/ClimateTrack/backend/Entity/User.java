@@ -29,5 +29,5 @@ public class User {
     private Date updatedAt;
     private String fcmToken;
     private GeoJsonPoint lastKnownLocation;
-    private boolean isAnonymous;
+    // private boolean isAnonymous;
 }
