@@ -6,6 +6,7 @@ import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
+import java.util.List;
 
 @Document("disaster_events")
 @Data
@@ -25,4 +26,5 @@ public class DisasterEvent {
     private double longitude;
     private Instant reportedAt;
     private String source;
+    private List<String> tags;
 }

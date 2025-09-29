@@ -6,6 +6,7 @@ import { WebView } from 'react-native-webview';
 import styles, { TAB_LABELS } from '../../constants/NewsFeedPageStyles';
 
 import CommunityPage from './CommunityPage';
+import API_BASE_URL from '../../constants/ApiConfig';
 
 
 type NewsItem = {
@@ -17,6 +18,7 @@ type NewsItem = {
   publishedDate: string; // To store the formatted date
   image: string;
   url: string;
+  articleId: string; // Use articleId for keyExtractor for consistency
 };
 
 
@@ -78,24 +80,34 @@ function NewsTab() {
 
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('http://172.16.107.201:8080/api/news') // updated to your IP
-        .then(response => response.json())
-        .then(data => {
-          const mapped = data.map((n: any) => ({
-            id: n.articleId || n.id,
-            title: n.title,
-            description: n.content,
-            sourceName: n.sourceName || 'Unknown',
-            time: formatTimeAgo(n.publishedAt),
-            publishedDate: formatPublishedDate(n.publishedAt), // Add the formatted date
-            image: n.imageUrl,
-            url: n.url
-          }));
-          setNews(mapped);
+    fetch(`${API_BASE_URL}/api/news`) // updated to your IP
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Failed to fetch news. Please try again later.');
+          }
+          return response.json();
         })
-        .catch(err => console.error("Failed to fetch news:", err))
+        .then(data => {
+          // Safety check: Ensure data is an array before mapping
+          if (Array.isArray(data)) {
+            const mapped = data.map((n: any) => ({
+              id: n.articleId, // Use articleId from backend DTO
+              articleId: n.articleId,
+              title: n.title,
+              description: n.description || n.content,
+              sourceName: n.sourceName || 'Unknown',
+              time: formatTimeAgo(n.publishedAt),
+              publishedDate: formatPublishedDate(n.publishedAt),
+              image: n.imageUrl,
+              url: n.url
+            }));
+            setNews(mapped);
+          }
+        })
+        .catch(err => setError(err.message || 'An unexpected error occurred.'))
         .finally(() => setLoading(false));
   }, []);
 
@@ -105,7 +117,10 @@ function NewsTab() {
           onPress={() => setWebviewUrl(item.url)}
           activeOpacity={0.88}
       >
-        <Image source={{ uri: item.image }} style={styles.newsImage} />
+        <Image
+            source={{ uri: item.image || 'https://via.placeholder.com/150?text=No+Image' }}
+            style={styles.newsImage}
+        />
         <View style={styles.newsContent}>
           <Text style={styles.newsSource}>{item.sourceName} • {item.publishedDate}</Text>
           <Text numberOfLines={2} style={styles.newsTitle}>{item.title}</Text>
@@ -119,11 +134,12 @@ function NewsTab() {
   return (
       <View style={styles.newsTabWrapper}>
         {loading && <Text style={{ textAlign: 'center' }}>Loading news...</Text>}
-        {!loading && news.length === 0 && <Text style={{ textAlign: 'center' }}>No news found.</Text>}
+        {error && <Text style={{ textAlign: 'center', color: 'red' }}>{error}</Text>}
+        {!loading && !error && news.length === 0 && <Text style={{ textAlign: 'center' }}>No news found.</Text>}
         <FlatList
             data={news}
             renderItem={renderNewsItem}
-            keyExtractor={item => item.id}
+            keyExtractor={item => item.articleId}
             contentContainerStyle={styles.newsListContainer}
             showsVerticalScrollIndicator={false}
         />

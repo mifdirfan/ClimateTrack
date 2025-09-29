@@ -2,12 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, ActivityIndicator, Modal, StyleSheet, ScrollView } from 'react-native';
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { WebView } from 'react-native-webview';
 
 import GoogleMapWeb from "@/components/GoogleMap";
 import { useLocation } from '@/hooks/useLocation';
 import { weatherTypes } from '@/constants/weatherTypes';
 import homepageStyles from '../../constants/homepageStyles';
+import API_BASE_URL from '../../constants/ApiConfig';
 
 // Type definitions
 type Disaster = {
@@ -48,7 +48,7 @@ export default function Index() {
     // Fetch disaster events and news
     useEffect(() => {
         // Fetch disasters
-        fetch('http://172.16.107.201:8080/api/events')
+        fetch(`${API_BASE_URL}/api/events`)
             .then(res => res.json())
             .then(data => {
                 const mapped = data.map((d: any) => ({
@@ -64,22 +64,7 @@ export default function Index() {
             .catch(err => console.error('Failed to fetch disasters:', err))
             .finally(() => setDisasterLoading(false));
 
-        // // Fetch news
-        // fetch('http://172.30.1.90:8080/api/news')
-        //     .then(res => res.json())
-        //     .then(data => {
-        //         const mapped = data.map((n: any) => ({
-        //             id: n.articleId,
-        //             title: n.title,
-        //             description: n.description,
-        //             image: n.imageUrl,
-        //             url: n.url,
-        //             date: new Date(n.publishedAt).toLocaleString()
-        //         }));
-        //         setNews(mapped);
-        //     })
-        //     .catch(err => console.error('Failed to fetch news:', err))
-        //     .finally(() => setNewsLoading(false));
+
     }, []);
 
     const handleGetLocation = async () => {
@@ -94,9 +79,9 @@ export default function Index() {
         }
     };
 
-    const filteredDisasters = selectedType
+    /*const filteredDisasters = selectedType
         ? disasters.filter(d => d.disasterType === selectedType)
-        : disasters;
+        : disasters;*/
 
     return (
         <SafeAreaView style={homepageStyles.container}>
@@ -110,7 +95,7 @@ export default function Index() {
                 />
             </View>
 
-            <View style={homepageStyles.filterRow}>
+            {/*<View style={homepageStyles.filterRow}>
                 <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
                     {weatherTypes.map((type) => (
                         <TouchableOpacity
@@ -129,13 +114,13 @@ export default function Index() {
                         </TouchableOpacity>
                     ))}
                 </ScrollView>
-            </View>
+            </View>*/}
 
             <View style={styles.mapContainer}>
                 {disasterLoading ? (
                     <ActivityIndicator size="large" />
                 ) : (
-                    <GoogleMapWeb disasters={filteredDisasters} userLocation={userLocation} />
+                    <GoogleMapWeb disasters={disasters} userLocation={userLocation} />
                 )}
                 <TouchableOpacity style={styles.locationButton} onPress={handleGetLocation}>
                     <MaterialIcons name="my-location" size={24} color="#007AFF" />

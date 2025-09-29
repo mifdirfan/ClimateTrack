@@ -111,9 +111,9 @@ public class NewsArticleService {
                 .author(a.getAuthor())
                 .url(a.getUrl())
                 .imageUrl(a.getImageUrl())
-                .description(a.getContent()) // Map content to description
-                .publishedAt(a.getPublishedAt())
+                .description(a.getDescription()) // Map content to description
                 .content(a.getContent())
+                .publishedAt(a.getPublishedAt())
                 .build()
         ).collect(Collectors.toList());
     }

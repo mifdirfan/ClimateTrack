@@ -28,6 +28,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
     // Add this dependency to handle Java 8 Date/Time types like Instant
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2' // match your Jackson version
 

@@ -22,8 +22,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ReportService {
 
-    @Autowired
-    private ReportRepository reportRepository;
+    private final ReportRepository reportRepository;
     private final NotificationService notificationService; // NEW: Inject notification service
 
     public Report createReport(ReportRequestDto reportRequest, String userId, String username) {
@@ -49,6 +48,13 @@ public class ReportService {
         );
 
         return savedReport;
+    }
+
+    public List<ReportResponseDto> getReportsByUserId(String userId) {
+        return reportRepository.findByPostedByUserId(userId)
+                .stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
     }
 
 
