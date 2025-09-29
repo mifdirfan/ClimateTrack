@@ -11,5 +11,5 @@ public class RegisterRequestDto {
     private String email;
     private String password;
     private String fullName;
-    private String anonymousId;
+    // private String anonymousId;
 }
