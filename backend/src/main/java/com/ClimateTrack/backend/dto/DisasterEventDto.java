@@ -4,10 +4,12 @@ import lombok.*;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 
 import java.time.Instant;
+import java.util.List;
 
 @Data
 @Builder
 public class DisasterEventDto {
+    private String id;
     private String disasterId;
     private String disasterType;
     private String description;
@@ -19,4 +21,5 @@ public class DisasterEventDto {
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Instant reportedAt;
     private String source;
+    private List<String> tags;
 }

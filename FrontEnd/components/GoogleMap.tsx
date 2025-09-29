@@ -35,7 +35,15 @@ export default function GoogleMapWeb({ disasters = [], userLocation }: GoogleMap
     const disasterMarkersJS = disasters
         .filter(d => d && typeof d.latitude === 'number' && typeof d.longitude === 'number')
         .map((d) => {
-            const weather = getWeatherDetails(d.disasterType);
+            // Make the weather type matching more robust.
+            // First, try to match the exact disasterType.
+            // If that fails, search for keywords in the description.
+            let weather = getWeatherDetails(d.disasterType);
+            if (!weather || weather.key === 'Unknown') {
+                const description = d.description.toLowerCase();
+                const foundType = Object.keys(getWeatherDetails('')).find(key => description.includes(key.toLowerCase()));
+                weather = getWeatherDetails(foundType || d.disasterType);
+            }
             const iconUrl = getWeatherIconUrl(weather.icon);
 
             const iconSvg = `
