@@ -1,14 +1,55 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Alert } from 'react-native';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { styles } from '@/constants/signupStyles';
+import API_BASE_URL from '@/constants/ApiConfig';
+import { useRouter } from 'expo-router';
 
 export default function SignUpScreen() {
+    const [username, setUsername] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const router = useRouter();
+
+    const handleSignUp = async () => {
+        if (password !== confirmPassword) {
+            Alert.alert("Passwords don't match");
+            return;
+        }
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    email: email,
+                    password: password,
+                    fullName: username, // or add another field for full name
+                }),
+            });
+
+            if (response.ok) {
+                Alert.alert("Success", "You have been registered successfully. Please login.");
+                router.push('/login');
+            } else {
+                const message = await response.text();
+                Alert.alert("Registration Failed", message);
+            }
+        } catch (error) {
+            console.error(error);
+            Alert.alert("Registration Error", "An error occurred during registration.");
+        }
+    };
+
+
     return (
         <SafeAreaView style={styles.safeArea}>
             <ScrollView contentContainerStyle={styles.container}>
                 <View style={styles.header}>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.back()}>
                         <Ionicons name="chevron-back" size={24} color="black" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>ClimateTrack</Text>
@@ -24,6 +65,8 @@ export default function SignUpScreen() {
                         placeholder="Username"
                         placeholderTextColor="#888"
                         autoCapitalize="none"
+                        value={username}
+                        onChangeText={setUsername}
                     />
                     <TextInput
                         style={styles.input}
@@ -31,21 +74,27 @@ export default function SignUpScreen() {
                         placeholderTextColor="#888"
                         keyboardType="email-address"
                         autoCapitalize="none"
+                        value={email}
+                        onChangeText={setEmail}
                     />
                     <TextInput
                         style={styles.input}
                         placeholder="Password"
                         placeholderTextColor="#888"
                         secureTextEntry
+                        value={password}
+                        onChangeText={setPassword}
                     />
                     <TextInput
                         style={styles.input}
                         placeholder="Confirm Password"
                         placeholderTextColor="#888"
                         secureTextEntry
+                        value={confirmPassword}
+                        onChangeText={setConfirmPassword}
                     />
 
-                    <TouchableOpacity style={styles.button}>
+                    <TouchableOpacity style={styles.button} onPress={handleSignUp}>
                         <Text style={styles.buttonText}>Continue</Text>
                     </TouchableOpacity>
 
@@ -71,9 +120,11 @@ export default function SignUpScreen() {
                 </View>
 
                 <View style={styles.footer}>
-                    <Text style={styles.bottomLink}>
-                        Already have an account? <Text style={styles.link}>Login now!</Text>
-                    </Text>
+                    <TouchableOpacity onPress={() => router.push('/login')}>
+                        <Text style={styles.bottomLink}>
+                            Already have an account? <Text style={styles.link}>Login now!</Text>
+                        </Text>
+                    </TouchableOpacity>
                 </View>
             </ScrollView>
         </SafeAreaView>

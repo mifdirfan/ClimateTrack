@@ -1,14 +1,45 @@
-import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Alert } from 'react-native';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { styles } from '@/constants/loginStyles';
+import { useAuth } from '@/context/AuthContext';
+import API_BASE_URL from '@/constants/ApiConfig';
+import { useRouter } from 'expo-router';
 
 export default function LoginScreen() {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const { login } = useAuth();
+    const router = useRouter();
+
+    const handleLogin = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username: email, password: password }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                login(data.token, email); // Assuming username is email
+                router.replace('/(tabs)');
+            } else {
+                Alert.alert("Login Failed", "Invalid username or password.");
+            }
+        } catch (error) {
+            console.error(error);
+            Alert.alert("Login Error", "An error occurred during login.");
+        }
+    };
+
     return (
         <SafeAreaView style={styles.safeArea}>
             <ScrollView contentContainerStyle={styles.container}>
                 <View style={styles.header}>
-                    <TouchableOpacity>
+                    <TouchableOpacity onPress={() => router.back()}>
                         <Ionicons name="chevron-back" size={24} color="black" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>ClimateTrack</Text>
@@ -25,19 +56,23 @@ export default function LoginScreen() {
                         placeholderTextColor="#888"
                         keyboardType="email-address"
                         autoCapitalize="none"
+                        value={email}
+                        onChangeText={setEmail}
                     />
                     <TextInput
                         style={styles.input}
                         placeholder="Password"
                         placeholderTextColor="#888"
                         secureTextEntry
+                        value={password}
+                        onChangeText={setPassword}
                     />
 
                     <TouchableOpacity style={styles.forgotPasswordContainer}>
                         <Text style={styles.forgotPasswordText}>Forgot password?</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.button}>
+                    <TouchableOpacity style={styles.button} onPress={handleLogin}>
                         <Text style={styles.buttonText}>Continue</Text>
                     </TouchableOpacity>
 
@@ -63,9 +98,11 @@ export default function LoginScreen() {
                 </View>
 
                 <View style={styles.footer}>
-                    <Text style={styles.bottomLink}>
-                        Don't have an account? <Text style={styles.link}>Register now!</Text>
-                    </Text>
+                    <TouchableOpacity onPress={() => router.push('/signup')}>
+                        <Text style={styles.bottomLink}>
+                            Don't have an account? <Text style={styles.link}>Register now!</Text>
+                        </Text>
+                    </TouchableOpacity>
                 </View>
             </ScrollView>
         </SafeAreaView>
