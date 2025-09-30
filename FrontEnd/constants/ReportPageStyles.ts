@@ -1,94 +1,124 @@
 import { StyleSheet } from 'react-native';
-import { Colors } from './Colors';
+
+// -------- styles --------
+const HEADER_HEIGHT = 52;
 
 export const styles = StyleSheet.create({
-    container: {
+    root: {
         flex: 1,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: '#FFF',
     },
-    box: {
-        height: 46,
-        backgroundColor: "#D9D9D9",
-        borderRadius: 10,
-        marginBottom: 25,
-        marginHorizontal: 26,
-    },
-    box2: {
-        height: 46,
-        backgroundColor: "#D9D9D9",
-        borderRadius: 10,
-        marginBottom: 25,
-        marginHorizontal: 28,
-    },
-    box3: {
-        height: 46,
-        backgroundColor: "#D9D9D9",
-        borderRadius: 10,
-        marginBottom: 26,
-        marginHorizontal: 26,
-    },
-    box4: {
-        height: 143,
-        backgroundColor: "#D9D9D9",
-        borderRadius: 10,
-        marginBottom: 74,
-        marginHorizontal: 26,
-    },
-    column: {
-        marginBottom: 25,
-    },
-    image: {
-        height: 44,
-    },
-    image2: {
-        width: 24,
-        height: 24,
-    },
-    image3: {
-        height: 77,
-    },
-    row: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        paddingVertical: 9,
+
+    // Sticky header
+    headerRow: {
+        position: 'absolute',
+        top: 45,
+        left: 0,
+        right: 0,
+        height: HEADER_HEIGHT,
+        backgroundColor: '#FFF',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
         paddingHorizontal: 16,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: '#E5E5E5',
+        zIndex: 10,
+        elevation: 4, // Android
     },
-    scrollView: {
+    headerTitle: { fontSize: 24, fontWeight: '700' },
+
+    // Body (no scroll; sized to fit one page)
+    pageBody: {
         flex: 1,
-        backgroundColor: "#FFFFFF",
+        paddingTop: HEADER_HEIGHT + 18, // offset for sticky header
+        paddingBottom: 8,
+        paddingLeft: 12,
+        paddingRight: 12,
+        gap: 8,
     },
-    text: {
-        color: "#000000",
+    pageTitle: {
         fontSize: 24,
-        fontWeight: "bold",
+        fontWeight: '700',
+        paddingHorizontal: 16,
+        marginBottom: 6,
     },
-    text2: {
-        color: "#000000",
-        fontSize: 28,
-        fontWeight: "bold",
-        marginLeft: 26,
-        width: 229,
+
+    label: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginHorizontal: 16,
+        marginBottom: 6,
     },
-    text3: {
-        color: "#000000",
-        fontSize: 20,
-        fontWeight: "bold",
-        marginBottom: 13,
-        marginLeft: 36,
+
+    input: {
+        backgroundColor: '#EDEDED',
+        height: 40,
+        borderRadius: 10,
+        paddingHorizontal: 14,
+        fontSize: 15,
+        marginHorizontal: 16,
+        marginBottom: 8,
     },
-    text4: {
-        color: "#000000",
-        fontSize: 20,
-        fontWeight: "bold",
-        marginBottom: 9,
-        marginLeft: 39,
+    textArea: {
+        height: 72,
+        textAlignVertical: 'top',
+        paddingTop: 10,
     },
-    text5: {
-        color: "#000000",
-        fontSize: 20,
-        fontWeight: "bold",
-        marginBottom: 9,
-        marginLeft: 37,
+
+    // Chips
+    disasterTypeContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        paddingHorizontal: 8,
+        marginBottom: 10,
     },
+    disasterTypeButton: {
+        backgroundColor: '#EFEFEF',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 18,
+        marginHorizontal: 4,
+        marginVertical: 4,
+    },
+    disasterTypeButtonSelected: { backgroundColor: '#007AFF' },
+    disasterTypeText: { color: '#333', fontWeight: '600', fontSize: 14 },
+    disasterTypeTextSelected: { color: '#FFF' },
+
+    // Image picker
+    imagePicker: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#EDEDED',
+        borderRadius: 10,
+        height: 110,
+        marginHorizontal: 16,
+        marginBottom: 10,
+        overflow: 'hidden',
+    },
+    imagePreview: { width: '100%', height: '100%', borderRadius: 10 },
+    plusWrap: { alignItems: 'center', justifyContent: 'center' },
+    plusCircle: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        borderWidth: 1.5,
+        borderColor: '#8C8C8C',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+
+    // Submit button
+    submitButton: {
+        backgroundColor: '#59a2fd',
+        borderRadius: 10,
+        height: 44,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginHorizontal: 16,
+        marginTop: 6,
+        marginBottom: 6,
+    },
+    submitButtonText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
 });

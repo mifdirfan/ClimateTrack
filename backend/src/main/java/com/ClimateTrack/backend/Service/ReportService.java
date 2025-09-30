@@ -25,6 +25,7 @@ public class ReportService {
 
     private final ReportRepository reportRepository;
     private final NotificationService notificationService; // NEW: Inject notification service
+    private final UploadService uploadService;  // Inject UploadService
 
     public Report createReport(ReportRequestDto reportRequest, String userId, String username) {
         Report report = new Report();
@@ -63,6 +64,9 @@ public class ReportService {
         double latitude = (r.getLocation() != null) ? r.getLocation().getY() : 0.0;
         double longitude = (r.getLocation() != null) ? r.getLocation().getX() : 0.0;
 
+        // Generate a temporary, viewable URL for the photo
+        String viewablePhotoUrl = uploadService.generatePresignedGetUrl(r.getPhotoUrl());
+
         return ReportResponseDto.builder()
                 .reportId(r.getReportId())
                 .title(r.getTitle())
@@ -72,7 +76,7 @@ public class ReportService {
                 .latitude(latitude)
                 .longitude(longitude)
                 .reportedAt(r.getReportedAt())
-                .photoUrl(r.getPhotoUrl())
+                .photoUrl(viewablePhotoUrl)
                 .build();
     }
 
