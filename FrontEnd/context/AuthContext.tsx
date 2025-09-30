@@ -3,12 +3,19 @@ import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
 import API_BASE_URL from '@/constants/ApiConfig';
 
+// The shape of the user data returned from your login API
+export type AuthData = {
+    token: string;
+    username: string;
+    // You can add other user properties here if needed, like id, fullName, etc.
+};
+
 // Define the shape of the context value
 interface AuthContextType {
     token: string | null;
     username: string | null;
     isLoading: boolean; // Add a loading state
-    login: (token: string, username: string) => Promise<void>;
+    login: (data: AuthData) => Promise<void>;
     logout: () => Promise<void>;
     isAuthenticated: boolean;
 }
@@ -40,11 +47,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         loadAuthState();
     }, []);
 
-    const login = async (newToken: string, newUsername: string) => {
-        setToken(newToken);
-        setUsername(newUsername);
-        await SecureStore.setItemAsync('userToken', newToken);
-        await SecureStore.setItemAsync('username', newUsername);
+    const login = async (data: AuthData) => {
+        setToken(data.token);
+        setUsername(data.username);
+        await SecureStore.setItemAsync('userToken', data.token);
+        await SecureStore.setItemAsync('username', data.username);
     };
 
     // const logout = async () => {

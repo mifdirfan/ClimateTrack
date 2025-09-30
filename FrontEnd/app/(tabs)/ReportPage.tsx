@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, Alert, ActivityIndicator} from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, Alert, ActivityIndicator, ScrollView} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather, Ionicons, AntDesign } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocation } from '@/hooks/useLocation';
+import { Header } from '../../components/Header';
 import { styles } from '../../constants/ReportPageStyles';
 import API_BASE_URL from '../../constants/ApiConfig';
 
@@ -117,18 +118,10 @@ export default function ReportPage() {
     return (
         <SafeAreaView style={styles.root}>
             {/* Sticky header */}
-            <View style={styles.headerRow}>
-                <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <Ionicons name="chevron-back" size={24} />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>ClimateTrack</Text>
-                <TouchableOpacity hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                    <Feather name="menu" size={22} />
-                </TouchableOpacity>
-            </View>
+            <Header title="ClimateTrack" />
 
             {/* Page body (no scroll) */}
-            <View style={styles.pageBody}>
+            <ScrollView style={styles.pageBody} showsVerticalScrollIndicator={false}>
                 <Text style={styles.pageTitle}>Lodge a Report</Text>
 
                 <Text style={styles.label}>Title</Text>
@@ -198,7 +191,7 @@ export default function ReportPage() {
                         <Text style={styles.submitButtonText}>Submit Report</Text>
                     )}
                 </TouchableOpacity>
-            </View>
+            </ScrollView>
         </SafeAreaView>
     );
 }

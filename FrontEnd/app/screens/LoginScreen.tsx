@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Alert } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView, Alert, ActivityIndicator } from 'react-native';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { styles } from '@/constants/loginStyles';
 import { useAuth } from '@/context/AuthContext';
@@ -7,8 +7,9 @@ import API_BASE_URL from '@/constants/ApiConfig';
 import { useRouter } from 'expo-router';
 
 export default function LoginScreen() {
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
+    const [loading, setLoading] = useState(false);
     const { login } = useAuth();
     const router = useRouter();
 
@@ -22,18 +23,20 @@ export default function LoginScreen() {
     };
 
     const handleLogin = async () => {
+        if (loading) return;
         try {
+            setLoading(true);
             const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ username: email, password: password }),
+                body: JSON.stringify({ username: username, password: password }),
             });
 
             if (response.ok) {
                 const data = await response.json();
-                login(data.token, data.username); // Assuming username is email
+                await login(data); // Pass the full user data object
                 router.replace('/(tabs)');
             } else {
                 Alert.alert("Login Failed", "Invalid username or password.");
@@ -41,6 +44,8 @@ export default function LoginScreen() {
         } catch (error) {
             console.error(error);
             Alert.alert("Login Error", "An error occurred during login.");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -61,12 +66,11 @@ export default function LoginScreen() {
 
                     <TextInput
                         style={styles.input}
-                        placeholder="Email"
+                        placeholder="Username"
                         placeholderTextColor="#888"
-                        keyboardType="email-address"
                         autoCapitalize="none"
-                        value={email}
-                        onChangeText={setEmail}
+                        value={username}
+                        onChangeText={setUsername}
                     />
                     <TextInput
                         style={styles.input}
@@ -81,8 +85,12 @@ export default function LoginScreen() {
                         <Text style={styles.forgotPasswordText}>Forgot password?</Text>
                     </TouchableOpacity>
 
-                    <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                        <Text style={styles.buttonText}>Continue</Text>
+                    <TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading}>
+                        {loading ? (
+                            <ActivityIndicator color="#fff" />
+                        ) : (
+                            <Text style={styles.buttonText}>Continue</Text>
+                        )}
                     </TouchableOpacity>
 
                     <View style={styles.separatorContainer}>
@@ -107,7 +115,7 @@ export default function LoginScreen() {
                 </View>
 
                 <View style={styles.footer}>
-                    <TouchableOpacity onPress={() => router.push('/screens/SignUpScreen')}>
+                    <TouchableOpacity onPress={() => router.replace('/screens/SignUpScreen')}>
                         <Text style={styles.bottomLink}>
                             Dont have an account? <Text style={styles.link}>Register now!</Text>
                         </Text>
