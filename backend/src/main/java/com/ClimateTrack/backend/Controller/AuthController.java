@@ -37,8 +37,16 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody AuthRequestDto authRequest) {
         Optional<User> userOptional = authService.validateUser(authRequest);
         if (userOptional.isPresent()) {
+            User user = userOptional.get();
             String token = jwtTokenProvider.createToken(authRequest.getUsername());
-            return ResponseEntity.ok(AuthResponseDto.builder().token(token).build());
+            AuthResponseDto response = AuthResponseDto.builder()
+                    .token(token)
+                    .id(user.getId())
+                    .username(user.getUsername())
+                    .email(user.getEmail())
+                    .fullName(user.getFullName())
+                    .build();
+            return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
         }
@@ -81,5 +89,3 @@ public class AuthController {
 //        }
 //    }
 }
-
-
