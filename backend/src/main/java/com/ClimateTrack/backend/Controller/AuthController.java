@@ -62,6 +62,15 @@ public class AuthController {
         }
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(@RequestHeader("Authorization") String authorizationHeader) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+            authService.blacklistToken(token);
+        }
+        return ResponseEntity.ok("Successfully logged out");
+    }
+
     @PutMapping("/location/{username}")
     public ResponseEntity<?> updateLocation(
             @PathVariable String username,

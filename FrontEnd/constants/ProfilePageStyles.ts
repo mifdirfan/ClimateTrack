@@ -113,4 +113,8 @@ export const styles = StyleSheet.create({
     footerImage: {
         height: 77,
     },
+    logoutButton: {
+        padding: 8,
+    },
+
 });

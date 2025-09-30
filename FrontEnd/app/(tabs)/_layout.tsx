@@ -64,3 +64,20 @@ export default function TabLayout() {
         </Tabs>
     );
 }
+
+
+// import { Tabs } from 'expo-router';
+// import React from 'react';
+//
+// // This is the layout for the tabs ONLY.
+// export default function TabLayout() {
+//     return (
+//         <Tabs>
+//             <Tabs.Screen name="index" options={{ title: 'Home' }} />
+//             <Tabs.Screen name="CommunityPage" options={{ title: 'Community' }} />
+//             <Tabs.Screen name="NewsFeedPage" options={{ title: 'News' }} />
+//             <Tabs.Screen name="ReportPage" options={{ title: 'Report' }} />
+//             <Tabs.Screen name="ProfilePage" options={{ title: 'Profile' }} />
+//         </Tabs>
+//     );
+// }

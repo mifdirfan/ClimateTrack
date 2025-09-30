@@ -101,4 +101,28 @@ export const styles = StyleSheet.create({
         fontWeight: '600',
         letterSpacing: 1,
     },
+    // adjust style ni
+    loginPromptContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    loginPromptText: {
+        fontSize: 16,
+        color: '#666',
+        textAlign: 'center',
+        marginBottom: 20,
+    },
+    loginButton: {
+        backgroundColor: '#007AFF', // A standard blue color
+        paddingVertical: 12,
+        paddingHorizontal: 30,
+        borderRadius: 25,
+    },
+    loginButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
 });

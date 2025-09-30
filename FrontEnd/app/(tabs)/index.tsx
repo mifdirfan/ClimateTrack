@@ -2,10 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
 import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
 // import { WebView } from 'react-native-webview';
-// import { useAuth } from '@/context/AuthContext';
-
+import { useAuth } from '@/context/AuthContext';
 import GoogleMapWeb from "@/components/GoogleMap";
 import { useLocation } from '@/hooks/useLocation';
 import { weatherTypes } from '@/constants/weatherTypes';
@@ -34,31 +32,7 @@ type UserLocation = {
 
 
 
-// Helper function to get the push token
-async function getPushToken() {
-    if (!Device.isDevice) {
-        alert('Must use physical device for Push Notifications');
-        return null;
-    }
 
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-
-    if (existingStatus !== 'granted') {
-        const { status } = await Notifications.requestPermissionsAsync();
-        finalStatus = status;
-    }
-
-    if (finalStatus !== 'granted') {
-        alert('Failed to get push token for push notification!');
-        return null;
-    }
-
-    // This is the token you'll send to your backend
-    const token = (await Notifications.getExpoPushTokenAsync()).data;
-    console.log("FCM Token:", token);
-    return token;
-}
 
 export default function Index() {
     //const [webviewUrl, setWebviewUrl] = useState<string | null>(null);
@@ -66,16 +40,14 @@ export default function Index() {
     const [selectedType, setSelectedType] = useState<string | null>(null);
     const [disasters, setDisasters] = useState<Disaster[]>([]);
     const [disasterLoading, setDisasterLoading] = useState(true);
-
     const [disasterError, setDisasterError] = useState<string | null>(null);
-    const [news, setNews] = useState<NewsItem[]>([]);
+    // const [news, setNews] = useState<NewsItem[]>([]);
     const [newsLoading, setNewsLoading] = useState(true);
-
     const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
 
-    // const { token, username } = useAuth();
-    // For now, we'll use a placeholder for testing:
-    const { token, username } = { token: "your_jwt_token", username: "testuser" }; // Replace with your real auth state
+    const { token, username, isLoading } = useAuth();
+    // placeholder for testing:
+    // const { token, username } = { token: "your_jwt_token", username: "testuser" }; // Replace with your real auth state
 
     const { requestLocation, errorMsg } = useLocation();
 
@@ -90,7 +62,7 @@ export default function Index() {
         console.log(`Sending location for logged-in user: ${username}`);
         try {
             // Note: getPushToken will only work in a development build
-            const fcmToken = await getPushToken();
+
 
             await fetch(`${API_BASE_URL}/api/auth/location/${username}`, {
                 method: 'PUT',
@@ -101,7 +73,7 @@ export default function Index() {
                 body: JSON.stringify({
                     latitude: location.coords.latitude,
                     longitude: location.coords.longitude,
-                    fcmToken: fcmToken
+
                 }),
             });
             console.log('Logged-in user location and token updated');
@@ -109,6 +81,7 @@ export default function Index() {
             console.error('Failed to send location for logged-in user:', error);
         }
     }, [token, username]); // Dependency array ensures this function updates when the user logs in/out
+
 
 
     // Fetch disaster events and news
@@ -142,7 +115,6 @@ export default function Index() {
 
         handleGetLocation();
 
-
     }, []);
 
     const handleGetLocation = useCallback(async () => {
@@ -152,12 +124,19 @@ export default function Index() {
                 latitude: location.coords.latitude,
                 longitude: location.coords.longitude,
             });
-            // This will now correctly check if the user is logged in before sending
-            await sendLocationToBackend(location);
+            // Only send location if the user is authenticated
+            if (token && username) {
+                await sendLocationToBackend(location);
+            }
         } else if (errorMsg) {
             alert(errorMsg);
         }
-    }, [requestLocation, errorMsg, sendLocationToBackend]);
+    }, [requestLocation, errorMsg, sendLocationToBackend, token, username]);
+
+    if (isLoading) {
+        // Show a loading screen while checking for a saved session
+        return <ActivityIndicator size="large" />;
+    }
 
     /*const filteredDisasters = selectedType
         ? disasters.filter(d => d.disasterType === selectedType)
