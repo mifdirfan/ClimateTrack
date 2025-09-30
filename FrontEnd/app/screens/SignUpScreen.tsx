@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
-import { styles } from '../../constants/signupStyles';
+import { styles } from '@/constants/signupStyles';
 
 export default function SignUpScreen() {
     return (
