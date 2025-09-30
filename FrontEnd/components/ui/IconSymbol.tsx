@@ -26,6 +26,7 @@ const MAPPING = {
   'chevron.right': { name: 'chevron-right', family: 'MaterialIcons' },
   'map.fill': { name: 'map', family: 'Foundation' },
   'person.3.fill': { name: 'groups', family: 'MaterialIcons'}, // New mapping
+  'person.fill': { name: 'person', family: 'MaterialIcons' }, // Add this mapping
 } as const;
 
 /**

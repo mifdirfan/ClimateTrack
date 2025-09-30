@@ -13,6 +13,7 @@ import org.springframework.data.geo.Metrics;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
@@ -22,8 +23,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ReportService {
 
-    @Autowired
-    private ReportRepository reportRepository;
+    private final ReportRepository reportRepository;
     private final NotificationService notificationService; // NEW: Inject notification service
 
     public Report createReport(ReportRequestDto reportRequest, String userId, String username) {
@@ -35,7 +35,7 @@ public class ReportService {
         report.setLocation(new GeoJsonPoint(reportRequest.getLongitude(), reportRequest.getLatitude()));
         report.setPostedByUserId(userId);
         report.setPostedByUsername(username);
-        report.setReportedAt(new Date());
+        report.setReportedAt(Instant.now());
         report.setPhotoUrl(reportRequest.getPhotoUrl());
 
         Report savedReport = reportRepository.save(report);
@@ -50,8 +50,6 @@ public class ReportService {
 
         return savedReport;
     }
-
-
 
     public List<ReportResponseDto> getAllReports() {
         return reportRepository.findAll()
@@ -76,5 +74,12 @@ public class ReportService {
                 .reportedAt(r.getReportedAt())
                 .photoUrl(r.getPhotoUrl())
                 .build();
+    }
+
+    public List<ReportResponseDto> getReportsByUsername(String username) {
+        return reportRepository.findByPostedByUsernameOrderByReportedAtDesc(username)
+                .stream()
+                .map(this::mapToDto)
+                .collect(Collectors.toList());
     }
 }

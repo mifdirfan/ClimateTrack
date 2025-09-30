@@ -25,7 +25,7 @@ public class BackendApplication {
 
 	@Scheduled(fixedRate = 3600000) // Runs every hour
 	public void scheduleWeatherFetch() {
-		disasterEventService.fetchAndSaveCurrentWeather();
+		disasterEventService.fetchAndSaveCurrentAlerts();
 	}
 
 	@Scheduled(fixedRate = 21600000) // Runs every 6 hours
