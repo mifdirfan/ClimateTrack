@@ -29,7 +29,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login", "/api/auth/signup").permitAll()
 
                         // NEW: Allow anyone to view the main page content
-                        .requestMatchers(HttpMethod.GET, "/api/events", "/api/news").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/events", "/api/news", "/api/upload/url").permitAll()
 
                         // --- SECURE ENDPOINTS ---
                         // All other requests must be authenticated

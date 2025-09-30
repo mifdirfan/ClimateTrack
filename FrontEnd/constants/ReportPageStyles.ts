@@ -91,4 +91,33 @@ export const styles = StyleSheet.create({
         marginBottom: 9,
         marginLeft: 37,
     },
+    // geo style
+    locationInputContainer: {
+        flexDirection: 'row',
+        marginHorizontal: 26,
+        marginBottom: 25,
+    },
+    locationInput: {
+        flex: 1,
+        height: 50,
+        backgroundColor: "#F0F0F0",
+        paddingHorizontal: 15,
+        fontSize: 16,
+        borderTopLeftRadius: 10,
+        borderBottomLeftRadius: 10,
+    },
+    findButton: {
+        height: 50,
+        backgroundColor: '#007AFF',
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        borderTopRightRadius: 10,
+        borderBottomRightRadius: 10,
+    },
+    findButtonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
 });

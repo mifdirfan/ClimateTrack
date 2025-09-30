@@ -1,11 +1,16 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import { View, Text, TextInput, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useLocation } from '@/hooks/useLocation';
-import { styles } from '../../constants/ReportPageStyles';
+import { styles } from '@/constants/ReportPageStyles';
 import API_BASE_URL from '../../constants/ApiConfig';
+import GOOGLE_MAPS_API_KEY from '../../constants/GoogleAPI';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'expo-router';
 
+// Example list of districts. In a real app, you might fetch this from a server.
+//const DISTRICTS = ['Bukit Bintang', 'Titiwangsa', 'Setiawangsa', 'Wangsa Maju', 'Batu', 'Cheras'];
 const DISASTER_TYPES = ['Flood', 'Landslide', 'Earthquake', 'Wildfire', 'Other'];
 
 export default function ReportPage() {
@@ -15,6 +20,50 @@ export default function ReportPage() {
     const [image, setImage] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { requestLocation, errorMsg } = useLocation();
+    //const [selectedDistrict, setSelectedDistrict] = useState('');
+
+    const [locationInput, setLocationInput] = useState('');
+    const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
+    const [isGeocoding, setIsGeocoding] = useState(false);
+
+    const { token, isLoading: isAuthLoading } = useAuth(); // Get the real auth state
+    const router = useRouter();
+
+    useEffect(() => {
+        // If the initial auth check is done and there's no token, redirect
+        if (!isAuthLoading && !token) {
+            Alert.alert("Login Required", "You must be logged in to submit a report.");
+            router.replace('/screens/LoginScreen');
+        }
+    }, [isAuthLoading, token, router]);
+
+    const handleGeocode = async () => {
+        if (!locationInput.trim()) {
+            Alert.alert('Location Missing', 'Please enter a district or location name.');
+            return;
+        }
+
+        setIsGeocoding(true);
+        const geocodingUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(locationInput)}&key=${GOOGLE_MAPS_API_KEY}`;
+
+        try {
+            const response = await fetch(geocodingUrl);
+            const data = await response.json();
+
+            if (data.status === 'OK' && data.results.length > 0) {
+                const { lat, lng } = data.results[0].geometry.location;
+                setCoordinates({ lat, lng });
+                Alert.alert('Location Found', `Location set to: ${data.results[0].formatted_address}`);
+            } else {
+                Alert.alert('Location Not Found', 'Could not find coordinates for the entered location. Please try being more specific.');
+                setCoordinates(null);
+            }
+        } catch (error) {
+            Alert.alert('API Error', 'Failed to fetch location data.');
+        } finally {
+            setIsGeocoding(false);
+        }
+    };
 
     const pickImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -30,6 +79,10 @@ export default function ReportPage() {
     };
 
     const handleSubmit = async () => {
+        if (!coordinates) {
+            Alert.alert('Location Missing', 'Please select a district to set the report location.');
+            return;
+        }
         if (!title || !disasterType || !description) {
             Alert.alert('Missing Information', 'Please fill out the title, disaster type, and description.');
             return;
@@ -37,27 +90,56 @@ export default function ReportPage() {
 
         setIsSubmitting(true);
 
-        const location = await requestLocation();
-        if (!location) {
-            Alert.alert('Location Error', errorMsg || 'Could not get your current location. Please enable location services.');
-            setIsSubmitting(false);
-            return;
+        // const location = await requestLocation();
+        // if (!location) {
+        //     Alert.alert('Location Error', errorMsg || 'Could not get your current location. Please enable location services.');
+        //     setIsSubmitting(false);
+        //     return;
+        // }
+
+        let photoKey: string | undefined = undefined;
+
+        // --- Real Image Upload Logic ---
+        if (image) {
+            try {
+                const filename = image.split('/').pop() || `report-image-${Date.now()}.jpg`;
+                const filetype = 'image/jpeg';
+
+                // 1. Get presigned URL from your backend
+                const presignedUrlResponse = await fetch(`${API_BASE_URL}/api/upload/url?filename=${filename}&filetype=${filetype}`);
+                if (!presignedUrlResponse.ok) throw new Error('Could not get upload URL.');
+                const presignedUrl = await presignedUrlResponse.text();
+
+                // 2. Upload image directly to S3
+                const imageResponse = await fetch(image);
+                const blob = await imageResponse.blob();
+                const uploadResponse = await fetch(presignedUrl, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': filetype },
+                    body: blob,
+                });
+
+                if (!uploadResponse.ok) throw new Error('Failed to upload image to S3.');
+
+                // 3. Set the photo key for the report
+                photoKey = `uploads/${filename}`;
+
+            } catch (uploadError: any) {
+                Alert.alert('Image Upload Error', uploadError.message);
+                setIsSubmitting(false);
+                return;
+            }
         }
 
-        // In a real app, you would get the token from an AuthContext
-        const authToken = "YOUR_JWT_TOKEN_HERE"; // TODO: Replace with actual token
-
-        // In a real app, you would first upload the image to a service like S3
-        // and get back a URL. For now, we'll use a placeholder.
-        const photoUrl = image ? 'https://placeholder.com/image.jpg' : undefined;
 
         const reportData = {
             title,
             description,
             disasterType,
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-            photoUrl,
+            // Use the coordinates from the geocoding result
+            latitude: coordinates.lat,
+            longitude: coordinates.lng,
+            photoUrl: photoKey,
         };
 
         try {
@@ -65,7 +147,7 @@ export default function ReportPage() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`,
+                    'Authorization': `Bearer ${token}`, // Use the real token from context
                 },
                 body: JSON.stringify(reportData),
             });
@@ -74,7 +156,7 @@ export default function ReportPage() {
                 throw new Error('Failed to submit report. Please try again.');
             }
 
-            Alert.alert('Success', 'Your report has been submitted. Thank you for your contribution!');
+            Alert.alert('Success', 'Your report has been submitted!');
             // Reset form
             setTitle('');
             setDisasterType('');
@@ -87,6 +169,15 @@ export default function ReportPage() {
             setIsSubmitting(false);
         }
     };
+
+    // Show a loading screen while checking authentication status
+    if (isAuthLoading) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <ActivityIndicator size="large" style={{ flex: 1 }} />
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -150,6 +241,23 @@ export default function ReportPage() {
                     value={description}
                     onChangeText={setDescription}
                 />
+                {/* --- NEW Location Input UI --- */}
+                <Text style={styles.text4}>Location</Text>
+                <View style={styles.locationInputContainer}>
+                    <TextInput
+                        style={styles.locationInput}
+                        placeholder="e.g., Bukit Bintang, Kuala Lumpur"
+                        value={locationInput}
+                        onChangeText={setLocationInput}
+                    />
+                    <TouchableOpacity style={styles.findButton} onPress={handleGeocode} disabled={isGeocoding}>
+                        {isGeocoding ? (
+                            <ActivityIndicator color="#FFFFFF" />
+                        ) : (
+                            <Text style={styles.findButtonText}>Find</Text>
+                        )}
+                    </TouchableOpacity>
+                </View>
                 <Text style={styles.text5}>
                     {"Upload an Image"}
                 </Text>
