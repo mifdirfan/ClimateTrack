@@ -34,7 +34,7 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
-GoogleAPI
+GoogleAPI.ts
 
 app-example
 
