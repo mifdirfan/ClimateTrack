@@ -37,8 +37,16 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody AuthRequestDto authRequest) {
         Optional<User> userOptional = authService.validateUser(authRequest);
         if (userOptional.isPresent()) {
+            User user = userOptional.get();
             String token = jwtTokenProvider.createToken(authRequest.getUsername());
-            return ResponseEntity.ok(AuthResponseDto.builder().token(token).build());
+            AuthResponseDto response = AuthResponseDto.builder()
+                    .token(token)
+                    .id(user.getId())
+                    .username(user.getUsername())
+                    .email(user.getEmail())
+                    .fullName(user.getFullName())
+                    .build();
+            return ResponseEntity.ok(response);
         } else {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
         }
@@ -66,20 +74,18 @@ public class AuthController {
         }
     }
 
-    @PutMapping("/update-fcm-token/{username}")
-    public ResponseEntity<?> updateFcmToken(@PathVariable String username, @RequestBody Map<String, String> payload) {
-        String fcmToken = payload.get("fcmToken");
-        if (fcmToken == null || fcmToken.isEmpty()) {
-            return ResponseEntity.badRequest().body("FCM token is required.");
-        }
-
-        User updatedUser = authService.updateFcmToken(username, fcmToken);
-        if (updatedUser != null) {
-            return ResponseEntity.ok("FCM token updated successfully for user " + username);
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
-        }
-    }
+//    @PutMapping("/update-fcm-token/{username}")
+//    public ResponseEntity<?> updateFcmToken(@PathVariable String username, @RequestBody Map<String, String> payload) {
+//        String fcmToken = payload.get("fcmToken");
+//        if (fcmToken == null || fcmToken.isEmpty()) {
+//            return ResponseEntity.badRequest().body("FCM token is required.");
+//        }
+//
+//        User updatedUser = authService.updateFcmToken(username, fcmToken);
+//        if (updatedUser != null) {
+//            return ResponseEntity.ok("FCM token updated successfully for user " + username);
+//        } else {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
+//        }
+//    }
 }
-
-

@@ -3,6 +3,8 @@ import { Platform } from 'react-native';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import Constants from 'expo-constants';
+import { useAuth } from '@/context/AuthContext'; // Import useAuth
+import API_BASE_URL from '@/constants/ApiConfig';
 
 // This handler determines how your app handles notifications when it's active
 Notifications.setNotificationHandler({
@@ -10,28 +12,27 @@ Notifications.setNotificationHandler({
         shouldShowAlert: true,
         shouldPlaySound: false,
         shouldSetBadge: false,
-        // FIX: Add missing properties for iOS
-        shouldShowBanner: true,
-        shouldShowList: true,
+        shouldShowBanner: false,
+        shouldShowList: false
     }),
 });
 
 export function useNotifications() {
+    const { username } = useAuth(); // Get username from AuthContext
     const [expoPushToken, setExpoPushToken] = useState<string | undefined>('');
     const [notification, setNotification] = useState<Notifications.Notification | false>(false);
-    // FIX: useRef must be initialized with a value, even if it's undefined.
-    const notificationListener = useRef<Notifications.Subscription | undefined>(undefined);
-    const responseListener = useRef<Notifications.Subscription | undefined>(undefined);
+    // @ts-ignore
+    const notificationListener = useRef<Notifications.Subscription>();
+    // @ts-ignore
+    const responseListener = useRef<Notifications.Subscription>();
 
     useEffect(() => {
         registerForPushNotificationsAsync().then(token => {
             setExpoPushToken(token);
-            if (token) {
+            if (token && username) {
                 console.log('Expo Push Token:', token);
 
-                // NOTE: This is a placeholder. You'll need a way to get the current user's username.
-                const username = "testuser"; // This should be dynamic based on the logged-in user
-                fetch(`http://172.30.1.90:8080/api/auth/update-fcm-token/${username}`, {
+                fetch(`${API_BASE_URL}/api/auth/update-fcm-token/${username}`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
@@ -52,11 +53,10 @@ export function useNotifications() {
         });
 
         return () => {
-            // The correct way to remove a subscription is to call .remove() on the subscription object itself.
             notificationListener.current?.remove();
             responseListener.current?.remove();
         };
-    }, []);
+    }, [username]); // Rerun when username changes
 
     return { expoPushToken, notification };
 }
@@ -86,10 +86,8 @@ async function registerForPushNotificationsAsync(): Promise<string | undefined> 
             return;
         }
 
-        // Refactored to remove the "throw caught locally" warning
         const projectId = Constants.expoConfig?.extra?.eas?.projectId;
         if (!projectId) {
-            // Instead of throwing, just log the error and return.
             console.error('Expo project ID not found in app.json. Please run "npx expo login" and "npx eas project:init".');
             return;
         }
@@ -100,7 +98,8 @@ async function registerForPushNotificationsAsync(): Promise<string | undefined> 
             console.error("Error getting push token:", e);
         }
     } else {
-        alert('Must use physical device for Push Notifications');
+        // alert('Must use physical device for Push Notifications');
+        console.log('Must use physical device for Push Notifications');
     }
 
     return token;

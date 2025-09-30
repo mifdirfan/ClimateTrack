@@ -27,6 +27,32 @@ public class ReportController {
     private final JwtTokenProvider jwtTokenProvider; // Assuming you have a JWT provider
     private final UserRepository userRepository; // Inject the UserRepository
 
+//    @PostMapping
+//    public ResponseEntity<Report> createReport(
+//            @RequestBody ReportRequestDto reportRequest,
+//            @RequestHeader(value = "Authorization", required = false) String authorizationHeader) {
+//
+//        String username = "Anonymous";
+//        String userId = null;
+//
+//        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+//            String token = authorizationHeader.substring(7);
+//            if (jwtTokenProvider.validateToken(token)) {
+//                String authenticatedUsername = jwtTokenProvider.getUsername(token);
+//                Optional<User> userOptional = userRepository.findByUsername(authenticatedUsername);
+//                if (userOptional.isPresent()) {
+//                    User user = userOptional.get();
+//                    username = user.getUsername();
+//                    userId = user.getId();
+//                }
+//            }
+//        }
+//
+//        Report report = reportService.createReport(reportRequest, userId, username);
+//        return new ResponseEntity<>(report, HttpStatus.CREATED);
+//    }
+
+
     @PostMapping
 
     public ResponseEntity<Report> createReport(
@@ -88,6 +114,7 @@ public class ReportController {
     @GetMapping("/user/{username}")
     public ResponseEntity<List<ReportResponseDto>> getReportsByUsernameForTesting(@PathVariable String username) {
         List<ReportResponseDto> userReports = reportService.getReportsByUsername(username);
+
         return ResponseEntity.ok(userReports);
     }
 }

@@ -30,7 +30,7 @@ public class AnonymousUserService {
             // User is new, create a new anonymous record
             user = new User();
             user.setId(request.getAnonymousId());
-            user.setAnonymous(true);
+            // user.setAnonymous(true); comment sebab buang function anonymous
             user.setCreatedAt(new Date());
             user.setLastKnownLocation(new GeoJsonPoint(request.getLongitude(), request.getLatitude()));
             user.setFcmToken(request.getFcmToken());
