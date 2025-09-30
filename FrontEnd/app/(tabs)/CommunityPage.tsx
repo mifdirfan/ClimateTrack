@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity, Image } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, TextInput, FlatList, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
 import { styles } from '../../constants/CommunityPageStyles';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
+import { useAuth } from '@/context/AuthContext'; // Import your auth hook
+import API_BASE_URL from '../../constants/ApiConfig';
 
 import { useNavigation } from '@react-navigation/native';
 import { useRouter } from 'expo-router';
@@ -28,19 +30,92 @@ const mockPosts = [
     // Add more mock posts if needed
 ];
 
+type Post = {
+    id: string;
+    title: string;
+    content: string;
+    photoUrl?: string;
+    comments: any[]; // Or a more specific Comment type
+    likes: string[];
+    dislikes: string[];
+    postedByUsername: string;
+};
+
 export default function CommunityScreen() {
     const router = useRouter();
 
+    const { token, isLoading: isAuthLoading } = useAuth(); // Get the real auth state
+
+    const [posts, setPosts] = useState<Post[]>([]);
+    const [loading, setLoading] = useState(true);
+
     const [search, setSearch] = useState('');
 
-    const filteredPosts = mockPosts.filter(
+    // const filteredPosts = mockPosts.filter(
+    //     (post) =>
+    //         post.title.toLowerCase().includes(search.toLowerCase()) ||
+    //         post.content.toLowerCase().includes(search.toLowerCase())
+    // );
+
+    const fetchPosts = useCallback(() => {
+        // Don't try to fetch if we don't have a token
+        if (!token) {
+            setLoading(false);
+            return;
+        }
+
+        setLoading(true);
+        fetch(`${API_BASE_URL}/api/community/posts`, {
+            headers: {
+                'Authorization': `Bearer ${token}` // Include the auth token
+            }
+        })
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error('Failed to fetch community posts.');
+                }
+                return res.json();
+            })
+            .then((data: Post[]) => {
+                setPosts(data);
+            })
+            .catch(err => {
+                console.error(err);
+                Alert.alert("Error", "Could not load community posts.");
+            })
+            .finally(() => {
+                setLoading(false);
+            });
+    }, [token]);
+
+    useEffect(() => {
+        // Fetch posts only when the initial authentication check is complete
+        if (!isAuthLoading) {
+            fetchPosts();
+        }
+    }, [isAuthLoading, fetchPosts]);
+
+    const handleWritePress = () => {
+        // Check if the user is logged in before navigating
+        if (token) {
+            router.push('/screens/WritePostPage');
+        } else {
+            // If not logged in, redirect to the login screen
+            Alert.alert("Login Required", "You must be logged in to create a post.");
+            router.push('/screens/LoginScreen');
+        }
+    };
+
+    const filteredPosts = posts.filter(
         (post) =>
             post.title.toLowerCase().includes(search.toLowerCase()) ||
             post.content.toLowerCase().includes(search.toLowerCase())
     );
 
-    const renderPost = ({ item }: { item: typeof mockPosts[0] }) => (
-        <View style={styles.postCard}>
+
+
+    const renderPost = ({ item }: { item: Post }) => (
+        <TouchableOpacity style={styles.postCard}>
             <View style={styles.postInfo}>
                 <Text style={styles.postTitle}>{item.title}</Text>
                 <Text style={styles.postContent} numberOfLines={3}>
@@ -49,26 +124,36 @@ export default function CommunityScreen() {
                 <View style={styles.metaRow}>
                     <View style={styles.metaItem}>
                         <Feather name="message-circle" size={14} color="#d12a2a" />
-                        <Text style={styles.metaText}>{item.comments}</Text>
+                        <Text style={styles.metaText}>{item.comments.length}</Text>
                     </View>
                     <View style={styles.metaItem}>
-                        <Ionicons name="eye-outline" size={14} color="#c0c0c0" />
-                        <Text style={styles.metaText}>{item.views}</Text>
+                        <Ionicons name="heart-outline" size={14} color="#c0c0c0" />
+                        <Text style={styles.metaText}>{item.likes.length}</Text>
                     </View>
-                    <Text style={[styles.metaText, { marginLeft: 6 }]}>{item.author}</Text>
+                    <Text style={[styles.metaText, { marginLeft: 6 }]}>{item.postedByUsername}</Text>
                 </View>
             </View>
-            <Image
-                source={{ uri: item.image }}
-                style={styles.postImage}
-                resizeMode="cover"
-            />
-        </View>
+            {item.photoUrl && (
+                <Image
+                    source={{ uri: item.photoUrl }}
+                    style={styles.postImage}
+                    resizeMode="cover"
+                />
+            )}
+        </TouchableOpacity>
     );
+
+    // Show a loading indicator while checking auth or fetching posts
+    if (isAuthLoading || loading) {
+        return (
+            <View style={styles.container}>
+                <ActivityIndicator size="large" style={{ flex: 1 }} />
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
-
             {/* Search Bar */}
             <View style={styles.searchBar}>
                 <Ionicons name="search" size={20} color="#b0b0b0" />
@@ -81,25 +166,33 @@ export default function CommunityScreen() {
                 />
             </View>
 
-            {/* Posts List */}
-            <FlatList
-                data={filteredPosts}
-                keyExtractor={(item) => item.id}
-                renderItem={renderPost}
-                contentContainerStyle={styles.listContent}
-                showsVerticalScrollIndicator={false}
-            />
+            {/* Posts List or Login Prompt */}
+            {!token ? (
+                <View style={styles.loginPromptContainer}>
+                    <Text style={styles.loginPromptText}>Please log in to view and create community posts.</Text>
+                    <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/screens/LoginScreen')}>
+                        <Text style={styles.loginButtonText}>Login</Text>
+                    </TouchableOpacity>
+                </View>
+            ) : (
+                <FlatList
+                    data={filteredPosts}
+                    keyExtractor={(item) => item.id}
+                    renderItem={renderPost}
+                    contentContainerStyle={styles.listContent}
+                    showsVerticalScrollIndicator={false}
+                />
+            )}
 
             {/* Write Button */}
             <TouchableOpacity
                 style={styles.writeButton}
-                onPress={() => router.push('/screens/WritePostPage')}
+                onPress={handleWritePress}
                 activeOpacity={0.8}
             >
                 <MaterialIcons name="edit" size={20} color="#fff" style={styles.pencilIcon} />
                 <Text style={styles.writeText}>Write</Text>
             </TouchableOpacity>
-
-        </View >
+        </View>
     );
 }

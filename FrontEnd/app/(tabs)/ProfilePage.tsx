@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback  } from 'react';
 import { View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert, RefreshControl, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { styles } from '../../constants/ProfilePageStyles';
 import API_BASE_URL from '../../constants/ApiConfig';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'expo-router';
 
 
 // Mock data based on your design
@@ -12,6 +14,13 @@ const userData = {
     username: 'testuser',
     location: 'Kuala Lumpur, Malaysia',
     avatar: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/u2F1jVXr2j/q2x1g2nj_expires_30_days.png',
+};
+
+type UserProfile = {
+    id: string;
+    username: string;
+    fullName: string;
+    email: string;
 };
 
 type Report = {
@@ -48,53 +57,116 @@ const settingsItems = [
 
 export default function ProfilePage() {
 
+    const { token, username, isLoading, logout } = useAuth(); // Use the real auth state
+    const router = useRouter();
+
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [reports, setReports] = useState<Report[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
-    const fetchUserReports = () => {
-        // FOR TESTING: Use the insecure endpoint to fetch reports by username directly.
-        // In production, you would switch back to the secure '/my-reports' endpoint.
-        const testUsername = userData.username;
-        fetch(`${API_BASE_URL}/api/reports/user/${testUsername}`)
-        // // In a real app, you would get this token from secure storage after login
-        // // TODO: Replace this with a dynamic token from your auth context or secure storage
-        // const authToken = "YOUR_JWT_TOKEN_HERE";
-        //
-        // fetch(`${API_BASE_URL}/api/reports/my-reports`, {
-        //     headers: {
-        //         'Authorization': `Bearer ${authToken}`
-        //     }
-        // })
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error('Failed to fetch reports');
-                }
-                return res.json();
-            })
-            .then((data: Report[]) => {
-                // The backend already sorts by date, so we can use the data directly
-                setReports(data);
+    // const fetchUserReports = () => {
+    //     // FOR TESTING: Use the insecure endpoint to fetch reports by username directly.
+    //     // In production, you would switch back to the secure '/my-reports' endpoint.
+    //     const testUsername = userData.username;
+    //     fetch(`${API_BASE_URL}/api/reports/user/${testUsername}`)
+    //     // // In a real app, you would get this token from secure storage after login
+    //     // // TODO: Replace this with a dynamic token from your auth context or secure storage
+    //     // const authToken = "YOUR_JWT_TOKEN_HERE";
+    //     //
+    //     // fetch(`${API_BASE_URL}/api/reports/my-reports`, {
+    //     //     headers: {
+    //     //         'Authorization': `Bearer ${authToken}`
+    //     //     }
+    //     // })
+    //         .then(res => {
+    //             if (!res.ok) {
+    //                 throw new Error('Failed to fetch reports');
+    //             }
+    //             return res.json();
+    //         })
+    //         .then((data: Report[]) => {
+    //             // The backend already sorts by date, so we can use the data directly
+    //             setReports(data);
+    //         })
+    //         .catch(err => {
+    //             console.error('Failed to fetch user reports:', err);
+    //             Alert.alert("Error", "Could not load your reports. Please try again later.");
+    //         })
+    //         .finally(() => {
+    //             setLoading(false);
+    //             setRefreshing(false);
+    //         });
+    // };
+
+    const fetchData = useCallback(() => {
+        if (!token || !username) return;
+
+        setLoading(true);
+
+        // Fetch user profile information
+        const fetchProfile = fetch(`${API_BASE_URL}/api/auth/${username}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        }).then(res => {
+            if (!res.ok) throw new Error('Failed to fetch profile');
+            return res.json();
+        });
+
+        // Fetch user's reports
+        const fetchReports = fetch(`${API_BASE_URL}/api/reports/my-reports`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        }).then(res => {
+            if (!res.ok) throw new Error('Failed to fetch reports');
+            return res.json();
+        });
+
+        // Run both fetches in parallel
+        Promise.all([fetchProfile, fetchReports])
+            .then(([profileData, reportsData]) => {
+                setUserProfile(profileData);
+                setReports(reportsData);
             })
             .catch(err => {
-                console.error('Failed to fetch user reports:', err);
-                Alert.alert("Error", "Could not load your reports. Please try again later.");
+                console.error('Failed to fetch data:', err);
+                Alert.alert("Error", "Could not load profile data. Please try again.");
             })
             .finally(() => {
                 setLoading(false);
                 setRefreshing(false);
             });
-    };
+    }, [token, username]);
 
     useEffect(() => {
-        setLoading(true);
-        fetchUserReports();
-    }, []);
+        // setLoading(true);
+        // fetchUserReports();
+
+        // If the initial auth check is done and there's no token, redirect to login
+        if (!isLoading && !token) {
+            router.replace('/screens/LoginScreen'); // Redirect to your login screen
+            return;
+        }
+
+        // If a token is available, fetch the data
+        if (token) {
+            fetchData();
+        }
+
+    }, [isLoading, token, fetchData, router]);
 
     const onRefresh = () => {
         setRefreshing(true);
-        fetchUserReports();
+        // fetchUserReports();
+        fetchData();
     };
+
+    // Show a loading screen while checking authentication or fetching data
+    if (isLoading || loading) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <ActivityIndicator size="large" style={{ flex: 1 }} />
+            </SafeAreaView>
+        );
+    }
 
     return (
         <SafeAreaView style={styles.container}>
@@ -105,9 +177,13 @@ export default function ProfilePage() {
             >
                 {/* Header */}
                 <View style={styles.headerRow}>
-                    <Ionicons name="menu" size={24} color="black" />
+                    <Ionicons name="menu" size={24} color="white" />
                     <Text style={styles.headerTitle}>ClimateTrack</Text>
-                    <Ionicons name="notifications-outline" size={24} color="black" />
+                    {/* NEW: Logout Button */}
+                    <TouchableOpacity onPress={logout} style={styles.logoutButton}>
+                        <Ionicons name="log-out-outline" size={26} color="#d9534f" />
+                    </TouchableOpacity>
+
                 </View>
 
                 {/* Profile Info */}

@@ -12,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.security.Principal;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -22,19 +24,17 @@ import java.util.Optional;
 public class CommunityPostController {
 
     private final CommunityPostService communityPostService;
-    private final JwtTokenProvider jwtTokenProvider;
-    private final UserRepository userRepository;
+    private final UserRepository userRepository; // Keep for finding user by username
+
+    // A helper method to get the User object from the Principal
+    private Optional<User> getUserFromPrincipal(Principal principal) {
+        String username = principal.getName();
+        return userRepository.findByUsername(username);
+    }
 
     @PostMapping
-    public ResponseEntity<CommunityPost> createPost(
-            @RequestBody PostRequestDto postRequest,
-            @RequestHeader("Authorization") String authorizationHeader) {
-        String token = authorizationHeader.substring(7);
-        String username = jwtTokenProvider.getUsername(token);
-        Optional<User> userOptional = userRepository.findByUsername(username);
-
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
+    public ResponseEntity<CommunityPost> createPost(@RequestBody PostRequestDto postRequest, Principal principal) {
+        return getUserFromPrincipal(principal).map(user -> {
             CommunityPost newPost = new CommunityPost();
             newPost.setTitle(postRequest.getTitle());
             newPost.setContent(postRequest.getContent());
@@ -42,35 +42,20 @@ public class CommunityPostController {
             newPost.setPostedByUsername(user.getUsername());
             newPost.setPhotoKey(postRequest.getPhotoKey());
             newPost.setPostedAt(new Date());
-
             CommunityPost createdPost = communityPostService.createPost(newPost);
             return new ResponseEntity<>(createdPost, HttpStatus.CREATED);
-        } else {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        }
+        }).orElse(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
     }
 
     @GetMapping
-    public ResponseEntity<List<PostResponseDto>> getAllPosts(@RequestHeader("Authorization") String authorizationHeader) {
-        String token = authorizationHeader.substring(7);
-        if (jwtTokenProvider.validateToken(token)) {
-            List<PostResponseDto> posts = communityPostService.getAllPosts();
-            return ResponseEntity.ok(posts);
-        } else {
-            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
-        }
+    public ResponseEntity<List<PostResponseDto>> getAllPosts() {
+        return ResponseEntity.ok(communityPostService.getAllPosts());
     }
 
     @GetMapping("/{postId}")
-    public ResponseEntity<?> getPostById(
-            @PathVariable String postId,
-            @RequestHeader("Authorization") String authorizationHeader) {
-        String token = authorizationHeader.substring(7);
-        if (!jwtTokenProvider.validateToken(token)) {
-            return new ResponseEntity<>("Invalid or expired token", HttpStatus.UNAUTHORIZED);
-        }
-
+    public ResponseEntity<?> getPostById(@PathVariable String postId) {
         Optional<PostResponseDto> postOptional = communityPostService.findById(postId);
+
         if (postOptional.isPresent()) {
             return new ResponseEntity<>(postOptional.get(), HttpStatus.OK);
         } else {
@@ -79,54 +64,26 @@ public class CommunityPostController {
     }
 
     @PostMapping("/{postId}/comments")
-    public ResponseEntity<?> addComment(
-            @PathVariable String postId,
-            @RequestBody CommentRequestDto commentRequest,
-            @RequestHeader("Authorization") String authorizationHeader) {
-        String token = authorizationHeader.substring(7);
-        String username = jwtTokenProvider.getUsername(token);
-        Optional<User> userOptional = userRepository.findByUsername(username);
-
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
+    public ResponseEntity<?> addComment(@PathVariable String postId, @RequestBody CommentRequestDto commentRequest, Principal principal) {
+        return getUserFromPrincipal(principal).map(user -> {
             CommunityPost updatedPost = communityPostService.addComment(postId, user, commentRequest.getText());
             return new ResponseEntity<>(updatedPost, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        }).orElse(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
     }
 
     @PostMapping("/{postId}/like")
-    public ResponseEntity<?> likePost(
-            @PathVariable String postId,
-            @RequestHeader("Authorization") String authorizationHeader) {
-        String token = authorizationHeader.substring(7);
-        String username = jwtTokenProvider.getUsername(token);
-        Optional<User> userOptional = userRepository.findByUsername(username);
-
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
+    public ResponseEntity<?> likePost(@PathVariable String postId, Principal principal) {
+        return getUserFromPrincipal(principal).map(user -> {
             CommunityPost updatedPost = communityPostService.toggleLike(postId, user.getId());
             return new ResponseEntity<>(updatedPost, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        }).orElse(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
     }
 
     @PostMapping("/{postId}/dislike")
-    public ResponseEntity<?> dislikePost(
-            @PathVariable String postId,
-            @RequestHeader("Authorization") String authorizationHeader) {
-        String token = authorizationHeader.substring(7);
-        String username = jwtTokenProvider.getUsername(token);
-        Optional<User> userOptional = userRepository.findByUsername(username);
-
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
+    public ResponseEntity<?> dislikePost(@PathVariable String postId, Principal principal) {
+        return getUserFromPrincipal(principal).map(user -> {
             CommunityPost updatedPost = communityPostService.toggleDislike(postId, user.getId());
             return new ResponseEntity<>(updatedPost, HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
+        }).orElse(new ResponseEntity<>(HttpStatus.UNAUTHORIZED));
     }
 }

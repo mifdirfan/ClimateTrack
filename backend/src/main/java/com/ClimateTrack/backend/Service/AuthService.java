@@ -7,11 +7,11 @@ import com.ClimateTrack.backend.dto.AuthResponseDto;
 import com.ClimateTrack.backend.dto.LocationRequestDto;
 import com.ClimateTrack.backend.dto.RegisterRequestDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint; // Add this import
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -19,17 +19,12 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final Set<String> blacklist = Collections.synchronizedSet(new HashSet<>());
+
 
     public Optional<User> validateUser(AuthRequestDto request) {
-        Optional<User> userOptional = userRepository.findByUsername(request.getUsername());
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            if (passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-                mergeAnonymousUser(request.getAnonymousId(), user);
-                return Optional.of(user);
-            }
-        }
-        return Optional.empty();
+        return userRepository.findByUsername(request.getUsername())
+                .filter(user -> passwordEncoder.matches(request.getPassword(), user.getPasswordHash()));
     }
 
     public User registerUser(RegisterRequestDto request) {
@@ -47,24 +42,7 @@ public class AuthService {
         newUser.setCreatedAt(now);
         newUser.setUpdatedAt(now);
 
-        User savedUser = userRepository.save(newUser);
-        mergeAnonymousUser(request.getAnonymousId(), savedUser);
-        return savedUser;
-    }
-
-    private void mergeAnonymousUser(String anonymousId, User registeredUser) {
-        if (anonymousId == null || anonymousId.isEmpty()) {
-            return;
-        }
-
-        Optional<User> anonymousUserOptional = userRepository.findById(anonymousId);
-        if (anonymousUserOptional.isPresent()) {
-            User anonymousUser = anonymousUserOptional.get();
-            registeredUser.setFcmToken(anonymousUser.getFcmToken());
-            registeredUser.setLastKnownLocation(anonymousUser.getLastKnownLocation());
-            userRepository.save(registeredUser);
-            userRepository.delete(anonymousUser);
-        }
+        return userRepository.save(newUser);
     }
 
     public Optional<AuthResponseDto> getUserByUsername(String username) {
@@ -77,24 +55,22 @@ public class AuthService {
     }
 
     public User updateLocation(String username, LocationRequestDto locationDto) {
-        Optional<User> userOptional = userRepository.findByUsername(username);
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
+        return userRepository.findByUsername(username).map(user -> {
+            user.setLastKnownLocation(new GeoJsonPoint(locationDto.getLongitude(), locationDto.getLatitude()));
+            if (locationDto.getFcmToken() != null && !locationDto.getFcmToken().isEmpty()) {
+                user.setFcmToken(locationDto.getFcmToken());
+            }
             user.setUpdatedAt(new Date());
             return userRepository.save(user);
-        }
-        return null;
+        }).orElse(null);
     }
 
-    public User updateFcmToken(String username, String fcmToken) {
-        Optional<User> userOptional = userRepository.findByUsername(username);
-        if (userOptional.isPresent()) {
-            User user = userOptional.get();
-            user.setFcmToken(fcmToken);
-            user.setUpdatedAt(new Date()); // Update the timestamp
-            return userRepository.save(user);
-        }
-        return null; // User not found
+
+    public void blacklistToken(String token) {
+        blacklist.add(token);
+    }
+
+    public boolean isTokenBlacklisted(String token) {
+        return blacklist.contains(token);
     }
 }
-
