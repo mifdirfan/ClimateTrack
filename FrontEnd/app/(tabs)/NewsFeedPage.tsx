@@ -1,12 +1,13 @@
 // NewsFeedPage.tsx -> to show news feed
 
-import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, FlatList, Image, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, Image, Modal, ActivityIndicator, SafeAreaView } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
 import { WebView } from 'react-native-webview';
 import styles, { TAB_LABELS } from '../../constants/NewsFeedPageStyles';
 
 import CommunityPage from './CommunityPage';
 import API_BASE_URL from '../../constants/ApiConfig';
+import {Ionicons} from "@expo/vector-icons";
 
 
 type NewsItem = {
@@ -65,24 +66,23 @@ function formatPublishedDate(dateString: string): string {
 
 
 // ----- TABS -----
-type TabKey = 'Community' | 'News' | 'Notifications';
+type TabKey = 'News';
 
-function CommunityTab() {
-  return <CommunityPage />;
-}
+// function CommunityTab() {
+//   return <CommunityPage />;
+// }
+//
+// function NotificationsTab() {
+//   return <View style={styles.tabContent} />;
+// }
 
-function NotificationsTab() {
-  return <View style={styles.tabContent} />;
-}
-
-function NewsTab() {
+export default function NewsFeedPage() {
   const [webviewUrl, setWebviewUrl] = useState<string | null>(null);
-
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchNews = () => {
+  const fetchNews = useCallback(() => {
     setLoading(true);
     setError(null);
 
@@ -94,10 +94,9 @@ function NewsTab() {
           return response.json();
         })
         .then(data => {
-          // Safety check: Ensure data is an array before mapping
           if (Array.isArray(data)) {
             const mapped = data.map((n: any) => ({
-              id: n.articleId, // Use articleId from backend DTO
+              id: n.articleId,
               articleId: n.articleId,
               title: n.title,
               description: n.description || n.content,
@@ -112,11 +111,11 @@ function NewsTab() {
         })
         .catch(err => setError(err.message || 'An unexpected error occurred.'))
         .finally(() => setLoading(false));
-  };
+  }, []);
 
   useEffect(() => {
     fetchNews();
-  }, []);
+  }, [fetchNews]);
 
   const renderNewsItem = ({ item }: { item: NewsItem }) => (
       <TouchableOpacity
@@ -137,12 +136,18 @@ function NewsTab() {
       </TouchableOpacity>
   );
 
-
   return (
-      <View style={styles.newsTabWrapper}>
+
+      <SafeAreaView style={styles.container}>
         {loading && <ActivityIndicator size="large" style={{ marginTop: 20 }} />}
-        {error && <Text style={{ textAlign: 'center', color: 'red' }}>{error}</Text>}
-        {!loading && !error && news.length === 0 && <Text style={{ textAlign: 'center' }}>No news found.</Text>}
+        {error && <Text style={{ textAlign: 'center', color: 'red', marginTop: 20 }}>{error}</Text>}
+        {!loading && !error && news.length === 0 && <Text style={{ textAlign: 'center', marginTop: 20 }}>No news found.</Text>}
+
+        {/* Header */}
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>ClimateTrack</Text>
+        </View>
+
         <FlatList
             data={news}
             renderItem={renderNewsItem}
@@ -154,7 +159,7 @@ function NewsTab() {
         />
 
         <Modal visible={!!webviewUrl} animationType="slide" onRequestClose={() => setWebviewUrl(null)}>
-          <View style={{ flex: 1 }}>
+          <SafeAreaView style={{ flex: 1 }}>
             <TouchableOpacity
                 style={styles.webviewCloseBtn}
                 onPress={() => setWebviewUrl(null)}
@@ -162,49 +167,8 @@ function NewsTab() {
               <Text style={styles.webviewCloseText}>Close</Text>
             </TouchableOpacity>
             {webviewUrl && <WebView source={{ uri: webviewUrl }} style={{ flex: 1 }} />}
-          </View>
+          </SafeAreaView>
         </Modal>
-      </View>
-  );
-}
-
-// -------- Main Component --------
-export default function NewsFeedPage() {
-  const [selectedTab, setSelectedTab] = useState<TabKey>('News');
-
-  function renderCurrentTab() {
-    switch (selectedTab) {
-      case 'Community':
-        return <CommunityTab />;
-      case 'Notifications':
-        return <NotificationsTab />;
-      case 'News':
-      default:
-        return <NewsTab />;
-    }
-  }
-
-  return (
-      <View style={styles.container}>
-        <View style={styles.tabRow}>
-          {TAB_LABELS.map(tab => (
-              <TouchableOpacity
-                  key={tab}
-                  style={styles.tabBtn}
-                  onPress={() => setSelectedTab(tab as TabKey)}
-                  activeOpacity={0.8}
-              >
-                <Text style={[
-                  styles.tabLabel,
-                  selectedTab === tab && styles.activeTabLabel,
-                ]}>
-                  {tab}
-                </Text>
-                {selectedTab === tab && <View style={styles.underline} />}
-              </TouchableOpacity>
-          ))}
-        </View>
-        {renderCurrentTab()}
-      </View>
+      </SafeAreaView>
   );
 }

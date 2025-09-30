@@ -47,12 +47,27 @@ export default StyleSheet.create({
         flex: 1,
         backgroundColor: '#fff',
     },
-    header: {
-        fontSize: 20,
-        fontWeight: '500',
-        marginBottom: 10,
-        color: '#b3b3b3',
-        marginLeft: 20,
+    headerImage: {
+        height: 44,
+    },
+    headerRow: {
+        top: 10,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 9,
+        paddingHorizontal: 16,
+        marginBottom: 26,
+    },
+    headerTitle: {
+        color: '#000000',
+        fontSize: 24,
+        fontWeight: 'bold',
+        textAlign: 'center',
+        position: 'absolute', // Position it relative to the parent
+        left: 0,              // Span the full width of the parent
+        right: 0,             // Span the full width of the parent
+        zIndex: -1,
     },
     newsListContainer: {
         paddingHorizontal: 18,

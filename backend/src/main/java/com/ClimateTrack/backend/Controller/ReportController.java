@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/reports") // Consistent API prefix
@@ -24,6 +25,7 @@ public class ReportController {
 
     private final ReportService reportService;
     private final JwtTokenProvider jwtTokenProvider; // Assuming you have a JWT provider
+    private final UserRepository userRepository;
 
 //    @PostMapping
 //    public ResponseEntity<Report> createReport(

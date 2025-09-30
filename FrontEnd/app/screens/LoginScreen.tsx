@@ -12,6 +12,15 @@ export default function LoginScreen() {
     const { login } = useAuth();
     const router = useRouter();
 
+    const handleGoBack = () => {
+        if (router.canGoBack()) {
+            router.back();
+        } else {
+            // If it can't go back, maybe navigate to the home screen
+            router.replace('/(tabs)');
+        }
+    };
+
     const handleLogin = async () => {
         try {
             const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
@@ -24,7 +33,7 @@ export default function LoginScreen() {
 
             if (response.ok) {
                 const data = await response.json();
-                login(data.token, email); // Assuming username is email
+                login(data.token, data.username); // Assuming username is email
                 router.replace('/(tabs)');
             } else {
                 Alert.alert("Login Failed", "Invalid username or password.");
@@ -39,7 +48,7 @@ export default function LoginScreen() {
         <SafeAreaView style={styles.safeArea}>
             <ScrollView contentContainerStyle={styles.container}>
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()}>
+                    <TouchableOpacity onPress={handleGoBack}>
                         <Ionicons name="chevron-back" size={24} color="black" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>ClimateTrack</Text>
@@ -98,9 +107,9 @@ export default function LoginScreen() {
                 </View>
 
                 <View style={styles.footer}>
-                    <TouchableOpacity onPress={() => router.push('/signup')}>
+                    <TouchableOpacity onPress={() => router.push('/screens/SignUpScreen')}>
                         <Text style={styles.bottomLink}>
-                            Don't have an account? <Text style={styles.link}>Register now!</Text>
+                            Dont have an account? <Text style={styles.link}>Register now!</Text>
                         </Text>
                     </TouchableOpacity>
                 </View>

@@ -12,6 +12,15 @@ export default function SignUpScreen() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const router = useRouter();
 
+    const handleGoBack = () => {
+        if (router.canGoBack()) {
+            router.back();
+        } else {
+            // If it can't go back, maybe navigate to the home screen
+            router.replace('/(tabs)');
+        }
+    };
+
     const handleSignUp = async () => {
         if (password !== confirmPassword) {
             Alert.alert("Passwords don't match");
@@ -33,7 +42,7 @@ export default function SignUpScreen() {
 
             if (response.ok) {
                 Alert.alert("Success", "You have been registered successfully. Please login.");
-                router.push('/login');
+                router.push('/screens/LoginScreen');
             } else {
                 const message = await response.text();
                 Alert.alert("Registration Failed", message);
@@ -49,7 +58,7 @@ export default function SignUpScreen() {
         <SafeAreaView style={styles.safeArea}>
             <ScrollView contentContainerStyle={styles.container}>
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()}>
+                    <TouchableOpacity onPress={handleGoBack}>
                         <Ionicons name="chevron-back" size={24} color="black" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>ClimateTrack</Text>
@@ -120,7 +129,7 @@ export default function SignUpScreen() {
                 </View>
 
                 <View style={styles.footer}>
-                    <TouchableOpacity onPress={() => router.push('/login')}>
+                    <TouchableOpacity onPress={() => router.push('/screens/LoginScreen')}>
                         <Text style={styles.bottomLink}>
                             Already have an account? <Text style={styles.link}>Login now!</Text>
                         </Text>
