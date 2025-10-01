@@ -1,5 +1,6 @@
 package com.ClimateTrack.backend.Service;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,17 +11,20 @@ import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignReques
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 
 import java.time.Duration;
+import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
 public class UploadService {
 
-    @Autowired
-    private S3Presigner s3Presigner;
+    //@Autowired
+    private final S3Presigner s3Presigner;
 
     @Value("${aws.s3.bucketName}")
     private String bucketName;
 
-    public String generatePreSignedUrl(String filename, String filetype) {
+    //public String generatePreSignedUrl(String filename, String filetype) {
+    public Map<String, String> generatePreSignedUrl(String filename, String filetype) {
         // Define the S3 key, which includes the folder path
         String s3Key = "uploads/" + filename;
 
@@ -37,7 +41,11 @@ public class UploadService {
                         .putObjectRequest(putObjectRequest)
         );
 
-        return presignedRequest.url().toString();
+        //return presignedRequest.url().toString();
+        return Map.of(
+                "uploadUrl", presignedRequest.url().toString(),
+                "key", s3Key
+        );
     }
 
     /**

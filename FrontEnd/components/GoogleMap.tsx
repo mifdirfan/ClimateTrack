@@ -11,7 +11,17 @@ type Disaster = {
     locationName: string;
     latitude: number;
     longitude: number;
+    source: string;
 };
+
+type Report = {
+    reportId: string;
+    title: string;
+    latitude: number;
+    longitude: number;
+    postedByUsername: string;
+};
+
 
 type UserLocation = {
     latitude: number;
@@ -20,10 +30,11 @@ type UserLocation = {
 
 type GoogleMapWebProps = {
     disasters?: Disaster[];
+    reports?: Report[]; // NEW: Add reports prop
     userLocation?: UserLocation | null;
 };
 
-export default function GoogleMapWeb({ disasters = [], userLocation }: GoogleMapWebProps) {
+export default function GoogleMapWeb({ disasters = [], reports = [], userLocation }: GoogleMapWebProps) {
     const apiKey = Constants.expoConfig?.extra?.googleMapsApiKey;
     const apiUrl = Constants.expoConfig?.extra?.googleMapsApiUrl || 'https://maps.googleapis.com/maps/api/js';
 
@@ -47,9 +58,14 @@ export default function GoogleMapWeb({ disasters = [], userLocation }: GoogleMap
             const iconUrl = getWeatherIconUrl(weather.icon);
 
             const iconSvg = `
-              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
-                <circle cx="20" cy="20" r="18" fill="${weather.color}" stroke="#fff" stroke-width="1"/>
-                <image href="${iconUrl}" x="5" y="5" height="30" width="30"/>
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48">
+                <defs>
+                  <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feDropShadow dx="1" dy="3" stdDeviation="2" flood-color="#000" flood-opacity="0.4"/>
+                  </filter>
+                </defs>
+                <circle cx="24" cy="21" r="18" fill="#cb0000" stroke="#fff" stroke-width="2" filter="url(#shadow)"/>
+                <image href="${iconUrl}" x="9" y="6" height="30" width="30"/>
               </svg>
             `.replace(/\s+/g, ' ').trim();
 
@@ -62,14 +78,15 @@ export default function GoogleMapWeb({ disasters = [], userLocation }: GoogleMap
                 title: "${d.locationName}",
                 icon: {
                   url: "${iconDataUrl}",
-                  scaledSize: new google.maps.Size(40, 40),
-                  anchor: new google.maps.Point(20, 40)
+                  scaledSize: new google.maps.Size(48, 48),
+                  anchor: new google.maps.Point(24, 42)
                 }
               }).addListener('click', function() {
                 infoWindow.setContent(
-                  '<div style="padding: 10px; min-width: 200px;">' +
-                  '<h3 style="margin: 0 0 5px 0; color: ${weather.color}">${d.locationName}</h3>' +
-                  '<p style="margin: 0;">${d.description}</p>' +
+                  '<div style="padding: 5px; min-width: 100px;">' +
+                  '<h1 style="font-size: 20px; margin: 0 0 5px 0; color: black">${d.locationName}</h1>' +
+                  '<h3 style="font-size: 15px; margin: 0 0 5px 0; color: darkslategrey; font-weight: bold">${d.disasterType}</h3>' +
+                  '<p style="margin: 0;">${d.source}</p>' +
                   '</div>'
                 );
                 infoWindow.open(map, this);
@@ -95,6 +112,35 @@ export default function GoogleMapWeb({ disasters = [], userLocation }: GoogleMap
       map.setZoom(14);
     ` : '';
 
+    const reportMarkersJS = reports
+        .filter(r => r && typeof r.latitude === 'number' && typeof r.longitude === 'number')
+        .map((r) => {
+            // User reports will be a simple blue circle to differentiate them
+            return `
+              new google.maps.Marker({
+                position: { lat: ${r.latitude}, lng: ${r.longitude} },
+                map: map,
+                title: "${r.title}",
+                icon: {
+                  path: google.maps.SymbolPath.CIRCLE,
+                  scale: 15,
+                  fillColor: '#E6AF00', 
+                  fillOpacity: 1,
+                  strokeColor: 'white',
+                  strokeWeight: 2
+                }
+              }).addListener('click', function() {
+                infoWindow.setContent(
+                  '<div style="padding: 5px; min-width: 100px;">' +
+                  '<h1 style="font-size: 18px; margin: 0 0 5px 0; color: black">${r.title}</h1>' +
+                  '<p style="margin: 0; color: #555;">Reported by: <strong>${r.postedByUsername}</strong></p>' +
+                  '</div>'
+                );
+                infoWindow.open(map, this);
+              });
+            `;
+        }).join('\n');
+
 
     const html = `
     <!DOCTYPE html>
@@ -113,14 +159,26 @@ export default function GoogleMapWeb({ disasters = [], userLocation }: GoogleMap
           function initMap() {
             map = new google.maps.Map(document.getElementById("map"), {
               center: { lat: 4.2105, lng: 101.9758 }, // Centered on Malaysia
-              zoom: 7,
+              zoom: 3,
               disableDefaultUI: true,
-              zoomControl: true
+              zoomControl: true,
+              // Restrict map to the valid Mercator projection bounds.
+              // This prevents scrolling into the blank space at the poles.
+              restriction: {
+                latLngBounds: {
+                  north: 85,
+                  south: -85,
+                  west: -180,
+                  east: 180,
+                },
+                strictBounds: false, // 'false' allows a soft bounce-back effect
+              }
             });
 
             infoWindow = new google.maps.InfoWindow();
             
             ${disasterMarkersJS}
+            ${reportMarkersJS}
             ${userMarkerJS}
           }
           

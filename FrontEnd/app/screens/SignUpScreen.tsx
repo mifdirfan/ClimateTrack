@@ -4,13 +4,16 @@ import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { styles } from '@/constants/signupStyles';
 import API_BASE_URL from '@/constants/ApiConfig';
 import { useRouter } from 'expo-router';
+import { AuthData, useAuth } from '@/context/AuthContext';
 
 export default function SignUpScreen() {
+    const [fullname, setFullname] = useState('');
     const [username, setUsername] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const router = useRouter();
+    const { login } = useAuth();
 
     const handleGoBack = () => {
         if (router.canGoBack()) {
@@ -27,7 +30,8 @@ export default function SignUpScreen() {
             return;
         }
         try {
-            const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+            // Step 1: Register the user
+            const signupResponse = await fetch(`${API_BASE_URL}/api/auth/signup`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -36,15 +40,35 @@ export default function SignUpScreen() {
                     username: username,
                     email: email,
                     password: password,
-                    fullName: username, // or add another field for full name
+                    fullName: fullname, // or add another field for full name
                 }),
             });
 
-            if (response.ok) {
-                Alert.alert("Success", "You have been registered successfully. Please login.");
-                router.push('/screens/LoginScreen');
+            if (signupResponse.ok) {
+                // Step 2: Automatically log the user in by calling the login API
+                const loginResponse = await fetch(`${API_BASE_URL}/api/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password }),
+                });
+
+                if (loginResponse.ok) {
+                    const loginData: AuthData = await loginResponse.json();
+
+                    // Step 3: Store the token and user data in the context
+                    await login(loginData);
+
+                    // Step 4: Navigate to the main app screen
+                    Alert.alert("Success", "You have been registered and logged in successfully!");
+                    router.replace('/(tabs)');
+                } else {
+                    // This case is unlikely but good to have.
+                    // If registration succeeds but auto-login fails, send them to the login screen.
+                    Alert.alert("Registration Successful", "Please log in to continue.");
+                    router.replace('/screens/LoginScreen');
+                }
             } else {
-                const message = await response.text();
+                const message = await signupResponse.text();
                 Alert.alert("Registration Failed", message);
             }
         } catch (error) {
@@ -69,6 +93,14 @@ export default function SignUpScreen() {
                     <Text style={styles.welcomeText}>Hi!</Text>
                     <Text style={styles.subText}>Register to get started.</Text>
 
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Full Name"
+                        placeholderTextColor="#888"
+                        autoCapitalize="none"
+                        value={fullname}
+                        onChangeText={setFullname}
+                    />
                     <TextInput
                         style={styles.input}
                         placeholder="Username"

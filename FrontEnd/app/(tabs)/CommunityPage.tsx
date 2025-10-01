@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, TextInput, FlatList, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
 import { styles } from '../../constants/CommunityPageStyles';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext'; // Import your auth hook
+import { Header } from '../../components/Header';
 import API_BASE_URL from '../../constants/ApiConfig';
 
 import { useNavigation } from '@react-navigation/native';
@@ -153,9 +155,10 @@ export default function CommunityScreen() {
     }
 
     return (
-        <View style={styles.container}>
+        <SafeAreaView style={styles.container}>
+            <Header title="ClimateTrack" />
             {/* Search Bar */}
-            <View style={styles.searchBar}>
+            {/*<View style={styles.searchBar}>
                 <Ionicons name="search" size={20} color="#b0b0b0" />
                 <TextInput
                     placeholder="Search"
@@ -164,7 +167,7 @@ export default function CommunityScreen() {
                     onChangeText={setSearch}
                     placeholderTextColor="#b0b0b0"
                 />
-            </View>
+            </View>*/}
 
             {/* Posts List or Login Prompt */}
             {!token ? (
@@ -193,6 +196,6 @@ export default function CommunityScreen() {
                 <MaterialIcons name="edit" size={20} color="#fff" style={styles.pencilIcon} />
                 <Text style={styles.writeText}>Write</Text>
             </TouchableOpacity>
-        </View>
+        </SafeAreaView>
     );
 }

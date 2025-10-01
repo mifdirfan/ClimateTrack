@@ -4,6 +4,7 @@ export const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#FFFFFF',
+        paddingLeft: 10
     },
     listContainer: {
         paddingBottom: 20,
@@ -11,14 +12,6 @@ export const styles = StyleSheet.create({
     // Header Section
     headerImage: {
         height: 44,
-    },
-    headerRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        paddingVertical: 9,
-        paddingHorizontal: 16,
-        marginBottom: 26,
     },
     headerIcon: {
         width: 24,
@@ -28,6 +21,20 @@ export const styles = StyleSheet.create({
         color: '#000000',
         fontSize: 24,
         fontWeight: 'bold',
+        textAlign: 'center',
+        position: 'absolute', // Position it relative to the parent
+        left: 0,              // Span the full width of the parent
+        right: 0,             // Span the full width of the parent
+        zIndex: -1
+    },
+    headerRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 9,
+        paddingHorizontal: 16,
+        marginTop: 10,
+        marginBottom: 16, // Adjusted for consistency
     },
     // Profile Info Section
     profileInfoContainer: {
@@ -44,13 +51,20 @@ export const styles = StyleSheet.create({
     },
     profileTextContainer: {
         flex: 1,
+        justifyContent: 'center', // Vertically center the text content
+        paddingLeft: 10 // Use paddingLeft instead of generic padding
     },
     profileName: {
         color: '#000000',
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: 'bold',
     },
     profileLocation: {
+        color: '#767676',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    profileEmail: {
         color: '#767676',
         fontSize: 14,
         fontWeight: 'bold',
@@ -62,11 +76,16 @@ export const styles = StyleSheet.create({
         fontWeight: 'bold',
         marginBottom: 12,
         paddingHorizontal: 27,
+        paddingTop: 50
     },
     reportsContainer: {
         // Use paddingHorizontal for the first and last item's spacing
         paddingHorizontal: 27,
         marginBottom: 26,
+        borderWidth: 20,
+        borderRadius: 10,
+        borderColor: '#000000',
+        backgroundColor: '#000000'
     },
     reportCard: {
         backgroundColor: '#FFFFFF',
@@ -92,6 +111,7 @@ export const styles = StyleSheet.create({
     },
     // Settings Section
     settingsContainer: {
+        top: 180,
         paddingHorizontal: 16,
     },
     settingsItem: {
@@ -114,7 +134,7 @@ export const styles = StyleSheet.create({
         height: 77,
     },
     logoutButton: {
-        padding: 8,
+        padding: 0
     },
 
 });
