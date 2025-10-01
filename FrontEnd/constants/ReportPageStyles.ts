@@ -1,49 +1,126 @@
 import { StyleSheet } from 'react-native';
-import { Colors } from './Colors';
+
+// -------- styles --------
+const HEADER_HEIGHT = 52;
 
 export const styles = StyleSheet.create({
-    container: {
+    root: {
         flex: 1,
-        backgroundColor: "#FFFFFF",
+        backgroundColor: '#FFF',
     },
-    box: {
-        height: 46,
-        backgroundColor: "#D9D9D9",
+
+    // Sticky header
+    headerRow: {
+        position: 'absolute',
+        top: 45,
+        left: 0,
+        right: 0,
+        height: HEADER_HEIGHT,
+        backgroundColor: '#FFF',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        borderBottomWidth: StyleSheet.hairlineWidth,
+        borderBottomColor: '#E5E5E5',
+        zIndex: 10,
+        elevation: 4, // Android
+    },
+    headerTitle: { fontSize: 24, fontWeight: '700' },
+
+    // Body (no scroll; sized to fit one page)
+    pageBody: {
+        flex: 1,
+        paddingTop: HEADER_HEIGHT + 18, // offset for sticky header
+        paddingBottom: 8,
+        paddingLeft: 12,
+        paddingRight: 12,
+        gap: 8,
+    },
+    pageTitle: {
+        fontSize: 24,
+        fontWeight: '700',
+        paddingHorizontal: 16,
+        marginBottom: 6,
+    },
+
+    label: {
+        fontSize: 14,
+        fontWeight: '600',
+        marginHorizontal: 16,
+        marginBottom: 6,
+    },
+
+    input: {
+        backgroundColor: '#EDEDED',
+        height: 40,
         borderRadius: 10,
-        marginBottom: 25,
-        marginHorizontal: 26,
+        paddingHorizontal: 14,
+        fontSize: 15,
+        marginHorizontal: 16,
+        marginBottom: 8,
     },
-    box2: {
-        height: 46,
-        backgroundColor: "#D9D9D9",
+    textArea: {
+        height: 72,
+        textAlignVertical: 'top',
+        paddingTop: 10,
+    },
+
+    // Chips
+    disasterTypeContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        paddingHorizontal: 8,
+        marginBottom: 10,
+    },
+    disasterTypeButton: {
+        backgroundColor: '#EFEFEF',
+        paddingVertical: 6,
+        paddingHorizontal: 12,
+        borderRadius: 18,
+        marginHorizontal: 4,
+        marginVertical: 4,
+    },
+    disasterTypeButtonSelected: { backgroundColor: '#007AFF' },
+    disasterTypeText: { color: '#333', fontWeight: '600', fontSize: 14 },
+    disasterTypeTextSelected: { color: '#FFF' },
+
+    // Image picker
+    imagePicker: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#EDEDED',
         borderRadius: 10,
-        marginBottom: 25,
-        marginHorizontal: 28,
+        height: 110,
+        marginHorizontal: 16,
+        marginBottom: 10,
+        overflow: 'hidden',
     },
-    box3: {
-        height: 46,
-        backgroundColor: "#D9D9D9",
+    imagePreview: { width: '100%', height: '100%', borderRadius: 10 },
+    plusWrap: { alignItems: 'center', justifyContent: 'center' },
+    plusCircle: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        borderWidth: 1.5,
+        borderColor: '#8C8C8C',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+
+    // Submit button
+    submitButton: {
+        backgroundColor: '#59a2fd',
         borderRadius: 10,
-        marginBottom: 26,
-        marginHorizontal: 26,
-    },
-    box4: {
-        height: 143,
-        backgroundColor: "#D9D9D9",
-        borderRadius: 10,
-        marginBottom: 74,
-        marginHorizontal: 26,
-    },
-    column: {
-        marginBottom: 25,
-    },
-    image: {
         height: 44,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginHorizontal: 16,
+        marginTop: 6,
+        marginBottom: 6,
     },
-    image2: {
-        width: 24,
-        height: 24,
-    },
+    submitButtonText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
     image3: {
         height: 77,
     },

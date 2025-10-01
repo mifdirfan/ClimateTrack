@@ -8,7 +8,7 @@ import GoogleMapWeb from "@/components/GoogleMap";
 import { useLocation } from '@/hooks/useLocation';
 import { weatherTypes } from '@/constants/weatherTypes';
 import homepageStyles from '../../constants/homepageStyles';
-
+import { Header } from '../../components/Header';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import API_BASE_URL from '../../constants/ApiConfig';
@@ -22,6 +22,7 @@ type Disaster = {
     locationName: string;
     latitude: number;
     longitude: number;
+    source: string;
 };
 
 
@@ -84,7 +85,7 @@ export default function Index() {
 
 
 
-    // Fetch disaster events and news
+    // Fetch disaster events
     useEffect(() => {
         // Fetch disasters
 
@@ -104,7 +105,8 @@ export default function Index() {
                         description: d.description,
                         locationName: d.locationName,
                         latitude: parseFloat(d.latitude),
-                        longitude: parseFloat(d.longitude)
+                        longitude: parseFloat(d.longitude),
+                        source: d.source
                     }));
                     setDisasters(mapped);
                 }
@@ -144,7 +146,7 @@ export default function Index() {
 
     return (
         <SafeAreaView style={homepageStyles.container}>
-            <View style={homepageStyles.searchBar}>
+            {/*<View style={homepageStyles.searchBar}>
                 <FontAwesome5 name="search" size={18} color="#888" style={{ marginRight: 8 }} />
                 <TextInput
                     placeholder="Search"
@@ -152,7 +154,8 @@ export default function Index() {
                     onChangeText={setSearch}
                     style={homepageStyles.searchInput}
                 />
-            </View>
+            </View>*/}
+            <Header title="ClimateTrack" />
 
             {/*<View style={homepageStyles.filterRow}>
                 <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>

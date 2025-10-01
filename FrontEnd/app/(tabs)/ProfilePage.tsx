@@ -5,14 +5,15 @@ import { Ionicons, Feather } from '@expo/vector-icons';
 import { styles } from '../../constants/ProfilePageStyles';
 import API_BASE_URL from '../../constants/ApiConfig';
 import { useAuth } from '@/context/AuthContext';
+import { Header } from '../../components/Header';
 import { useRouter } from 'expo-router';
 
 
 // Mock data based on your design
 const userData = {
-    id: '68d2aa19d4b231ff3685ee9e',
+    id: '68dc0e2617ca703c528bbba7',
     username: 'testuser',
-    location: 'Kuala Lumpur, Malaysia',
+    email: 'testuser2@example.com',
     avatar: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/u2F1jVXr2j/q2x1g2nj_expires_30_days.png',
 };
 
@@ -64,6 +65,7 @@ export default function ProfilePage() {
     const [reports, setReports] = useState<Report[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     // const fetchUserReports = () => {
     //     // FOR TESTING: Use the insecure endpoint to fetch reports by username directly.
@@ -103,6 +105,7 @@ export default function ProfilePage() {
         if (!token || !username) return;
 
         setLoading(true);
+        setError(null);
 
         // Fetch user profile information
         const fetchProfile = fetch(`${API_BASE_URL}/api/auth/${username}`, {
@@ -126,10 +129,11 @@ export default function ProfilePage() {
                 setUserProfile(profileData);
                 setReports(reportsData);
             })
-            .catch(err => {
+            .catch(err => setError(err.message || 'An unexpected error occurred.'))
+            /*.catch(err =>  {
                 console.error('Failed to fetch data:', err);
                 Alert.alert("Error", "Could not load profile data. Please try again.");
-            })
+            })*/
             .finally(() => {
                 setLoading(false);
                 setRefreshing(false);
@@ -170,22 +174,19 @@ export default function ProfilePage() {
 
     return (
         <SafeAreaView style={styles.container}>
+            <Header
+                title="ClimateTrack"
+                rightComponent={
+                    <TouchableOpacity onPress={logout} style={styles.logoutButton}>
+                        <Ionicons name="log-out-outline" size={26} color="#d9534f" />
+                    </TouchableOpacity>}
+            />
+            {loading && <ActivityIndicator size="large" style={{ marginTop: 20 }} />}
+            {error && <Text style={{ textAlign: 'center', color: 'red', marginTop: 20 }}>{error}</Text>}
             <ScrollView
-                style={styles.container}
                 contentContainerStyle={styles.listContainer}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
             >
-                {/* Header */}
-                <View style={styles.headerRow}>
-                    <Ionicons name="menu" size={24} color="white" />
-                    <Text style={styles.headerTitle}>ClimateTrack</Text>
-                    {/* NEW: Logout Button */}
-                    <TouchableOpacity onPress={logout} style={styles.logoutButton}>
-                        <Ionicons name="log-out-outline" size={26} color="#d9534f" />
-                    </TouchableOpacity>
-
-                </View>
-
                 {/* Profile Info */}
                 <View style={styles.profileInfoContainer}>
                     <Image
@@ -194,8 +195,9 @@ export default function ProfilePage() {
                         style={styles.profileAvatar}
                     />
                     <View style={styles.profileTextContainer}>
-                        <Text style={styles.profileName}>{userData.username}</Text>
-                        <Text style={styles.profileLocation}>{userData.location}</Text>
+                        <Text style={styles.profileName}>{userProfile?.fullName || 'User'}</Text>
+                        <Text style={styles.profileLocation}>{userProfile?.username}</Text>
+                        <Text style={styles.profileEmail}>{userProfile?.email}</Text>
                     </View>
                 </View>
 

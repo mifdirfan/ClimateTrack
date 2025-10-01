@@ -7,6 +7,7 @@ import styles, { TAB_LABELS } from '../../constants/NewsFeedPageStyles';
 
 import CommunityPage from './CommunityPage';
 import API_BASE_URL from '../../constants/ApiConfig';
+import { Header } from '../../components/Header';
 import {Ionicons} from "@expo/vector-icons";
 
 
@@ -143,10 +144,7 @@ export default function NewsFeedPage() {
         {error && <Text style={{ textAlign: 'center', color: 'red', marginTop: 20 }}>{error}</Text>}
         {!loading && !error && news.length === 0 && <Text style={{ textAlign: 'center', marginTop: 20 }}>No news found.</Text>}
 
-        {/* Header */}
-        <View style={styles.headerRow}>
-          <Text style={styles.headerTitle}>ClimateTrack</Text>
-        </View>
+        <Header title="ClimateTrack" />
 
         <FlatList
             data={news}

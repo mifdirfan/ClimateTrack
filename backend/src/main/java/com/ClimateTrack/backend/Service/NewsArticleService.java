@@ -45,7 +45,7 @@ public class NewsArticleService {
     @Transactional
     public void fetchAndSaveNews() {
         URI newsApiUri = UriComponentsBuilder.fromUriString(newsApiBaseUrl)
-                .queryParam("q", newsApiQuery)
+                .queryParam("qInTitle", newsApiQuery)
                 .queryParam("language", "en")
                 .queryParam("sortBy", "publishedAt")
                 .build()
