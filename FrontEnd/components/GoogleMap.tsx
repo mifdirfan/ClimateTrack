@@ -14,6 +14,15 @@ type Disaster = {
     source: string;
 };
 
+type Report = {
+    reportId: string;
+    title: string;
+    latitude: number;
+    longitude: number;
+    postedByUsername: string;
+};
+
+
 type UserLocation = {
     latitude: number;
     longitude: number;
@@ -21,10 +30,11 @@ type UserLocation = {
 
 type GoogleMapWebProps = {
     disasters?: Disaster[];
+    reports?: Report[]; // NEW: Add reports prop
     userLocation?: UserLocation | null;
 };
 
-export default function GoogleMapWeb({ disasters = [], userLocation }: GoogleMapWebProps) {
+export default function GoogleMapWeb({ disasters = [], reports = [], userLocation }: GoogleMapWebProps) {
     const apiKey = Constants.expoConfig?.extra?.googleMapsApiKey;
     const apiUrl = Constants.expoConfig?.extra?.googleMapsApiUrl || 'https://maps.googleapis.com/maps/api/js';
 
@@ -102,6 +112,35 @@ export default function GoogleMapWeb({ disasters = [], userLocation }: GoogleMap
       map.setZoom(14);
     ` : '';
 
+    const reportMarkersJS = reports
+        .filter(r => r && typeof r.latitude === 'number' && typeof r.longitude === 'number')
+        .map((r) => {
+            // User reports will be a simple blue circle to differentiate them
+            return `
+              new google.maps.Marker({
+                position: { lat: ${r.latitude}, lng: ${r.longitude} },
+                map: map,
+                title: "${r.title}",
+                icon: {
+                  path: google.maps.SymbolPath.CIRCLE,
+                  scale: 15,
+                  fillColor: '#E6AF00', 
+                  fillOpacity: 1,
+                  strokeColor: 'white',
+                  strokeWeight: 2
+                }
+              }).addListener('click', function() {
+                infoWindow.setContent(
+                  '<div style="padding: 5px; min-width: 100px;">' +
+                  '<h1 style="font-size: 18px; margin: 0 0 5px 0; color: black">${r.title}</h1>' +
+                  '<p style="margin: 0; color: #555;">Reported by: <strong>${r.postedByUsername}</strong></p>' +
+                  '</div>'
+                );
+                infoWindow.open(map, this);
+              });
+            `;
+        }).join('\n');
+
 
     const html = `
     <!DOCTYPE html>
@@ -139,6 +178,7 @@ export default function GoogleMapWeb({ disasters = [], userLocation }: GoogleMap
             infoWindow = new google.maps.InfoWindow();
             
             ${disasterMarkersJS}
+            ${reportMarkersJS}
             ${userMarkerJS}
           }
           

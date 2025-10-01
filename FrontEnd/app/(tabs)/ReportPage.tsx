@@ -19,7 +19,7 @@ export default function ReportPage() {
     const [title, setTitle] = useState('');
     const [disasterType, setDisasterType] = useState('');
     const [description, setDescription] = useState('');
-    const [image, setImage] = useState<string | null>(null);
+    const [image, setImage] = useState<{ uri: string; mimeType?: string } | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { requestLocation, errorMsg } = useLocation();
     //const [selectedDistrict, setSelectedDistrict] = useState('');
@@ -74,7 +74,12 @@ export default function ReportPage() {
             aspect: [4, 3],
             quality: 1,
         });
-        if (!result.canceled) setImage(result.assets[0].uri);
+
+        if (!result.canceled) {
+            const asset = result.assets[0];
+            // Save both the uri and the mimeType from the selected asset
+            setImage({ uri: asset.uri, mimeType: asset.mimeType });
+        }
     };
 
     const handleSubmit = async () => {
@@ -101,16 +106,19 @@ export default function ReportPage() {
         // --- Real Image Upload Logic ---
         if (image) {
             try {
-                const filename = image.split('/').pop() || `report-image-${Date.now()}.jpg`;
-                const filetype = 'image/jpeg';
+                // Use image.uri to get the filename
+                const filename = image.uri.split('/').pop() || `report-image-${Date.now()}`;
+                // Dynamically use the stored mimeType, with a fallback just in case
+                const filetype = image.mimeType || 'image/jpeg';
 
-                // 1. Get presigned URL from your backend
+                // 1. Get presigned URL from your backend with the correct file type
                 const presignedUrlResponse = await fetch(`${API_BASE_URL}/api/upload/url?filename=${filename}&filetype=${filetype}`);
                 if (!presignedUrlResponse.ok) throw new Error('Could not get upload URL.');
                 const presignedUrl = await presignedUrlResponse.text();
 
                 // 2. Upload image directly to S3
-                const imageResponse = await fetch(image);
+                // Make sure you fetch the image from its uri
+                const imageResponse = await fetch(image.uri);
                 const blob = await imageResponse.blob();
                 const uploadResponse = await fetch(presignedUrl, {
                     method: 'PUT',
@@ -120,13 +128,10 @@ export default function ReportPage() {
 
                 if (!uploadResponse.ok) throw new Error('Failed to upload image to S3.');
 
-                // 3. Set the photo key for the report
                 photoKey = `uploads/${filename}`;
 
             } catch (uploadError: any) {
-                Alert.alert('Image Upload Error', uploadError.message);
-                setIsSubmitting(false);
-                return;
+                // ... (error handling)
             }
         }
 
@@ -246,9 +251,10 @@ export default function ReportPage() {
                 <Text style={styles.text5}>
                     {"Upload an Image"}
                 </Text>
-                <TouchableOpacity style={[styles.box4, localStyles.imagePicker]} onPress={pickImage}>
+                <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>
                     {image ? (
-                        <Image source={{ uri: image }} style={styles.imagePreview} resizeMode="cover" />
+                        // Use image.uri here to show the preview
+                        <Image source={{ uri: image.uri }} style={styles.imagePreview} resizeMode="cover" />
                     ) : (
                         <View style={styles.plusWrap}>
                             <View style={styles.plusCircle}>

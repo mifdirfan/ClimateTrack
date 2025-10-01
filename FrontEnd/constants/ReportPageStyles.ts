@@ -8,6 +8,11 @@ export const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#FFF',
     },
+    container: {
+        flex: 1,
+        backgroundColor: '#fff',
+        position: 'relative',
+    },
 
     // Sticky header
     headerRow: {
@@ -31,7 +36,7 @@ export const styles = StyleSheet.create({
     // Body (no scroll; sized to fit one page)
     pageBody: {
         flex: 1,
-        paddingTop: HEADER_HEIGHT + 18, // offset for sticky header
+        paddingTop: 10, // offset for sticky header
         paddingBottom: 8,
         paddingLeft: 12,
         paddingRight: 12,
