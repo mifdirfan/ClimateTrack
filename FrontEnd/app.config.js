@@ -11,6 +11,10 @@ export default {
         "extra": {
             "googleMapsApiKey": process.env.GOOGLE_MAPS_API_KEY,
             "googleMapsApiUrl": process.env.GOOGLE_MAPS_API_URL,
+            "eas": {
+                "projectId": "d55943a1-b511-4bbe-b031-25112add3aff"
+            }
+
         },
         "ios": {
             "supportsTablet": true,
@@ -19,6 +23,7 @@ export default {
             }
         },
         "android": {
+            "package": "com.dongyang.ClimateTrack",
             "adaptiveIcon": {
                 "foregroundImage": "./assets/images/adaptive-icon.png",
                 "backgroundColor": "#ffffff"
@@ -56,5 +61,6 @@ export default {
         "experiments": {
             "typedRoutes": true
         }
+
     }
 };
