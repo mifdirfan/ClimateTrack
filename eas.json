@@ -1,0 +1,24 @@
+{
+  "cli": {
+    "version": ">= 16.22.0",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "workingDir": "./Frontend"
+    },
+    "preview": {
+      "distribution": "internal",
+      "workingDir": "./Frontend"
+    },
+    "production": {
+      "autoIncrement": true,
+      "workingDir": "./Frontend"
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
