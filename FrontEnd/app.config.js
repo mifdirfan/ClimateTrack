@@ -16,10 +16,6 @@ export default {
         "extra": {
             "googleMapsApiKey": process.env.GOOGLE_MAPS_API_KEY,
             "googleMapsApiUrl": process.env.GOOGLE_MAPS_API_URL,
-            "eas": {
-                "projectId": "3cff4e88-1c90-4a2f-a378-ebd99099f79f"
-            }
-
         },
         "ios": {
             "supportsTablet": true,
@@ -70,6 +66,5 @@ export default {
         "experiments": {
             "typedRoutes": true
         }
-
     }
 };
