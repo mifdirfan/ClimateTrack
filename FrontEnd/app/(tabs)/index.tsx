@@ -119,12 +119,19 @@ export default function Index() {
     // Fetch disasters
     const fetchData = useCallback(async () => {
         // Don't set dataLoading here, it will be handled by the calling function
+
+        console.log(`Attempting to fetch data from: ${API_BASE_URL}`);
         setDisasterError(null);
         try {
             const [disastersResponse, reportsResponse] = await Promise.all([
                 fetch(`${API_BASE_URL}/api/events`),
                 fetch(`${API_BASE_URL}/api/reports`)
             ]);
+
+            // --- NEW LOGGING (Checks the HTTP response) ---
+            console.log(`Disasters response status: ${disastersResponse.status}`);
+            console.log(`Reports response status: ${reportsResponse.status}`);
+
             if (!disastersResponse.ok || !reportsResponse.ok) {
                 throw new Error('Failed to load map data.');
             }
@@ -135,6 +142,9 @@ export default function Index() {
             if (Array.isArray(disastersData)) setDisasters(disastersData);
             if (Array.isArray(reportsData)) setReports(reportsData);
         } catch (err: any) {
+
+            // This will show us the exact network error
+            console.error('An error occurred during fetch:', JSON.stringify(err, null, 2));
             setDisasterError(err.message || 'An unknown error occurred.');
         }
     }, []);
