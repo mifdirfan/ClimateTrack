@@ -36,24 +36,25 @@ export const styles = StyleSheet.create({
     // Body (no scroll; sized to fit one page)
     pageBody: {
         flex: 1,
-        paddingTop: 10, // offset for sticky header
-        paddingBottom: 8,
-        paddingLeft: 12,
-        paddingRight: 12,
-        gap: 8,
+        paddingTop: 5, // offset for sticky header
+        paddingBottom: 10,
+        paddingLeft: 18,
+        paddingRight: 18,
+        gap: 10,
     },
     pageTitle: {
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: '700',
         paddingHorizontal: 16,
-        marginBottom: 6,
+        marginBottom: 10,
     },
 
     label: {
-        fontSize: 14,
-        fontWeight: '600',
-        marginHorizontal: 16,
-        marginBottom: 6,
+        color: "#000000",
+        fontSize: 20,
+        fontWeight: "bold",
+        marginBottom: 9,
+        paddingHorizontal: 18,
     },
 
     input: {
@@ -63,7 +64,7 @@ export const styles = StyleSheet.create({
         paddingHorizontal: 14,
         fontSize: 15,
         marginHorizontal: 16,
-        marginBottom: 8,
+        marginBottom: 15,
     },
     textArea: {
         height: 72,
@@ -91,6 +92,62 @@ export const styles = StyleSheet.create({
     disasterTypeText: { color: '#333', fontWeight: '600', fontSize: 14 },
     disasterTypeTextSelected: { color: '#FFF' },
 
+    // Dropdown styles
+    dropdown: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#EDEDED',
+        height: 40,
+        borderRadius: 10,
+        paddingHorizontal: 14,
+        marginHorizontal: 16,
+        marginBottom: 8,
+    },
+    dropdownText: {
+        fontSize: 15,
+        color: '#333',
+    },
+    dropdownPlaceholder: {
+        fontSize: 15,
+        color: '#9B9B9B',
+    },
+
+    // Modal styles
+    modalOverlay: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalContent: {
+        backgroundColor: '#FFF',
+        borderRadius: 10,
+        padding: 10,
+        width: '80%',
+        maxHeight: '60%',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    modalItem: {
+        paddingVertical: 12,
+        paddingHorizontal: 10,
+        borderBottomWidth: 1,
+        borderBottomColor: '#EEE',
+    },
+    modalItemText: {
+        fontSize: 16,
+        color: '#333',
+    },
+    modalItemSelectedText: {
+        fontSize: 16,
+        color: '#007AFF',
+        fontWeight: 'bold',
+    },
+
     // Image picker
     imagePicker: {
         justifyContent: 'center',
@@ -99,7 +156,7 @@ export const styles = StyleSheet.create({
         borderRadius: 10,
         height: 110,
         marginHorizontal: 16,
-        marginBottom: 10,
+        marginBottom: 15,
         overflow: 'hidden',
     },
     imagePreview: { width: '100%', height: '100%', borderRadius: 10 },
@@ -116,14 +173,14 @@ export const styles = StyleSheet.create({
 
     // Submit button
     submitButton: {
-        backgroundColor: '#59a2fd',
+        backgroundColor: '#000000',
         borderRadius: 10,
         height: 44,
         justifyContent: 'center',
         alignItems: 'center',
         marginHorizontal: 16,
         marginTop: 6,
-        marginBottom: 6,
+        marginBottom: 18,
     },
     submitButtonText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
     image3: {
@@ -142,7 +199,7 @@ export const styles = StyleSheet.create({
     },
     text: {
         color: "#000000",
-        fontSize: 24,
+        fontSize: 28,
         fontWeight: "bold",
     },
     text2: {
@@ -154,7 +211,7 @@ export const styles = StyleSheet.create({
     },
     text3: {
         color: "#000000",
-        fontSize: 20,
+        fontSize: 28,
         fontWeight: "bold",
         marginBottom: 13,
         marginLeft: 36,
@@ -176,8 +233,9 @@ export const styles = StyleSheet.create({
     // geo style
     locationInputContainer: {
         flexDirection: 'row',
-        marginHorizontal: 26,
-        marginBottom: 25,
+        paddingHorizontal: 14,
+        marginHorizontal: 4,
+        marginBottom: 15,
     },
     locationInput: {
         flex: 1,
@@ -190,7 +248,7 @@ export const styles = StyleSheet.create({
     },
     findButton: {
         height: 50,
-        backgroundColor: '#007AFF',
+        backgroundColor: '#000000',
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 20,

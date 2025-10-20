@@ -17,12 +17,7 @@
         "backgroundColor": "#ffffff"
       },
       "googleServicesFile": "./google-services.json",
-      "edgeToEdgeEnabled": true,
-      "config": {
-        "googleMaps": {
-          "apiKey": "AIzaSyBjcP9Fs8PT6etygC3Ps-OxWhjvuraIulI"
-        }
-      }
+      "edgeToEdgeEnabled": true
     },
     "web": {
       "bundler": "metro",

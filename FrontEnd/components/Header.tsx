@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
         paddingVertical: 9,
         paddingHorizontal: 16,
         marginTop: 10,
-        marginBottom: 16, // Adjusted for consistency
+        marginBottom: 10, // Adjusted for consistency
         position: 'relative', // Ensure children can be positioned absolutely within
     },
     headerContainer: {
@@ -40,8 +40,8 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingVertical: 9,
         paddingHorizontal: 16,
-        marginTop: 10,
-        marginBottom: 16,
+        marginTop: 8,
+        marginBottom: 8,
     },
     headerSide: {
         flex: 1,

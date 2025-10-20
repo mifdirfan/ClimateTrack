@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, Image, Alert, ScrollView, ActivityIndicator, StyleSheet, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather, Ionicons, AntDesign } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -20,6 +20,7 @@ export default function ReportPage() {
     const [disasterType, setDisasterType] = useState('');
     const [description, setDescription] = useState('');
     const [image, setImage] = useState<{ uri: string; mimeType?: string } | null>(null);
+    const [isPickerVisible, setIsPickerVisible] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { requestLocation, errorMsg } = useLocation();
     //const [selectedDistrict, setSelectedDistrict] = useState('');
@@ -131,7 +132,11 @@ export default function ReportPage() {
                 photoKey = `uploads/${filename}`;
 
             } catch (uploadError: any) {
-                // ... (error handling)
+                // CRITICAL: Handle the upload error and stop the submission
+                console.error("Image upload failed:", uploadError);
+                Alert.alert('Upload Failed', `Could not upload the image: ${uploadError.message}. Please try again.`);
+                setIsSubmitting(false); // Reset the button
+                return; // Exit the handleSubmit function immediately
             }
         }
 
@@ -193,34 +198,58 @@ export default function ReportPage() {
                 <Text style={styles.label}>Title</Text>
                 <TextInput
                     style={styles.input}
-                    placeholder="Flood at Downtown"
+                    placeholder="Example: 'Flood at Downtown'"
                     placeholderTextColor="#9B9B9B"
                     value={title}
                     onChangeText={setTitle}
                 />
 
                 <Text style={styles.label}>Disaster Type</Text>
-                <View style={styles.disasterTypeContainer}>
-                    {DISASTER_TYPES.map((type) => (
-                        <TouchableOpacity
-                            key={type}
-                            style={[
-                                styles.disasterTypeButton,
-                                disasterType === type && styles.disasterTypeButtonSelected,
-                            ]}
-                            onPress={() => setDisasterType(type)}
-                        >
-                            <Text
-                                style={[
-                                    styles.disasterTypeText,
-                                    disasterType === type && styles.disasterTypeTextSelected,
-                                ]}
-                            >
-                                {type}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </View>
+                <TouchableOpacity style={styles.dropdown} onPress={() => setIsPickerVisible(true)}>
+                    <Text style={disasterType ? styles.dropdownText : styles.dropdownPlaceholder}>
+                        {disasterType || 'Select a disaster type...'}
+                    </Text>
+                    <AntDesign name="down" size={16} color="#333" />
+                </TouchableOpacity>
+
+                <Modal
+                    transparent={true}
+                    visible={isPickerVisible}
+                    animationType="fade"
+                    onRequestClose={() => setIsPickerVisible(false)}
+                >
+                    <TouchableOpacity
+                        style={styles.modalOverlay}
+                        activeOpacity={1}
+                        onPressOut={() => setIsPickerVisible(false)}
+                    >
+                        <View style={styles.modalContent}>
+                            <ScrollView>
+                                {DISASTER_TYPES.map((type) => (
+                                    <TouchableOpacity
+                                        key={type}
+                                        style={styles.modalItem}
+                                        onPress={() => {
+                                            setDisasterType(type);
+                                            setIsPickerVisible(false);
+                                        }}
+                                    >
+                                        <Text
+                                            style={
+                                                disasterType === type
+                                                    ? styles.modalItemSelectedText
+                                                    : styles.modalItemText
+                                            }
+                                        >
+                                            {type}
+                                        </Text>
+                                    </TouchableOpacity>
+                                ))}
+                            </ScrollView>
+                        </View>
+                    </TouchableOpacity>
+                </Modal>
+
 
                 <Text style={styles.label}>Description</Text>
                 <TextInput
@@ -232,11 +261,12 @@ export default function ReportPage() {
                     onChangeText={setDescription}
                 />
                 {/* --- NEW Location Input UI --- */}
-                <Text style={styles.text4}>Location</Text>
+                <Text style={styles.label}>Location</Text>
                 <View style={styles.locationInputContainer}>
                     <TextInput
                         style={styles.locationInput}
                         placeholder="e.g., Bukit Bintang, Kuala Lumpur"
+                        placeholderTextColor="#9B9B9B"
                         value={locationInput}
                         onChangeText={setLocationInput}
                     />
@@ -248,7 +278,7 @@ export default function ReportPage() {
                         )}
                     </TouchableOpacity>
                 </View>
-                <Text style={styles.text5}>
+                <Text style={styles.label}>
                     {"Upload an Image"}
                 </Text>
                 <TouchableOpacity style={styles.imagePicker} onPress={pickImage}>

@@ -7,6 +7,7 @@ import com.google.firebase.messaging.Message;
 import com.google.firebase.messaging.Notification;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.geo.Distance;
 import org.springframework.data.geo.Metrics;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
@@ -25,6 +26,9 @@ public class NotificationService {
     private FirebaseMessaging firebaseMessaging;
     @Autowired
     private UserRepository userRepository; // NEW: Inject user repository
+
+    @Value("${notification.proximity.radius.km}")
+    private double notificationRadiusKm;
 
     /**
      * Sends a push notification to a specific device.
@@ -53,7 +57,7 @@ public class NotificationService {
         }
     }
     public void sendProximityNotification(GeoJsonPoint location, String authorId, String title, String body) {
-        Distance radius = new Distance(10, Metrics.KILOMETERS);
+        Distance radius = new Distance(notificationRadiusKm, Metrics.KILOMETERS);
         List<User> nearbyUsers = userRepository.findByLastKnownLocationNear(location, radius);
 
         logger.info("Found {} users near the event location.", nearbyUsers.size());
