@@ -67,7 +67,7 @@ export const styles = StyleSheet.create({
         marginBottom: 15,
     },
     textArea: {
-        height:70,
+        height:120,
         textAlignVertical: 'top',
         paddingTop: 10,
     },
@@ -154,7 +154,7 @@ export const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#EDEDED',
         borderRadius: 10,
-        height: 90,
+        height: 180,
         marginHorizontal: 16,
         marginBottom: 15,
         overflow: 'hidden',
@@ -180,7 +180,7 @@ export const styles = StyleSheet.create({
         alignItems: 'center',
         marginHorizontal: 16,
         marginTop: 6,
-        marginBottom: 18,
+        marginBottom: 100,
     },
     submitButtonText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
     image3: {

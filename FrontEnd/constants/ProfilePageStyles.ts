@@ -76,11 +76,11 @@ export const styles = StyleSheet.create({
     // Reports Section
     reportsHeader: {
         color: '#000000',
-        fontSize: 24,
+        fontSize: 26,
         fontWeight: 'bold',
         marginBottom: 12,
         paddingHorizontal: 27,
-        paddingTop: 50
+        paddingTop: 40
     },
     reportsContainer: {
         // Use paddingHorizontal for the first and last item's spacing
@@ -97,7 +97,7 @@ export const styles = StyleSheet.create({
         borderWidth: 1,
         padding: 16,
         // Give each card a defined width to work in a horizontal scroll
-        width: 220,
+        width: 260,
         minHeight: 180,
         // Add margin to the right for spacing between cards
         marginRight: 12,
@@ -124,7 +124,7 @@ export const styles = StyleSheet.create({
         color: '#000000',
         fontSize: 20,
         fontWeight: 'bold',
-        marginBottom: 4,
+        marginBottom: 8,
     },
     reportDescription: {
         color: '#000000',
@@ -137,6 +137,7 @@ export const styles = StyleSheet.create({
     settingsContainer: {
         top: 20,
         paddingHorizontal: 16,
+        marginBottom: 60,
     },
     settingsItem: {
         flexDirection: 'row',
