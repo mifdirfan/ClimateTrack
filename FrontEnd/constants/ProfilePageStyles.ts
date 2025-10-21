@@ -40,11 +40,12 @@ export const styles = StyleSheet.create({
     profileInfoContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 38,
+        marginTop: 38,
+        marginBottom: 8,
         paddingHorizontal: 27,
     },
     profileAvatar: {
-        width: 84,
+        width: 85,
         height: 85,
         marginRight: 19,
         borderRadius: 42, // Make it a circle
@@ -54,20 +55,23 @@ export const styles = StyleSheet.create({
         justifyContent: 'center', // Vertically center the text content
         paddingLeft: 10 // Use paddingLeft instead of generic padding
     },
-    profileName: {
+    profileUsername: {
         color: '#000000',
-        fontSize: 24,
+        fontSize: 26,
         fontWeight: 'bold',
+        marginBottom: 4,
     },
-    profileLocation: {
-        color: '#767676',
-        fontSize: 18,
+    profileFullName: {
+        color: '#000000',
+        fontSize: 14,
         fontWeight: 'bold',
+        marginBottom: 4,
     },
     profileEmail: {
         color: '#767676',
         fontSize: 14,
         fontWeight: 'bold',
+        marginBottom: 4,
     },
     // Reports Section
     reportsHeader: {
@@ -81,11 +85,10 @@ export const styles = StyleSheet.create({
     reportsContainer: {
         // Use paddingHorizontal for the first and last item's spacing
         paddingHorizontal: 27,
-        marginBottom: 26,
-        borderWidth: 20,
+        marginBottom: 13,
         borderRadius: 10,
-        borderColor: '#000000',
-        backgroundColor: '#000000'
+        borderColor: '#DFDFDF',
+        backgroundColor: '#FFFFFF'
     },
     reportCard: {
         backgroundColor: '#FFFFFF',
@@ -95,23 +98,44 @@ export const styles = StyleSheet.create({
         padding: 16,
         // Give each card a defined width to work in a horizontal scroll
         width: 220,
+        minHeight: 180,
         // Add margin to the right for spacing between cards
         marginRight: 12,
     },
-    reportText: {
-        color: '#000000',
-        fontSize: 15,
-        fontWeight: 'bold',
-        marginBottom: 8,
+    reportLocation: {
+        fontSize: 10,
+        color: '#666',
+        fontWeight: '600',
+        marginBottom: 4,
+        textTransform: 'uppercase',
     },
     reportImage: {
         borderRadius: 8,
         height: 133,
         width: '100%',
     },
+    reportDate: {
+        color: '#000000',
+        fontSize: 9,
+        fontWeight: 'bold',
+        marginBottom: 8,
+    },
+    reportTitle: {
+        color: '#000000',
+        fontSize: 20,
+        fontWeight: 'bold',
+        marginBottom: 4,
+    },
+    reportDescription: {
+        color: '#000000',
+        fontSize: 15,
+        fontWeight: 'bold',
+        marginBottom: 8,
+    },
+
     // Settings Section
     settingsContainer: {
-        top: 180,
+        top: 20,
         paddingHorizontal: 16,
     },
     settingsItem: {
@@ -134,9 +158,93 @@ export const styles = StyleSheet.create({
         height: 77,
     },
     logoutButton: {
-        padding: 0
+        padding: 0,
+        margin: 0,
     },
 
+    // Modal Styles for Report Details
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalContent: {
+        width: '90%',
+        maxHeight: '80%',
+        backgroundColor: '#FFFFFF',
+        borderRadius: 12,
+        padding: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
+        elevation: 10,
+    },
+    modalImage: {
+        width: '100%',
+        height: 200,
+        minHeight: 200,
+        borderRadius: 8,
+        marginBottom: 16,
+    },
+    modalTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        marginBottom: 8,
+    },
+    modalMeta: {
+        fontSize: 14,
+        color: '#666',
+        marginBottom: 16,
+    },
+    modalDescription: {
+        fontSize: 16,
+        lineHeight: 24,
+        color: '#333',
+    },
+    closeButton: {
+        backgroundColor: '#000000',
+        borderRadius: 8,
+        paddingVertical: 12,
+        marginTop: 20,
+    },
+    closeButtonText: {
+        color: '#FFFFFF',
+        textAlign: 'center',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+
+    // Styles for text content within a setting modal
+    modalSectionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#333',
+        marginTop: 16,
+        marginBottom: 8,
+    },
+    modalParagraph: {
+        fontSize: 15,
+        lineHeight: 22,
+        color: '#555',
+    },
+
+    // Styles for options within a setting modal
+    settingOptionRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingVertical: 10,
+        marginVertical: 10,
+        borderTopWidth: 1,
+        borderBottomWidth: 1,
+        borderColor: '#EEE',
+    },
+    settingOptionText: {
+        fontSize: 16,
+        color: '#333',
+    },
     loginPromptContainer: {
         flex: 1,
         justifyContent: 'center',
