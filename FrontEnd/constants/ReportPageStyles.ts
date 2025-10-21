@@ -260,4 +260,32 @@ export const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
+
+    loginPromptContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20,
+    },
+    loginPromptText: {
+        fontSize: 18,
+        textAlign: 'center',
+        marginBottom: 20,
+        color: '#333',
+    },
+    loginButton: {
+        backgroundColor: '#007AFF',
+        paddingVertical: 12,
+        paddingHorizontal: 30,
+        borderRadius: 25,
+    },
+    loginButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    // findButtonText: {
+    //     color: '#FFFFFF',
+    //     fontWeight: 'bold',
+    // },
 });

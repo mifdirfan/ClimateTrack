@@ -106,7 +106,10 @@ export default function ProfilePage() {
     // };
 
     const fetchData = useCallback(() => {
-        if (!token || !username) return;
+        if (!token || !username){
+            setLoading(false); // Not logged in, so don't show a loader
+            return;
+        }
 
         setLoading(true);
         setError(null);
@@ -145,21 +148,10 @@ export default function ProfilePage() {
     }, [token, username]);
 
     useEffect(() => {
-        // setLoading(true);
-        // fetchUserReports();
-
-        // If the initial auth check is done and there's no token, redirect to login
-        if (!isLoading && !token) {
-            router.replace('/screens/LoginScreen'); // Redirect to your login screen
-            return;
-        }
-
-        // If a token is available, fetch the data
-        if (token) {
+        if (!isLoading) {
             fetchData();
         }
-
-    }, [isLoading, token, fetchData, router]);
+    }, [isLoading, token, fetchData]);
 
     const onRefresh = () => {
         setRefreshing(true);
@@ -224,10 +216,24 @@ export default function ProfilePage() {
     }, [reports]); // Rerun this effect if the reports array itself changes.
 
     // Show a loading screen while checking authentication or fetching data
-    if (isLoading || loading) {
+    if (isLoading) {
         return (
             <SafeAreaView style={styles.container}>
                 <ActivityIndicator size="large" style={{ flex: 1 }} />
+            </SafeAreaView>
+        );
+    }
+
+    if (!token) {
+        return (
+            <SafeAreaView style={styles.container}>
+                <Header title="ClimateTrack" />
+                <View style={styles.loginPromptContainer}>
+                    <Text style={styles.loginPromptText}>Please log in to view your profile.</Text>
+                    <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/screens/LoginScreen')}>
+                        <Text style={styles.loginButtonText}>Login</Text>
+                    </TouchableOpacity>
+                </View>
             </SafeAreaView>
         );
     }
