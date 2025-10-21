@@ -16,8 +16,11 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
+      "package": "com.climatetrack",
+      "edgeToEdgeEnabled": true,
       "googleServicesFile": "./google-services.json",
-      "edgeToEdgeEnabled": true
+      "useNextNotificationsApi": true
+
     },
     "web": {
       "bundler": "metro",

@@ -15,7 +15,7 @@ export default {
         "newArchEnabled": true,
         "extra": {
             "eas": {
-                "projectId": "3cff4e88-1c90-4a2f-a378-ebd99099f79f"
+                "projectId": "d55943a1-b511-4bbe-b031-25112add3aff"
             },
             "googleMapsApiKey": process.env.GOOGLE_MAPS_API_KEY,
             "googleMapsApiUrl": process.env.GOOGLE_MAPS_API_URL,
@@ -25,10 +25,10 @@ export default {
             "config": {
                 "googleMapsApiKey": process.env.GOOGLE_MAPS_API_KEY
             },
-            "bundleIdentifier": "com.dongyang.ClimateTrack"
+            "bundleIdentifier": "com.ClimateTrack"
         },
         "android": {
-            "package": "com.dongyang.ClimateTrack",
+            "package": "com.ClimateTrack",
             "adaptiveIcon": {
                 "foregroundImage": "./assets/images/adaptive-icon.png",
                 "backgroundColor": "#ffffff"

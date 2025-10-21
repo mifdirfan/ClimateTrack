@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import {View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Alert} from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
@@ -63,6 +63,14 @@ export default function Index() {
             // Note: getPushToken will only work in a development build
             const fcmToken = await getPushToken();
 
+            if (!fcmToken) {
+                console.warn("Could not get push token. Location update will not include token.");
+                // Optionally, you could choose *not* to send the location update at all
+                // if the token is essential for this call. For now, we'll send without it.
+            } else {
+                console.log("Obtained push token:", fcmToken);
+            }
+
             await fetch(`${API_BASE_URL}/api/auth/location/${username}`, {
                 method: 'PUT',
                 headers: {
@@ -93,7 +101,7 @@ export default function Index() {
                 await sendLocationToBackend(location);
             }
         } else if (errorMsg) {
-            alert(errorMsg);
+            Alert.alert("Location Error", errorMsg);
         }
     }, [requestLocation, errorMsg, sendLocationToBackend, token, username]);
 
