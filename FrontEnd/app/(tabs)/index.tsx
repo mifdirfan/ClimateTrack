@@ -1,21 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Image, ActivityIndicator, StyleSheet, ScrollView } from 'react-native';
-import { FontAwesome5, MaterialIcons } from '@expo/vector-icons';
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native';
+import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-// import { WebView } from 'react-native-webview';
 import { useAuth } from '@/context/AuthContext';
 import GoogleMapWeb from "@/components/GoogleMap";
 import { useLocation } from '@/hooks/useLocation';
-import { weatherTypes } from '@/constants/weatherTypes';
 import homepageStyles from '../../constants/homepageStyles';
-import { Header } from '../../components/Header';
-import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
+import { Header } from '@/components/Header';
 import API_BASE_URL from '../../constants/ApiConfig';
-import {useFocusEffect} from "expo-router";
-import { getPushToken } from '../../components/notifications'; // 1. Import your new function
-
-
+import { getPushToken } from '@/components/notifications'; // 1. Import your new function
 
 // Type definitions
 type Disaster = {
@@ -42,32 +35,21 @@ type Report = {
     postedByUsername: string;
 };
 
-
-
-
-
 export default function Index() {
     //const [webviewUrl, setWebviewUrl] = useState<string | null>(null);
-    const [search, setSearch] = useState('');
-    const [selectedType, setSelectedType] = useState<string | null>(null);
+    //const [search, setSearch] = useState('');
+    //const [selectedType, setSelectedType] = useState<string | null>(null);
     const [disasters, setDisasters] = useState<Disaster[]>([]);
-    const [disasterLoading, setDisasterLoading] = useState(true);
+    //const [disasterLoading, setDisasterLoading] = useState(true);
     const [disasterError, setDisasterError] = useState<string | null>(null);
-    // const [news, setNews] = useState<NewsItem[]>([]);
-    const [newsLoading, setNewsLoading] = useState(true);
     const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
     const [reports, setReports] = useState<Report[]>([]); // NEW: State for user reports
     const [dataLoading, setDataLoading] = useState(true);
-
     const [isRefreshing, setIsRefreshing] = useState(false);
-
-
     const { token, username, isLoading } = useAuth();
     // placeholder for testing:
     // const { token, username } = { token: "your_jwt_token", username: "testuser" }; // Replace with your real auth state
-
     const { requestLocation, errorMsg } = useLocation();
-
 
     const sendLocationToBackend = useCallback(async (location: { coords: { latitude: number; longitude: number; } }) => {
         // Only proceed if we have a token and username
@@ -98,7 +80,6 @@ export default function Index() {
             console.error('Failed to send location for logged-in user:', error);
         }
     }, [token, username]); // Dependency array ensures this function updates when the user logs in/out
-
 
     const handleGetLocation = useCallback(async () => {
         const location = await requestLocation();
@@ -168,8 +149,6 @@ export default function Index() {
         setIsRefreshing(false);
     }, [fetchData, handleGetLocation]);
 
-
-
     if (isLoading) {
         // Show a loading screen while checking for a saved session
         return <ActivityIndicator size="large" />;
@@ -178,8 +157,6 @@ export default function Index() {
     /*const filteredDisasters = selectedType
         ? disasters.filter(d => d.disasterType === selectedType)
         : disasters;*/
-
-
 
     return (
         <SafeAreaView style={homepageStyles.container}>

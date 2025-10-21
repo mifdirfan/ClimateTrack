@@ -46,7 +46,7 @@ export const styles = StyleSheet.create({
         fontSize: 28,
         fontWeight: '700',
         paddingHorizontal: 16,
-        marginBottom: 10,
+        marginBottom: 20,
     },
 
     label: {
@@ -67,7 +67,7 @@ export const styles = StyleSheet.create({
         marginBottom: 15,
     },
     textArea: {
-        height: 72,
+        height:70,
         textAlignVertical: 'top',
         paddingTop: 10,
     },
@@ -154,7 +154,7 @@ export const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: '#EDEDED',
         borderRadius: 10,
-        height: 110,
+        height: 90,
         marginHorizontal: 16,
         marginBottom: 15,
         overflow: 'hidden',
@@ -239,7 +239,7 @@ export const styles = StyleSheet.create({
     },
     locationInput: {
         flex: 1,
-        height: 50,
+        height: 40,
         backgroundColor: "#F0F0F0",
         paddingHorizontal: 15,
         fontSize: 16,
@@ -247,7 +247,7 @@ export const styles = StyleSheet.create({
         borderBottomLeftRadius: 10,
     },
     findButton: {
-        height: 50,
+        height: 40,
         backgroundColor: '#000000',
         justifyContent: 'center',
         alignItems: 'center',

@@ -1,27 +1,21 @@
 import React, { useEffect, useState, useCallback  } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert, RefreshControl, FlatList } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert, RefreshControl, FlatList, Modal, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { styles } from '../../constants/ProfilePageStyles';
 import API_BASE_URL from '../../constants/ApiConfig';
+import GOOGLE_MAPS_API_KEY from '../../constants/GoogleAPI'; // Import the API Key
 import { useAuth } from '@/context/AuthContext';
 import { Header } from '../../components/Header';
 import { useRouter } from 'expo-router';
-
-
-// Mock data based on your design
-const userData = {
-    id: '68dc0e2617ca703c528bbba7',
-    username: 'testuser',
-    email: 'testuser2@example.com',
-    avatar: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/u2F1jVXr2j/q2x1g2nj_expires_30_days.png',
-};
 
 type UserProfile = {
     id: string;
     username: string;
     fullName: string;
     email: string;
+    // The avatar should be an optional string, which will be a URL from the backend.
+    avatar?: string;
 };
 
 type Report = {
@@ -35,7 +29,14 @@ type Report = {
     longitude: number;
     // Backend sends Instant as a string (ISO 8601 format)
     reportedAt: string;
+    locationName?: string; // Add optional field for reverse geocoded location
 
+};
+
+type SettingItem = {
+    id: string;
+    label: string;
+    icon: string;
 };
 
 const settingsItems = [
@@ -65,6 +66,9 @@ export default function ProfilePage() {
     const [reports, setReports] = useState<Report[]>([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [selectedReport, setSelectedReport] = useState<Report | null>(null);
+    const [selectedSetting, setSelectedSetting] = useState<SettingItem | null>(null);
+    const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(true); // State for the toggle
     const [error, setError] = useState<string | null>(null);
 
     // const fetchUserReports = () => {
@@ -163,6 +167,62 @@ export default function ProfilePage() {
         fetchData();
     };
 
+    // This effect runs whenever the `reports` state is updated.
+    // It performs reverse geocoding for each report.
+    useEffect(() => {
+        // Find reports that don't have a locationName yet.
+        const reportsToGeocode = reports.filter(report => !report.locationName);
+
+        // If all reports already have a location, do nothing.
+        if (reportsToGeocode.length === 0) return;
+
+        const reverseGeocodeReports = async () => {
+            const reportsWithLocation = await Promise.all(
+                reports.map(async (report) => {
+                    // If the report already has a name, or no coordinates, skip the API call.
+                    if (report.locationName || !report.latitude || !report.longitude) {
+                        return report;
+                    }
+
+                    try {
+                        const response = await fetch(
+                            `https://maps.googleapis.com/maps/api/geocode/json?latlng=${report.latitude},${report.longitude}&key=${GOOGLE_MAPS_API_KEY}`
+                        );
+                        const data = await response.json();
+                        if (data.status === 'OK' && data.results[0]) {
+                            let addressParts = data.results[0].formatted_address.split(',');
+
+                            // Clean the address: Check if the first part is a "plus code" (contains a '+')
+                            if (addressParts.length > 1 && addressParts[0].includes('+')) {
+                                const firstPart = addressParts[0];
+                                // Find the first space after the plus code (e.g., "8F7C25+M5 Ipoh" -> " Ipoh")
+                                const spaceAfterPlusCode = firstPart.indexOf(' ', firstPart.indexOf('+'));
+                                if (spaceAfterPlusCode !== -1) {
+                                    // Keep the part after the plus code (e.g., "Ipoh")
+                                    addressParts[0] = firstPart.substring(spaceAfterPlusCode + 1).trim();
+                                } else {
+                                    // If it's just a plus code without a city, remove the whole part
+                                    addressParts.shift();
+                                }
+                            }
+
+                            // Join the first two remaining parts and trim whitespace for a clean look.
+                            const cleanedLocation = addressParts.slice(0, 2).map((part: string) => part.trim()).filter(Boolean).join(', ');
+                            return { ...report, locationName: cleanedLocation };
+                        }
+                    } catch (err) {
+                        console.error("Reverse geocoding failed:", err);
+                    }
+                    // If geocoding fails, return the original report without a location name.
+                    return report;
+                })
+            );
+            setReports(reportsWithLocation);
+        };
+
+        reverseGeocodeReports();
+    }, [reports]); // Rerun this effect if the reports array itself changes.
+
     // Show a loading screen while checking authentication or fetching data
     if (isLoading || loading) {
         return (
@@ -190,13 +250,14 @@ export default function ProfilePage() {
                 {/* Profile Info */}
                 <View style={styles.profileInfoContainer}>
                     <Image
-                        source={{ uri: userData.avatar }}
+                        // Use the avatar URL from the profile, or a local default image as a fallback.
+                        source={userProfile?.avatar ? { uri: userProfile.avatar } : require('../../assets/images/defaultAvatar.jpg')}
                         resizeMode="cover"
                         style={styles.profileAvatar}
                     />
                     <View style={styles.profileTextContainer}>
-                        <Text style={styles.profileName}>{userProfile?.fullName || 'User'}</Text>
-                        <Text style={styles.profileLocation}>{userProfile?.username}</Text>
+                        <Text style={styles.profileUsername}>{userProfile?.username || 'Guest'}</Text>
+                        <Text style={styles.profileFullName}>{userProfile?.fullName}</Text>
                         <Text style={styles.profileEmail}>{userProfile?.email}</Text>
                     </View>
                 </View>
@@ -209,14 +270,23 @@ export default function ProfilePage() {
                     reports.length > 0 ? (
                         <FlatList
                             horizontal
-                            data={reports}
+                            data={reports} // The data now includes locationName
                             keyExtractor={(item) => item.reportId}
                             renderItem={({ item }) => (
-                                <TouchableOpacity style={styles.reportCard}>
-                                    <Text style={styles.reportText} numberOfLines={2}>{item.title}</Text>
-                                    {item.photoUrl && (
-                                        <Image source={{ uri: item.photoUrl }} style={styles.reportImage} resizeMode="cover" />
+                                <TouchableOpacity
+                                    style={styles.reportCard}
+                                    onPress={() => setSelectedReport(item)}
+                                >
+                                    <Text style={styles.reportTitle} numberOfLines={2}>{item.title}</Text>
+                                    {item.locationName && (
+                                        <Text style={styles.reportLocation} numberOfLines={1}>{item.locationName}</Text>
                                     )}
+                                    <Text style={styles.reportDate} >{new Date(item.reportedAt).toLocaleDateString()}</Text>
+                                    {/* Always render the Image. Let the `source` prop handle the fallback. */}
+                                    <Image
+                                        source={item.photoUrl ? { uri: item.photoUrl } : require('../../assets/images/defaultReportPhoto.png')}
+                                        style={styles.reportImage}
+                                        resizeMode="cover" />
                                 </TouchableOpacity>
                             )}
                             showsHorizontalScrollIndicator={false}
@@ -229,8 +299,8 @@ export default function ProfilePage() {
 
                 {/* Settings */}
                 <View style={styles.settingsContainer}>
-                    {settingsItems.map((item) => (
-                        <TouchableOpacity key={item.id} style={styles.settingsItem} onPress={() => alert(`${item.label} pressed!`)}>
+                    {settingsItems.map((item: SettingItem) => (
+                        <TouchableOpacity key={item.id} style={styles.settingsItem} onPress={() => setSelectedSetting(item)}>
                             <Image
                                 source={{ uri: item.icon }}
                                 resizeMode="contain"
@@ -240,14 +310,88 @@ export default function ProfilePage() {
                         </TouchableOpacity>
                     ))}
                 </View>
-
-                {/*/!* Footer *!/*/}
-                {/*<Image*/}
-                {/*    source={{ uri: "https://storage.googleapis.com/tagjs-prod.appspot.com/v1/u2F1jVXr2j/43inueb9_expires_30_days.png" }}*/}
-                {/*    resizeMode="stretch"*/}
-                {/*    style={styles.footerImage}*/}
-                {/*/>*/}
             </ScrollView>
+
+            {/* Report Detail Modal */}
+            {selectedReport && (
+                <Modal
+                    animationType="fade"
+                    transparent={true}
+                    visible={!!selectedReport}
+                    onRequestClose={() => setSelectedReport(null)}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
+                            {/* Always render the Image. Let the `source` prop handle the fallback. */}
+                            <Image
+                                source={selectedReport.photoUrl ? { uri: selectedReport.photoUrl } : require('../../assets/images/defaultReportPhoto.png')}
+                                style={styles.modalImage}
+                                resizeMode="cover" />
+                            <Text style={styles.modalTitle}>{selectedReport.title}</Text>
+                            <Text style={styles.modalMeta}>{`${selectedReport.disasterType} • ${new Date(selectedReport.reportedAt).toLocaleDateString()}`}</Text>
+                            <ScrollView>
+                                <Text style={styles.modalDescription}>{selectedReport.description}</Text>
+                            </ScrollView>
+                            <TouchableOpacity style={styles.closeButton} onPress={() => setSelectedReport(null)}>
+                                <Text style={styles.closeButtonText}>Close</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
+            )}
+
+            {/* Settings Detail Modal */}
+            {selectedSetting && (
+                <Modal
+                    animationType="fade"
+                    transparent={true}
+                    visible={!!selectedSetting}
+                    onRequestClose={() => setSelectedSetting(null)}
+                >
+                    <View style={styles.modalOverlay}>
+                        <View style={styles.modalContent}>
+                            <Text style={styles.modalTitle}>{selectedSetting.label}</Text>
+
+                            {/* Conditionally render content based on selected setting */}
+                            {selectedSetting.id === '1' ? (
+                                <ScrollView>
+                                    <Text style={styles.modalSectionTitle}>Data Collection</Text>
+                                    <Text style={styles.modalParagraph}>
+                                        ClimateTrack collects information you provide directly to us, such as when you create an account or submit a report. This includes your username, email, and any photos or descriptions you upload. We also collect location data to map reports accurately.
+                                    </Text>
+                                    <Text style={styles.modalSectionTitle}>Data Usage</Text>
+                                    <Text style={styles.modalParagraph}>
+                                        Your data is used to operate, maintain, and improve our services. Location data and reports are shared publicly on the map to inform the community about potential climate-related events. Your personal information, like your email, is never shared publicly.
+                                    </Text>
+                                    <Text style={styles.modalSectionTitle}>Your Rights</Text>
+                                    <Text style={styles.modalParagraph}>
+                                        You have the right to access and delete your account and associated data at any time. For more information, please contact our support team.
+                                    </Text>
+                                </ScrollView>
+                            ) : selectedSetting.id === '2' ? (
+                                <View style={styles.settingOptionRow}>
+                                    <Text style={styles.settingOptionText}>App Notifications</Text>
+                                    <Switch
+                                        trackColor={{ false: "#E9E9EA", true: "#34C759" }}
+                                        thumbColor={isNotificationsEnabled ? "#FFFFFF" : "#F4F3F4"}
+                                        ios_backgroundColor="#3e3e3e"
+                                        onValueChange={setIsNotificationsEnabled}
+                                        value={isNotificationsEnabled}
+                                    />
+                                </View>
+                            ) : (
+                                <Text style={{ marginVertical: 20, textAlign: 'center', color: '#666' }}>
+                                    More options for {selectedSetting.label} will be available soon.
+                                </Text>
+                            )}
+
+                            <TouchableOpacity style={styles.closeButton} onPress={() => setSelectedSetting(null)}>
+                                <Text style={styles.closeButtonText}>Close</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </Modal>
+            )}
         </SafeAreaView>
     );
 }
