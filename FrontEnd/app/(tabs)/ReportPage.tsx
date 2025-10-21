@@ -31,13 +31,13 @@ export default function ReportPage() {
     const { token, isLoading: isAuthLoading } = useAuth(); // Get the real auth state
     const router = useRouter();
 
-    useEffect(() => {
-        // If the initial auth check is done and there's no token, redirect
-        if (!isAuthLoading && !token) {
-            Alert.alert("Login Required", "You must be logged in to submit a report.");
-            router.replace('/screens/LoginScreen');
-        }
-    }, [isAuthLoading, token, router]);
+    // useEffect(() => {
+    //     // If the initial auth check is done and there's no token, redirect
+    //     if (!isAuthLoading && !token) {
+    //         Alert.alert("Login Required", "You must be logged in to submit a report.");
+    //         router.replace('/screens/LoginScreen');
+    //     }
+    // }, [isAuthLoading, token, router]);
 
     const handleGeocode = async () => {
         if (!locationInput.trim()) {
@@ -83,6 +83,7 @@ export default function ReportPage() {
     };
 
     const handleSubmit = async () => {
+        // ... (Input validation checks remain the same) ...
         if (!coordinates) {
             Alert.alert('Location Missing', 'Please select a district to set the report location.');
             return;
@@ -93,46 +94,65 @@ export default function ReportPage() {
         }
 
         setIsSubmitting(true);
-
-        // const location = await requestLocation();
-        // if (!location) {
-        //     Alert.alert('Location Error', errorMsg || 'Could not get your current location. Please enable location services.');
-        //     setIsSubmitting(false);
-        //     return;
-        // }
+        //console.log("Starting report submission..."); // Log start
 
         let photoKey: string | undefined = undefined;
 
         // --- Real Image Upload Logic ---
         if (image) {
+            console.log("Image selected, attempting upload..."); // Log image presence
             try {
-                // Use image.uri to get the filename
                 const filename = image.uri.split('/').pop() || `report-image-${Date.now()}`;
-                // Dynamically use the stored mimeType, with a fallback just in case
                 const filetype = image.mimeType || 'image/jpeg';
+                console.log(`Filename: ${filename}, Filetype: ${filetype}`); // Log file info
 
-                // 1. Get presigned URL from your backend with the correct file type
+                // 1. Get presigned URL data
+                //console.log("Fetching presigned URL...");
                 const presignedUrlResponse = await fetch(`${API_BASE_URL}/api/upload/url?filename=${filename}&filetype=${filetype}`);
-                if (!presignedUrlResponse.ok) throw new Error('Could not get upload URL.');
-                const presignedUrl = await presignedUrlResponse.text();
+                //console.log(`Presigned URL response status: ${presignedUrlResponse.status}`); // Log status
 
-                // 2. Upload image directly to S3
-                // Make sure you fetch the image from its uri
+                if (!presignedUrlResponse.ok) {
+                    const errorText = await presignedUrlResponse.text();
+                    throw new Error(`Could not get upload URL: ${errorText}`);
+                }
+
+                const { uploadUrl, key } = await presignedUrlResponse.json();
+                //console.log(`Received upload URL: ${uploadUrl}`); // Log URL
+                //console.log(`Received S3 key: ${key}`); // Log key
+
+                // 2. Prepare image blob
+                //console.log("Fetching image blob...");
                 const imageResponse = await fetch(image.uri);
                 const blob = await imageResponse.blob();
-                const uploadResponse = await fetch(presignedUrl, {
+                //console.log("Image blob fetched successfully.");
+
+                // 3. Upload image directly to S3
+                //console.log("Uploading blob to S3...");
+                const uploadResponse = await fetch(uploadUrl, {
                     method: 'PUT',
                     headers: { 'Content-Type': filetype },
                     body: blob,
                 });
 
-                if (!uploadResponse.ok) throw new Error('Failed to upload image to S3.');
 
-                photoKey = `uploads/${filename}`;
+                console.log(`S3 Upload Response Status: ${uploadResponse.status}`);
+                if (!uploadResponse.ok) {
+                    const errorText = await uploadResponse.text(); // Get error text from S3 if possible
+                    //console.error("S3 Upload Error Response Text:", errorText);
+                    throw new Error(`Failed to upload image to S3. Status: ${uploadResponse.status}`);
+                }
+
+                console.log("Image uploaded successfully to S3.");
+                photoKey = key; // Assign the key ONLY if upload is OK
 
             } catch (uploadError: any) {
-                // ... (error handling)
+                console.error("Image Upload Process Failed:", uploadError);
+                Alert.alert("Upload Failed", `Could not upload the image: ${uploadError.message}. Please try again.`);
+                setIsSubmitting(false); // Stop submission
+                return; // Exit the function
             }
+        } else {
+            console.log("No image selected for upload."); // Log if no image
         }
 
 
@@ -140,43 +160,68 @@ export default function ReportPage() {
             title,
             description,
             disasterType,
-            // Use the coordinates from the geocoding result
             latitude: coordinates.lat,
             longitude: coordinates.lng,
-            photoUrl: photoKey,
+            photoUrl: photoKey, // Will be undefined if upload failed or no image
         };
 
+        //console.log("Submitting report data to backend:", JSON.stringify(reportData, null, 2));
+
         try {
+            //console.log("Sending report data to /api/reports...");
             const response = await fetch(`${API_BASE_URL}/api/reports`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`, // Use the real token from context
+                    'Authorization': `Bearer ${token}`,
                 },
                 body: JSON.stringify(reportData),
             });
+            //console.log(`Backend report submission response status: ${response.status}`); // Log backend response status
 
-            if (!response.ok) throw new Error('Failed to submit report. Please try again.');
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Failed to submit report: ${errorText}`);
+            }
 
+            //console.log("Report submitted successfully!");
             Alert.alert('Success', 'Your report has been submitted!');
             // Reset form
             setTitle('');
             setDisasterType('');
             setDescription('');
             setImage(null);
+            setLocationInput('');
+            setCoordinates(null);
 
         } catch (error: any) {
+            console.error("Report Submission Failed:", error);
             Alert.alert('Submission Error', error.message);
         } finally {
             setIsSubmitting(false);
+            console.log("Report submission process finished."); // Log end
         }
     };
 
     // Show a loading screen while checking authentication status
     if (isAuthLoading) {
         return (
-            <SafeAreaView style={styles.container}>
+            <SafeAreaView style={styles.root}>
                 <ActivityIndicator size="large" style={{ flex: 1 }} />
+            </SafeAreaView>
+        );
+    }
+
+    if (!token) {
+        return (
+            <SafeAreaView style={styles.root}>
+                <Header title="ClimateTrack" />
+                <View style={styles.loginPromptContainer}>
+                    <Text style={styles.loginPromptText}>Please log in to submit a report.</Text>
+                    <TouchableOpacity style={styles.loginButton} onPress={() => router.push('/screens/LoginScreen')}>
+                        <Text style={styles.loginButtonText}>Login</Text>
+                    </TouchableOpacity>
+                </View>
             </SafeAreaView>
         );
     }
