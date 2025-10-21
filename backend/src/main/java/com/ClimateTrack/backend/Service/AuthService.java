@@ -51,6 +51,7 @@ public class AuthService {
                         .id(user.getId())
                         .username(user.getUsername())
                         .fullName(user.getFullName())
+                        .email(user.getEmail())
                         .build());
     }
 
