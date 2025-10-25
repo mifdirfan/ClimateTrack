@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "630317041133",
-    "project_id": "climatetrack-8e682",
-    "storage_bucket": "climatetrack-8e682.firebasestorage.app"
+    "project_number": "41286246307",
+    "project_id": "climatetrack-5a84f",
+    "storage_bucket": "climatetrack-5a84f.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:630317041133:android:ca30dd57099623eea7d3e4",
+        "mobilesdk_app_id": "1:41286246307:android:803c9282355be8d55c0416",
         "android_client_info": {
-          "package_name": "com.climatetrack"
+          "package_name": "com.dongyang.ClimateTrack"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyBGTY2FmbyNGRVffTZ1ZmKY9MKy7xduZQ8"
+          "current_key": "AIzaSyBl8bKsGyvMT7MhwqQoNySgxsbSSW8QNYk"
         }
       ],
       "services": {

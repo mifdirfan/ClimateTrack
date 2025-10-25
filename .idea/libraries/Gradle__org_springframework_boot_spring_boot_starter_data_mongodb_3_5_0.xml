@@ -2,9 +2,13 @@
   <library name="Gradle: org.springframework.boot:spring-boot-starter-data-mongodb:3.5.0" type="java-imported" external-system-id="GRADLE">
     <properties groupId="org.springframework.boot" artifactId="spring-boot-starter-data-mongodb" version="3.5.0" baseVersion="3.5.0" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-data-mongodb/3.5.0/e638c9af8b36069605fbcdacb34a5517f3189b29/spring-boot-starter-data-mongodb-3.5.0.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-data-mongodb/3.5.0/e638c9af8b36069605fbcdacb34a5517f3189b29/spring-boot-starter-data-mongodb-3.5.0.jar!/" />
     </CLASSES>
-    <JAVADOC />
-    <SOURCES />
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-data-mongodb/3.5.0/e638c9af8b36069605fbcdacb34a5517f3189b29/spring-boot-starter-data-mongodb-3.5.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.springframework.boot/spring-boot-starter-data-mongodb/3.5.0/e638c9af8b36069605fbcdacb34a5517f3189b29/spring-boot-starter-data-mongodb-3.5.0-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>
