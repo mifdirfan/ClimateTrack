@@ -20,7 +20,7 @@ public class UploadService {
     //@Autowired
     private final S3Presigner s3Presigner;
 
-    @Value("${aws.s3.bucketName}")
+    @Value("${application.bucket.name}")
     private String bucketName;
 
     //public String generatePreSignedUrl(String filename, String filetype) {

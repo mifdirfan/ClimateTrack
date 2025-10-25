@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 
 @Configuration
@@ -15,7 +16,6 @@ public class S3Config {
     private final String accessKey;
     private final String secretKey;
 
-    // The region is now injected via the constructor
     public S3Config(
             @Value("${aws.s3.region}") String region,
             @Value("${aws.s3.accessKey}") String accessKey,
@@ -24,6 +24,17 @@ public class S3Config {
         this.region = region;
         this.accessKey = accessKey;
         this.secretKey = secretKey;
+    }
+
+    @Bean
+    public S3Client s3Client() {
+        AwsBasicCredentials credentials = AwsBasicCredentials.create(accessKey, secretKey);
+        StaticCredentialsProvider credentialsProvider = StaticCredentialsProvider.create(credentials);
+
+        return S3Client.builder()
+                .region(Region.of(region))
+                .credentialsProvider(credentialsProvider)
+                .build();
     }
 
     @Bean

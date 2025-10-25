@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -8,35 +8,103 @@ import {
     SafeAreaView,
     KeyboardAvoidingView,
     Platform,
-    Switch,
     Alert,
+    Image,
+    ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import * as Location from 'expo-location';
+import { useAuth } from '@/context/AuthContext';
+import API_BASE_URL from '../../constants/ApiConfig';
 
 export default function WritePostPage() {
     const router = useRouter();
+    const { token, user } = useAuth();
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
-    const [isAnonymous, setIsAnonymous] = useState(true);
+    const [image, setImage] = useState<string | null>(null);
+    const [location, setLocation] = useState<Location.LocationObject | null>(null);
+    const [loading, setLoading] = useState(false);
 
-    const isPostButtonDisabled = !title.trim() || !content.trim();
+    useEffect(() => {
+        (async () => {
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+                Alert.alert('Permission denied', 'Permission to access location was denied');
+                return;
+            }
+            let location = await Location.getCurrentPositionAsync({});
+            setLocation(location);
+        })();
+    }, []);
 
-    const handlePost = () => {
-        if (isPostButtonDisabled) {
+    const handleChooseImage = async () => {
+        let result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            allowsEditing: true,
+            aspect: [4, 3],
+            quality: 1,
+        });
+
+        if (!result.canceled) {
+            setImage(result.assets[0].uri);
+        }
+    };
+
+    const handlePost = async () => {
+        if (!title.trim() || !content.trim()) {
             Alert.alert("Empty Fields", "Please enter a title and content for your post.");
             return;
         }
-        // TODO: Implement post submission logic here
-        // This would typically involve making an API call to the backend
-        console.log({
-            title,
-            content,
-            isAnonymous,
-        });
-        Alert.alert("Post Submitted", "Your post has been submitted successfully.", [
-            { text: "OK", onPress: () => router.back() }
-        ]);
+
+        setLoading(true);
+
+        const formData = new FormData();
+        formData.append('title', title);
+        formData.append('content', content);
+        formData.append('postedByUserId', user?.uid || '');
+        formData.append('postedByUsername', user?.email || 'Anonymous');
+
+        if (location) {
+            formData.append('latitude', String(location.coords.latitude));
+            formData.append('longitude', String(location.coords.longitude));
+        }
+
+        if (image) {
+            const uriParts = image.split('.');
+            const fileType = uriParts[uriParts.length - 1];
+            formData.append('image', {
+                uri: image,
+                name: `photo.${fileType}`,
+                type: `image/${fileType}`,
+            } as any);
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/posts`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data',
+                },
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to create post');
+            }
+
+            Alert.alert("Post Submitted", "Your post has been submitted successfully.", [
+                { text: "OK", onPress: () => router.back() }
+            ]);
+        } catch (error) {
+            console.error(error);
+            Alert.alert("Error", "Could not submit your post.");
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -53,11 +121,9 @@ export default function WritePostPage() {
                     <TouchableOpacity
                         onPress={handlePost}
                         style={styles.headerButton}
-                        disabled={isPostButtonDisabled}
+                        disabled={loading}
                     >
-                        <Text style={[styles.doneText, isPostButtonDisabled && styles.doneTextDisabled]}>
-                            Done
-                        </Text>
+                        {loading ? <ActivityIndicator size="small" /> : <Text style={styles.doneText}>Done</Text>}
                     </TouchableOpacity>
                 </View>
 
@@ -77,22 +143,13 @@ export default function WritePostPage() {
                         onChangeText={setContent}
                         multiline
                     />
+                    {image && <Image source={{ uri: image }} style={styles.imagePreview} />}
                 </View>
 
                 <View style={styles.footer}>
-                    <TouchableOpacity style={styles.footerButton}>
+                    <TouchableOpacity style={styles.footerButton} onPress={handleChooseImage}>
                         <Ionicons name="camera-outline" size={24} color="#888" />
                     </TouchableOpacity>
-                    <View style={styles.anonymousContainer}>
-                        <Text style={styles.anonymousText}>Anonymous</Text>
-                        <Switch
-                            trackColor={{ false: '#767577', true: '#81b0ff' }}
-                            thumbColor={isAnonymous ? '#f5dd4b' : '#f4f3f4'}
-                            ios_backgroundColor="#3e3e3e"
-                            onValueChange={() => setIsAnonymous(previousState => !previousState)}
-                            value={isAnonymous}
-                        />
-                    </View>
                 </View>
             </KeyboardAvoidingView>
         </SafeAreaView>
@@ -129,9 +186,6 @@ const styles = StyleSheet.create({
         color: '#007AFF',
         fontWeight: '600',
     },
-    doneTextDisabled: {
-        color: '#B0B0B0',
-    },
     inputContainer: {
         flex: 1,
         padding: 20,
@@ -162,13 +216,10 @@ const styles = StyleSheet.create({
     footerButton: {
         padding: 8,
     },
-    anonymousContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    anonymousText: {
-        marginRight: 8,
-        fontSize: 16,
-        color: '#555',
+    imagePreview: {
+        width: 100,
+        height: 100,
+        borderRadius: 10,
+        marginTop: 10,
     },
 });
