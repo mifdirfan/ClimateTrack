@@ -25,20 +25,20 @@ export default {
             "config": {
                 "googleMapsApiKey": process.env.GOOGLE_MAPS_API_KEY
             },
-            "bundleIdentifier": "com.ClimateTrack"
+            "bundleIdentifier": "com.dongyang.ClimateTrack"
         },
         "android": {
-            "package": "com.ClimateTrack",
+            "package": "com.dongyang.ClimateTrack",
             "adaptiveIcon": {
                 "foregroundImage": "./assets/images/adaptive-icon.png",
                 "backgroundColor": "#ffffff"
             },
             "googleServicesFile": "./google-services.json",
-            "mixedContentMode": "always",
+            "usesCleartextTraffic": true,
+            // "mixedContentMode": "always",
             // Add this flag to allow HTTP requests in development on Android.
             // This is necessary for connecting to a local backend server.
             // NOTE: For a production build, you should use HTTPS.
-            "usesCleartextTraffic": true,
             "edgeToEdgeEnabled": true,
             "config": {
                 "googleMaps": {
