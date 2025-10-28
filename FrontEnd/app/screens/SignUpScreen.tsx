@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { styles } from '@/constants/signupStyles';
-import API_BASE_URL from '@/constants/ApiConfig';
+import API_BASE_URL from '../../constants/ApiConfig';
 import { useRouter } from 'expo-router';
 import { AuthData, useAuth } from '@/context/AuthContext';
 
