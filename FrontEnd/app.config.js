@@ -34,11 +34,11 @@ export default {
                 "backgroundColor": "#ffffff"
             },
             "googleServicesFile": "./google-services.json",
-            "mixedContentMode": "always",
+            "usesCleartextTraffic": true,
+            // "mixedContentMode": "always",
             // Add this flag to allow HTTP requests in development on Android.
             // This is necessary for connecting to a local backend server.
             // NOTE: For a production build, you should use HTTPS.
-            "usesCleartextTraffic": true,
             "edgeToEdgeEnabled": true,
             "config": {
                 "googleMaps": {
