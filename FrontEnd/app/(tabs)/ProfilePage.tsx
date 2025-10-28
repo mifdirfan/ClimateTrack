@@ -1,13 +1,14 @@
 import React, { useEffect, useState, useCallback  } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert, RefreshControl, FlatList, Modal, Switch } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl, FlatList, Modal, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, Feather } from '@expo/vector-icons';
-import { styles } from '../../constants/ProfilePageStyles';
+import { Ionicons} from '@expo/vector-icons';
+import { styles } from '@/constants/ProfilePageStyles';
 import API_BASE_URL from '../../constants/ApiConfig';
 import GOOGLE_MAPS_API_KEY from '../../constants/GoogleAPI'; // Import the API Key
 import { useAuth } from '@/context/AuthContext';
-import { Header } from '../../components/Header';
+import { Header } from '@/components/Header';
 import { useRouter } from 'expo-router';
+import {black} from "colorette";
 
 type UserProfile = {
     id: string;
@@ -283,7 +284,7 @@ export default function ProfilePage() {
                                     style={styles.reportCard}
                                     onPress={() => setSelectedReport(item)}
                                 >
-                                    <Text style={styles.reportTitle} numberOfLines={2}>{item.title}</Text>
+                                    <Text style={styles.reportTitle} numberOfLines={1}>{item.title}</Text>
                                     {item.locationName && (
                                         <Text style={styles.reportLocation} numberOfLines={1}>{item.locationName}</Text>
                                     )}
@@ -299,7 +300,7 @@ export default function ProfilePage() {
                             contentContainerStyle={styles.reportsContainer}
                         />
                     ) : (
-                        <Text style={{ paddingHorizontal: 27, color: '#666' }}>No reports found.</Text>
+                        <Text style={{ color: '#666', height: 180, textAlign: 'center', paddingTop: 80 }}>You have no report.</Text>
                     )
                 )}
 

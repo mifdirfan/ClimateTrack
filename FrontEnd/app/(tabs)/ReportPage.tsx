@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 
 // Example list of districts. In a real app, you might fetch this from a server.
 //const DISTRICTS = ['Bukit Bintang', 'Titiwangsa', 'Setiawangsa', 'Wangsa Maju', 'Batu', 'Cheras'];
-const DISASTER_TYPES = ['Flood', 'Landslide', 'Earthquake', 'Wildfire', 'Other'];
+const DISASTER_TYPES = ['Flood', 'Landslide', 'Cyclone/Typhoon/Tornado', 'Wildfire', 'Tsunamis', 'Earthquake', 'Volcanic Eruption', 'Drought', 'Other'];
 
 export default function ReportPage() {
     const [title, setTitle] = useState('');

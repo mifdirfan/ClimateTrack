@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, Alert} from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
+import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, TextInput, Alert } from 'react-native';
+import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import GoogleMapWeb from "@/components/GoogleMap";
@@ -8,6 +8,7 @@ import { useLocation } from '@/hooks/useLocation';
 import homepageStyles from '../../constants/homepageStyles';
 import { Header } from '@/components/Header';
 import API_BASE_URL from '../../constants/ApiConfig';
+import GOOGLE_MAPS_API_KEY from '../../constants/GoogleAPI';
 import { getPushToken } from '@/components/notifications'; // 1. Import your new function
 
 // Type definitions
@@ -19,6 +20,7 @@ type Disaster = {
     latitude: number;
     longitude: number;
     source: string;
+    reportedAt: string;
 };
 
 
@@ -30,21 +32,29 @@ type UserLocation = {
 type Report = {
     reportId: string;
     title: string;
+    description: string;
+    disasterType: string;
+    postedByUsername: string;
+    photoUrl?: string;
     latitude: number;
     longitude: number;
-    postedByUsername: string;
+    // Backend sends Instant as a string (ISO 8601 format)
+    reportedAt: string;
+    locationName?: string; // Add optional field for reverse geocoded location
 };
 
 export default function Index() {
-    //const [webviewUrl, setWebviewUrl] = useState<string | null>(null);
-    //const [search, setSearch] = useState('');
+    const [searchQuery, setSearchQuery] = useState('');
     //const [selectedType, setSelectedType] = useState<string | null>(null);
     const [disasters, setDisasters] = useState<Disaster[]>([]);
+    const [searchedLocation, setSearchedLocation] = useState<UserLocation | null>(null);
     //const [disasterLoading, setDisasterLoading] = useState(true);
     const [disasterError, setDisasterError] = useState<string | null>(null);
     const [userLocation, setUserLocation] = useState<UserLocation | null>(null);
     const [reports, setReports] = useState<Report[]>([]); // NEW: State for user reports
     const [dataLoading, setDataLoading] = useState(true);
+    const [showDisasters, setShowDisasters] = useState(true);
+    const [showReports, setShowReports] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const { token, username, isLoading } = useAuth();
     // placeholder for testing:
@@ -62,14 +72,6 @@ export default function Index() {
         try {
             // Note: getPushToken will only work in a development build
             const fcmToken = await getPushToken();
-
-            if (!fcmToken) {
-                console.warn("Could not get push token. Location update will not include token.");
-                // Optionally, you could choose *not* to send the location update at all
-                // if the token is essential for this call. For now, we'll send without it.
-            } else {
-                console.log("Obtained push token:", fcmToken);
-            }
 
             await fetch(`${API_BASE_URL}/api/auth/location/${username}`, {
                 method: 'PUT',
@@ -101,9 +103,34 @@ export default function Index() {
                 await sendLocationToBackend(location);
             }
         } else if (errorMsg) {
-            Alert.alert("Location Error", errorMsg);
+            alert(errorMsg);
         }
     }, [requestLocation, errorMsg, sendLocationToBackend, token, username]);
+
+    const handleSearch = useCallback(async () => {
+        if (!searchQuery.trim()) {
+            return; // Don't search if the input is empty
+        }
+
+        const geocodingUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchQuery)}&key=${GOOGLE_MAPS_API_KEY}`;
+
+        try {
+            const response = await fetch(geocodingUrl);
+            const data = await response.json();
+
+            if (data.status === 'OK' && data.results.length > 0) {
+                const { lat, lng } = data.results[0].geometry.location;
+                // Set the searched location state, which will be used for the new marker
+                setSearchedLocation({ latitude: lat, longitude: lng });
+            } else {
+                Alert.alert('Location Not Found', 'Could not find the specified location. Please try again.');
+            }
+        } catch (err) {
+            console.error("Geocoding API error:", err);
+            Alert.alert('Error', 'Failed to search for location.');
+        }
+    }, [searchQuery, GOOGLE_MAPS_API_KEY]);
+
 
     // Fetch disasters
     const fetchData = useCallback(async () => {
@@ -140,11 +167,18 @@ export default function Index() {
 
     // This useEffect runs only ONCE when the component first mounts
     useEffect(() => {
-        setDataLoading(true);
-        Promise.all([
-            fetchData(),
-            handleGetLocation()
-        ]).finally(() => setDataLoading(false));
+        const initialLoad = async () => {
+            setDataLoading(true);
+            // Fetch data and location in parallel
+            await Promise.all([
+                fetchData(),
+                handleGetLocation()
+            ]);
+            setDataLoading(false);
+        };
+        initialLoad();
+        // We only want this to run once, so we disable the exhaustive-deps warning for this specific effect.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     // This function is called when the user presses the refresh button
@@ -162,43 +196,17 @@ export default function Index() {
         return <ActivityIndicator size="large" />;
     }
 
+    // Conditionally filter the data based on the toggle state
+    const filteredDisasters = showDisasters ? disasters : [];
+    const filteredReports = showReports ? reports : [];
+
     /*const filteredDisasters = selectedType
         ? disasters.filter(d => d.disasterType === selectedType)
         : disasters;*/
 
     return (
         <SafeAreaView style={homepageStyles.container}>
-            {/*<View style={homepageStyles.searchBar}>
-                <FontAwesome5 name="search" size={18} color="#888" style={{ marginRight: 8 }} />
-                <TextInput
-                    placeholder="Search"
-                    value={search}
-                    onChangeText={setSearch}
-                    style={homepageStyles.searchInput}
-                />
-            </View>*/}
             <Header title="ClimateTrack" />
-
-            {/*<View style={homepageStyles.filterRow}>
-                <ScrollView horizontal={true} showsHorizontalScrollIndicator={false}>
-                    {weatherTypes.map((type) => (
-                        <TouchableOpacity
-                            key={type.key}
-                            style={[
-                                homepageStyles.filterBtn,
-                                {
-                                    backgroundColor: type.color,
-                                    opacity: selectedType === type.key || !selectedType ? 1 : 0.5
-                                }
-                            ]}
-                            onPress={() => setSelectedType(selectedType === type.key ? null : type.key)}
-                        >
-                            <Image source={{ uri: `https://openweathermap.org/img/wn/${type.icon}@2x.png` }} style={{ width: 20, height: 20, marginRight: 4 }} />
-                            <Text style={homepageStyles.filterBtnText}>{type.label}</Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
-            </View>*/}
 
             <View style={styles.mapContainer}>
                 {dataLoading ? (
@@ -213,11 +221,13 @@ export default function Index() {
                 ) : (
                     // Pass both disasters and reports to the map
                     <GoogleMapWeb
-                        disasters={disasters}
-                        reports={reports}
-                        userLocation={userLocation}
+                        disasters={filteredDisasters}
+                        reports={filteredReports}
+                        userLocation={userLocation} // This is always the user's actual location
+                        searchedLocation={searchedLocation} // Pass the searched location separately
                     />
                 )}
+                {/* --- Reset User Location Button --- */}
                 <TouchableOpacity style={styles.locationButton} onPress={handleGetLocation}>
                     <MaterialIcons name="my-location" size={24} color="#007AFF" />
                 </TouchableOpacity>
@@ -229,6 +239,45 @@ export default function Index() {
                         <MaterialIcons name="refresh" size={24} color="#007AFF" />
                     )}
                 </TouchableOpacity>
+
+                {/* Search Bar Overlay */}
+                <View style={homepageStyles.searchBar}>
+                    <TextInput
+                        placeholder="Search for a location..."
+                        placeholderTextColor="#888" // Add this line to set the color
+                        value={searchQuery}
+                        onChangeText={setSearchQuery}
+                        style={homepageStyles.searchInput}
+                        onSubmitEditing={handleSearch} // Trigger search on keyboard submit
+                    />
+                    <TouchableOpacity onPress={handleSearch}><FontAwesome5 name="search" size={18} color="#888" /></TouchableOpacity>
+                </View>
+
+                {/* Filter Buttons */}
+                <View style={homepageStyles.filterContainer}>
+                    <TouchableOpacity
+                        style={[
+                            homepageStyles.filterButton,
+                            showDisasters ? homepageStyles.filterButtonActive : homepageStyles.filterButtonInactive
+                        ]}
+                        onPress={() => setShowDisasters(!showDisasters)}
+                    >
+                        <Text style={{ ...homepageStyles.filterButtonText, color: showDisasters ? '#FFF' : '#333' }}>
+                            Disasters
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                        style={[
+                            homepageStyles.filterButton,
+                            showReports ? homepageStyles.filterButtonActive : homepageStyles.filterButtonInactive
+                        ]}
+                        onPress={() => setShowReports(!showReports)}
+                    >
+                        <Text style={{ ...homepageStyles.filterButtonText, color: showReports ? '#FFF' : '#333' }}>
+                            Reports
+                        </Text>
+                    </TouchableOpacity>
+                </View>
             </View>
 
         </SafeAreaView>
@@ -239,11 +288,10 @@ const styles = StyleSheet.create({
     mapContainer: {
         flex: 1,
         position: 'relative',
-        marginBottom: 50,
     },
     locationButton: {
         position: 'absolute',
-        bottom: 20,
+        bottom: 70,
         left: 20,
         backgroundColor: '#fff',
         borderRadius: 30,
@@ -253,11 +301,12 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
+        zIndex: 10,
     },
     // --- UPDATED STYLE FOR REFRESH BUTTON ---
     refreshButton: {
         position: 'absolute',
-        bottom: 80, // Position it higher than the location button
+        bottom: 130, // Position it higher than the location button
         left: 20,   // Align it to the left side
         backgroundColor: '#fff',
         borderRadius: 30,
@@ -267,6 +316,7 @@ const styles = StyleSheet.create({
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.25,
         shadowRadius: 3.84,
+        zIndex: 10,
     },
     errorContainer: {
         flex: 1,
