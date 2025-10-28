@@ -17,6 +17,7 @@ import { Ionicons, Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import API_BASE_URL from '../../constants/ApiConfig';
+import {Header} from "@/components/Header";
 
 type Comment = {
     commentId: string;
@@ -30,7 +31,7 @@ type Post = {
     id: string;
     title: string;
     content: string;
-    photoKey?: string;
+    photoUrl?: string;
     comments: Comment[];
     likes: string[];
     postedByUsername: string;
@@ -163,7 +164,11 @@ export default function PostPage() {
                         <View style={styles.postContainer}>
                             <Text style={styles.postTitle}>{post.title}</Text>
                             <Text style={styles.postUsername}>by {post.postedByUsername}</Text>
-                            {post.photoKey && <Image source={{ uri: post.photoKey }} style={styles.postImage} />}
+                            <Image
+                                source={post.photoUrl ? { uri: post.photoUrl } : require('@/assets/images/defaultReportPhoto.png')} // Use your preferred fallback
+                                style={styles.postImage}
+                                resizeMode="cover" // Recommended for consistency
+                            />
                             <Text style={styles.postContent}>{post.content}</Text>
                             <View style={styles.metaRow}>
                                 <TouchableOpacity onPress={handleLike} style={styles.metaItem}>

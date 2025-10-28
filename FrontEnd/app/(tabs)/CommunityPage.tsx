@@ -12,7 +12,7 @@ type Post = {
     id: string;
     title: string;
     content: string;
-    photoKey?: string; // Match backend field
+    photoUrl?: string; // Match backend field
     comments: any[];
     likes: string[];
     postedByUsername: string;
@@ -99,13 +99,11 @@ export default function CommunityScreen() {
                     <Text style={[styles.metaText, { marginLeft: 6 }]}>{item.postedByUsername}</Text>
                 </View>
             </View>
-            {item.photoKey && (
-                <Image
-                    source={{ uri: item.photoKey }}
-                    style={styles.postImage}
-                    resizeMode="cover"
-                />
-            )}
+            <Image
+                source={item.photoUrl ? { uri: item.photoUrl } : require('@/assets/images/defaultReportPhoto.png')} // Use your preferred fallback
+                style={styles.postImage}
+                resizeMode="cover" // Recommended for consistency
+            />
         </TouchableOpacity>
     );
 
@@ -119,7 +117,7 @@ export default function CommunityScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <Header title="Community" />
+            <Header title="ClimateTrack" />
 
             {!token ? (
                 <View style={styles.loginPromptContainer}>
