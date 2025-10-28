@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, Alert, ActivityInd
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { styles } from '@/constants/loginStyles';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth, User } from '@/context/AuthContext';
 import API_BASE_URL from '@/constants/ApiConfig';
 import { useRouter } from 'expo-router';
 
@@ -37,7 +37,8 @@ export default function LoginScreen() {
 
             if (response.ok) {
                 const data = await response.json();
-                await login(data); // Pass the full user data object
+                const user: User = { uid: data.id, email: data.email };
+                await login({ token: data.token, user: user }); // Pass the full user data object
                 router.replace('/(tabs)');
             } else {
                 Alert.alert("Login Failed", "Invalid username or password.");

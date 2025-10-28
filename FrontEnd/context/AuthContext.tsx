@@ -3,17 +3,23 @@ import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
 import API_BASE_URL from '@/constants/ApiConfig';
 
+// Define the User type
+export type User = {
+    uid: string;
+    email: string;
+};
+
 // The shape of the user data returned from your login API
 export type AuthData = {
     token: string;
-    username: string;
+    user: User;
     // You can add other user properties here if needed, like id, fullName, etc.
 };
 
 // Define the shape of the context value
 interface AuthContextType {
     token: string | null;
-    username: string | null;
+    user: User | null;
     isLoading: boolean; // Add a loading state
     login: (data: AuthData) => Promise<void>;
     logout: () => Promise<void>;
@@ -24,7 +30,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [token, setToken] = useState<string | null>(null);
-    const [username, setUsername] = useState<string | null>(null);
+    const [user, setUser] = useState<User | null>(null);
     const [isLoading, setIsLoading] = useState(true); // To handle initial auth check
 
     // This effect runs once when the app starts to check for a saved session
@@ -32,11 +38,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const loadAuthState = async () => {
             try {
                 const storedToken = await SecureStore.getItemAsync('userToken');
-                const storedUsername = await SecureStore.getItemAsync('username');
+                const storedUser = await SecureStore.getItemAsync('user');
 
-                if (storedToken && storedUsername) {
+                if (storedToken && storedUser) {
                     setToken(storedToken);
-                    setUsername(storedUsername);
+                    setUser(JSON.parse(storedUser));
                 }
             } catch (e) {
                 console.error("Failed to load auth state from secure store.", e);
@@ -49,18 +55,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     const login = async (data: AuthData) => {
         setToken(data.token);
-        setUsername(data.username);
+        setUser(data.user);
         await SecureStore.setItemAsync('userToken', data.token);
-        await SecureStore.setItemAsync('username', data.username);
+        await SecureStore.setItemAsync('user', JSON.stringify(data.user));
     };
-
-    // const logout = async () => {
-    //     setToken(null);
-    //     setUsername(null);
-    //     await SecureStore.deleteItemAsync('userToken');
-    //     await SecureStore.deleteItemAsync('username');
-    //     router.replace('/'); // Navigate to home screen after logout
-    // };
 
     const logout = async () => {
         if (token) {
@@ -79,14 +77,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         // Clear local state and storage regardless of API call success
         setToken(null);
-        setUsername(null);
+        setUser(null);
         await SecureStore.deleteItemAsync('userToken');
-        await SecureStore.deleteItemAsync('username');
+        await SecureStore.deleteItemAsync('user');
         router.replace('/');
     };
 
     return (
-        <AuthContext.Provider value={{ token, username, isLoading, login, logout, isAuthenticated: !!token }}>
+        <AuthContext.Provider value={{ token, user, isLoading, login, logout, isAuthenticated: !!token }}>
             {children}
         </AuthContext.Provider>
     );
