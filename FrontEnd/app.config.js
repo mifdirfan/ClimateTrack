@@ -15,7 +15,7 @@ export default {
         "newArchEnabled": true,
         "extra": {
             "eas": {
-                "projectId": "3cff4e88-1c90-4a2f-a378-ebd99099f79f"
+                "projectId": "d55943a1-b511-4bbe-b031-25112add3aff"
             },
             "googleMapsApiKey": process.env.GOOGLE_MAPS_API_KEY,
             "googleMapsApiUrl": process.env.GOOGLE_MAPS_API_URL,
@@ -34,11 +34,11 @@ export default {
                 "backgroundColor": "#ffffff"
             },
             "googleServicesFile": "./google-services.json",
-            "mixedContentMode": "always",
+            "usesCleartextTraffic": true,
+            // "mixedContentMode": "always",
             // Add this flag to allow HTTP requests in development on Android.
             // This is necessary for connecting to a local backend server.
             // NOTE: For a production build, you should use HTTPS.
-            "usesCleartextTraffic": true,
             "edgeToEdgeEnabled": true,
             "config": {
                 "googleMaps": {
