@@ -37,24 +37,29 @@ type Report = {
 type SettingItem = {
     id: string;
     label: string;
-    icon: string;
+    icon: number; // `require` returns a number (asset reference)
 };
 
 const settingsItems = [
     {
         id: '1',
-        label: 'Privacy & Security',
-        icon: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/u2F1jVXr2j/v8ynwpry_expires_30_days.png',
+        label: 'Ai Chatbot',
+        icon: require('@/assets/images/chatbotIcon.png'),
     },
     {
         id: '2',
-        label: 'Notification Preference',
-        icon: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/u2F1jVXr2j/oqmpfarw_expires_30_days.png',
+        label: 'Privacy & Security',
+        icon: require('@/assets/images/privacySettingIcon.png'),
     },
     {
         id: '3',
+        label: 'Notification Preference',
+        icon: require('@/assets/images/notificationSettingIcon.png'),
+    },
+    {
+        id: '4',
         label: 'Language',
-        icon: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/u2F1jVXr2j/q2g4o5vh_expires_30_days.png',
+        icon: require('@/assets/images/languageSettingIcon.png'),
     },
 ];
 
@@ -307,9 +312,15 @@ export default function ProfilePage() {
                 {/* Settings */}
                 <View style={styles.settingsContainer}>
                     {settingsItems.map((item: SettingItem) => (
-                        <TouchableOpacity key={item.id} style={styles.settingsItem} onPress={() => setSelectedSetting(item)}>
+                        <TouchableOpacity
+                            key={item.id}
+                            style={styles.settingsItem}
+                            onPress={() => {
+                                if (item.id === '1') { router.push('/screens/ChatbotScreen'); } // Navigate to ChatbotScreen for 'Ai Chatbot'
+                                else { setSelectedSetting(item); } // For other settings, open the modal
+                            }}>
                             <Image
-                                source={{ uri: item.icon }}
+                                source={item.icon}
                                 resizeMode="contain"
                                 style={styles.settingsIcon}
                             />
@@ -360,7 +371,7 @@ export default function ProfilePage() {
                             <Text style={styles.modalTitle}>{selectedSetting.label}</Text>
 
                             {/* Conditionally render content based on selected setting */}
-                            {selectedSetting.id === '1' ? (
+                            {selectedSetting.id === '2' ? (
                                 <ScrollView>
                                     <Text style={styles.modalSectionTitle}>Data Collection</Text>
                                     <Text style={styles.modalParagraph}>
@@ -375,7 +386,7 @@ export default function ProfilePage() {
                                         You have the right to access and delete your account and associated data at any time. For more information, please contact our support team.
                                     </Text>
                                 </ScrollView>
-                            ) : selectedSetting.id === '2' ? (
+                            ) : selectedSetting.id === '3' ? (
                                 <View style={styles.settingOptionRow}>
                                     <Text style={styles.settingOptionText}>App Notifications</Text>
                                     <Switch
@@ -387,7 +398,7 @@ export default function ProfilePage() {
                                     />
                                 </View>
                             ) : (
-                                <Text style={{ marginVertical: 20, textAlign: 'center', color: '#666' }}>
+                                <Text style={{ marginVertical: 20, textAlign: 'left', color: '#666' }}>
                                     More options for {selectedSetting.label} will be available soon.
                                 </Text>
                             )}
