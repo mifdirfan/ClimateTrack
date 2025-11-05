@@ -7,6 +7,7 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 // --- REMOVE ClassPathResource, io, and nio imports ---
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -32,9 +33,9 @@ public class VectorStoreService {
     private final List<String> pdfFiles = List.of(
             "data/(MOHW)RevisionofMedicalEmergencyResponseManual.pdf",
             "data/Emergency_Procedures_Manual_for_Foreigners(English).pdf",
-            "data/are-you-ready-guide.pdf",
-            "data/Dosnewnidm.pdf",
-            "data/DisasterPreventionPreparedness.pdf"
+            "data/are-you-ready-guide.pdf"
+            // "data/Dosnewnidm.pdf",
+            // "data/DisasterPreventionPreparedness.pdf"
     );
 
     private final List<String> csvFiles = List.of(
@@ -50,9 +51,11 @@ public class VectorStoreService {
         this.csvReader = csvReader; // <-- ADD this line
     }
 
-    @PostConstruct
-    public void initialize() {
-        logger.info("--- Initializing Vector Store ---");
+
+
+    @Async
+    public void buildVectorStore() {
+        logger.info("--- [BACKGROUND] Starting Vector Store Initialization ---");
         try {
             List<String> allChunks = new ArrayList<>();
             StringBuilder pdfTextBuilder = new StringBuilder();

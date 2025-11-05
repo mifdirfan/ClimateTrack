@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import java.util.List; // <-- 1. IMPORT LIST
 
 @RestController
 @RequestMapping("/api/chatbot")
@@ -18,14 +19,22 @@ public class ChatbotController {
     private static final Logger logger = LoggerFactory.getLogger(ChatbotController.class);
     private final ChatbotService chatbotService;
 
-    // Simple DTOs for request/response bodies
-    // Record is a concise way to define immutable data carriers in Java 16+
-    public record ChatRequest(String message) {}
+    // --- START CHANGES ---
+
+    // 2. DEFINE a new record for history messages
+    public record ChatMessage(String role, String content) {}
+
+    // 3. UPDATE ChatRequest to include history
+    public record ChatRequest(String message, List<ChatMessage> history) {}
+
+    // 4. DEFINE the ChatResponse (was already here)
     public record ChatResponse(String reply) {}
+
+    // --- END CHANGES ---
 
     /**
      * Handles chatbot query requests from authenticated users.
-     * @param request ChatRequest DTO containing the user's message.
+     * @param request ChatRequest DTO containing the user's message AND history.
      * @param principal Authenticated user principal provided by Spring Security.
      * @return ResponseEntity containing the ChatResponse DTO or an error status.
      */
@@ -48,8 +57,8 @@ public class ChatbotController {
         logger.info("Received chatbot query from user {}: '{}'", username, request.message());
 
         try {
-            // 3. Call Service
-            String reply = chatbotService.getChatbotResponse(request.message());
+            // 3. Call Service (--- 5. PASS THE HISTORY ---)
+            String reply = chatbotService.getChatbotResponse(request.message(), request.history());
 
             // 4. Return Response
             logger.info("Sending chatbot reply to user {}.", username);

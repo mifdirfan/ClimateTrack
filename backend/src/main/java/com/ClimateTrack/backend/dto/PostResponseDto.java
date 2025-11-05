@@ -3,6 +3,7 @@ package com.ClimateTrack.backend.dto;
 
 import com.ClimateTrack.backend.Entity.CommunityPost;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -13,6 +14,7 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class PostResponseDto {
 
     private String id;
@@ -23,6 +25,8 @@ public class PostResponseDto {
     private List<String> likes;
     private List<String> dislikes;
     private List<CommunityPost.Comment> comments;
+    private double latitude;
+    private double longitude;
     private Date postedAt;
 
 }

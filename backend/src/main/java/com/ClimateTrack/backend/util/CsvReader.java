@@ -4,104 +4,111 @@ import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.ClassPathResource; // <-- 1. IMPORT ClassPathResource
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
+import java.nio.charset.StandardCharsets; // <-- 2. IMPORT Charsets
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
-@Component
+@Component // <-- 3. This makes it a "bean" and fixes the original error
 public class CsvReader {
 
     private static final Logger logger = LoggerFactory.getLogger(CsvReader.class);
 
     /**
-     * Reads a specific CSV file from the classpath, parses it, and formats
-     * each relevant row into a natural language sentence.
-     *
-     * @param classpathCsvPath The path to the CSV file (e.g., "data/my_file.csv")
-     * @return A list of formatted strings, ready for embedding.
+     * This is the method your VectorStoreService is trying to call.
+     * It takes a classpath path string, loads the file, and returns formatted chunks.
      */
     public List<String> readAndFormatCsv(String classpathCsvPath) {
-        List<String> csvChunks = new ArrayList<>();
-        logger.info("Loading CSV data from classpath: {}", classpathCsvPath);
-        ClassPathResource resource = new ClassPathResource(classpathCsvPath);
+        List<String> chunks = new ArrayList<>();
 
-        if (!resource.exists()) {
-            logger.error("CSV resource not found: {}", classpathCsvPath);
-            return csvChunks;
-        }
+        // 1. Get the InputStream from the classpath path string
+        try (InputStream inputStream = new ClassPathResource(classpathCsvPath).getInputStream();
+             // 2. Force the reader to use "EUC-KR" for Korean characters
+             InputStreamReader reader = new InputStreamReader(inputStream, "EUC-KR"); // <-- NEW LINE
+             CSVReader csvReader = new CSVReader(reader)) {
 
-        // --- This logic is moved from VectorStoreService ---
-        // It correctly uses UTF-8 to read Korean characters
-        try (
-                InputStream inputStream = resource.getInputStream();
-                Reader reader = new InputStreamReader(inputStream, StandardCharsets.UTF_8);
-                CSVReader csvReader = new CSVReader(reader)
-        ) {
-            String[] headers = csvReader.readNext(); // Read header row
+            String[] headers = csvReader.readNext(); // Read the header row
             if (headers == null) {
-                logger.warn("CSV file is empty: {}", classpathCsvPath);
-                return csvChunks;
+                logger.warn("CSV file is empty or headers are missing: {}", classpathCsvPath);
+                return chunks;
             }
 
-            String[] line;
-            while ((line = csvReader.readNext()) != null) {
-                // Pass the path, headers, and row to the formatter
-                String chunk = formatCsvRowAsSentence(classpathCsvPath, headers, line);
-                if (chunk != null) {
-                    csvChunks.add(chunk);
+            String[] row;
+            while ((row = csvReader.readNext()) != null) {
+                if (row.length == headers.length) {
+                    chunks.add(formatCsvRowAsSentence(headers, row));
                 }
             }
-        } catch (IOException | CsvValidationException e) {
-            logger.error("Error reading or parsing CSV file {}: {}", classpathCsvPath, e.getMessage(), e);
-        }
-        // --- End of moved logic ---
 
-        return csvChunks;
+        } catch (IOException | CsvValidationException e) {
+            logger.error("Error reading or parsing CSV file: " + classpathCsvPath, e);
+        }
+
+        logger.info("Extracted {} chunks from CSV: {}", chunks.size(), classpathCsvPath);
+        return chunks;
     }
 
     /**
-     * Formats a single CSV row into a natural language sentence based on the file type.
-     * (This method is moved from VectorStoreService)
+     * Formats a CSV row into a human-readable sentence.
      */
-    private String formatCsvRowAsSentence(String filePath, String[] headers, String[] row) {
-        try {
-            if (filePath.contains("소방청_시도_소방서_현황")) {
-                // Headers: 순번,소방본부,소방서,주소,전화번호,팩스번호
-                String stationName = row[2]; // 소방서
-                String address = row[3];     // 주소
-                String phone = row[4];       // 전화번호
-                if (stationName != null && !stationName.isEmpty() && address != null && !address.isEmpty() && phone != null && !phone.isEmpty()) {
-                    return String.format("%s의 주소는 %s입니다. 전화번호는 %s입니다.", stationName.trim(), address.trim(), phone.trim());
-                }
-            } else if (filePath.contains("행정안전부_일선행정기관_주소와_전화번호_현황")) {
-                // Headers: 기관유형,기관유형별분류,대표기관명,전체기관명,최하위기관명,대표전화번호,새우편번호,도로명주소
-                String orgType = row[1]; // 기관유형별분류
-                String orgName = row[4]; // 최하위기관명
-                String phone = row[5];   // 대표전화번호
-                String address = row[7]; // 도로명주소
-                if (orgType != null && (orgType.contains("소방") || orgType.contains("경찰")) && orgName != null && !orgName.isEmpty() && address != null && !address.isEmpty() && phone != null && !phone.isEmpty()) {
-                    return String.format("%s(%s)의 주소는 %s입니다. 대표 전화번호는 %s입니다.", orgName.trim(), orgType.trim(), address.trim(), phone.trim());
-                }
-            } else if (filePath.contains("경찰청_전국_경찰서_명칭_및_주소")) {
-                // Headers: 시도경찰청,위치,경찰서명칭,경찰서주소
-                String agency = row[0];     // 시도경찰청
-                String stationName = row[2]; // 경찰서명칭
-                String address = row[3];     // 경찰서주소
-                if (stationName != null && !stationName.isEmpty() && address != null && !address.isEmpty()) {
-                    return String.format("%s %s의 주소는 %s입니다.", agency.trim(), stationName.trim(), address.trim());
+    private String formatCsvRowAsSentence(String[] headers, String[] row) {
+        StringBuilder sb = new StringBuilder();
+
+        // Header names from your CSVs
+        String policeName = getColumnValue(headers, row, "Police station name");
+        String policeAddress = getColumnValue(headers, row, "Police station address");
+
+        String fireStation = getColumnValue(headers, row, "fire station");
+        String fireAddress = getColumnValue(headers, row, "address");
+        String firePhone = getColumnValue(headers, row, "phone number");
+
+        String adminName = getColumnValue(headers, row, "Name of lowest-level institution");
+        String adminAddress = getColumnValue(headers, row, "Road name address");
+        String adminPhone = getColumnValue(headers, row, "Representative phone number");
+
+        // Build a sentence
+        if (policeName != null) { // Police CSV
+            sb.append("The institution named '").append(policeName.trim()).append("' ");
+            sb.append("is located at '").append(policeAddress.trim()).append("'.");
+        } else if (fireStation != null) { // Fire CSV
+            sb.append("The institution named '").append(fireStation.trim()).append("' ");
+            sb.append("is located at '").append(fireAddress.trim()).append("'");
+            sb.append(" and the phone number is '").append(firePhone.trim()).append("'.");
+        } else if (adminName != null) { // Admin CSV
+            sb.append("The institution named '").append(adminName.trim()).append("' ");
+            sb.append("is located at '").append(adminAddress.trim()).append("'");
+            sb.append(" and the phone number is '").append(adminPhone.trim()).append("'.");
+        } else {
+            // Fallback for any other CSV structure
+            sb.append("A record contains the following data: ");
+            for (int i = 0; i < headers.length; i++) {
+                if (i < row.length && row[i] != null && !row[i].isEmpty()) {
+                    sb.append(headers[i]).append(" is ").append(row[i]).append("; ");
                 }
             }
-        } catch (ArrayIndexOutOfBoundsException e) {
-            logger.warn("Skipping malformed CSV row: {} in file {}", Arrays.toString(row), filePath);
         }
-        return null; // Return null if row is not relevant or malformed
+
+        return sb.toString().replaceAll("\\s+", " ").trim();
+    }
+
+    /**
+     * Helper to safely get a value from a CSV row by its header name.
+     */
+    private String getColumnValue(String[] headers, String[] row, String headerName) {
+        for (int i = 0; i < headers.length; i++) {
+            if (headers[i].trim().equalsIgnoreCase(headerName)) {
+                if (i < row.length) {
+                    return row[i];
+                } else {
+                    return null;
+                }
+            }
+        }
+        return null;
     }
 }
