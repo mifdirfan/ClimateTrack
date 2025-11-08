@@ -2,7 +2,7 @@
   <library name="Gradle: org.springframework.security:spring-security-oauth2-resource-server:6.5.0" type="java-imported" external-system-id="GRADLE">
     <properties groupId="org.springframework.security" artifactId="spring-security-oauth2-resource-server" version="6.5.0" baseVersion="6.5.0" />
     <CLASSES>
-      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.springframework.security/spring-security-oauth2-resource-server/6.5.0/5caf339de7e7bc1e0025deb90c66c124bf9cb1f9/spring-security-oauth2-resource-server-6.5.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../Journotes/backend/.gradle/caches/modules-2/files-2.1/org.springframework.security/spring-security-oauth2-resource-server/6.5.0/5caf339de7e7bc1e0025deb90c66c124bf9cb1f9/spring-security-oauth2-resource-server-6.5.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
