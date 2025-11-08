@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useCallback  } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl, FlatList, Modal, Switch } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl, FlatList, Modal, Switch, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons} from '@expo/vector-icons';
 import { styles } from '@/constants/ProfilePageStyles';
@@ -8,7 +8,6 @@ import GOOGLE_MAPS_API_KEY from '../../constants/GoogleAPI'; // Import the API K
 import { useAuth } from '@/context/AuthContext';
 import { Header } from '@/components/Header';
 import { useRouter } from 'expo-router';
-import {black} from "colorette";
 
 type UserProfile = {
     id: string;
@@ -61,13 +60,17 @@ const settingsItems = [
         label: 'Language',
         icon: require('@/assets/images/languageSettingIcon.png'),
     },
+    {
+        id: '5',
+        label: 'Sign Out',
+        icon: require('@/assets/images/signOutSettingIcon.png'),
+    },
 ];
 
 export default function ProfilePage() {
 
     const { token, username, isLoading, logout } = useAuth(); // Use the real auth state
     const router = useRouter();
-
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [reports, setReports] = useState<Report[]>([]);
     const [loading, setLoading] = useState(true);
@@ -76,41 +79,6 @@ export default function ProfilePage() {
     const [selectedSetting, setSelectedSetting] = useState<SettingItem | null>(null);
     const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(true); // State for the toggle
     const [error, setError] = useState<string | null>(null);
-
-    // const fetchUserReports = () => {
-    //     // FOR TESTING: Use the insecure endpoint to fetch reports by username directly.
-    //     // In production, you would switch back to the secure '/my-reports' endpoint.
-    //     const testUsername = userData.username;
-    //     fetch(`${API_BASE_URL}/api/reports/user/${testUsername}`)
-    //     // // In a real app, you would get this token from secure storage after login
-    //     // // TODO: Replace this with a dynamic token from your auth context or secure storage
-    //     // const authToken = "YOUR_JWT_TOKEN_HERE";
-    //     //
-    //     // fetch(`${API_BASE_URL}/api/reports/my-reports`, {
-    //     //     headers: {
-    //     //         'Authorization': `Bearer ${authToken}`
-    //     //     }
-    //     // })
-    //         .then(res => {
-    //             if (!res.ok) {
-    //                 throw new Error('Failed to fetch reports');
-    //             }
-    //             return res.json();
-    //         })
-    //         .then((data: Report[]) => {
-    //             // The backend already sorts by date, so we can use the data directly
-    //             setReports(data);
-    //         })
-    //         .catch(err => {
-    //             console.error('Failed to fetch user reports:', err);
-    //             Alert.alert("Error", "Could not load your reports. Please try again later.");
-    //         })
-    //         .finally(() => {
-    //             setLoading(false);
-    //             setRefreshing(false);
-    //         });
-    // };
-
     const fetchData = useCallback(() => {
         if (!token || !username){
             setLoading(false); // Not logged in, so don't show a loader
@@ -221,6 +189,36 @@ export default function ProfilePage() {
         reverseGeocodeReports();
     }, [reports]); // Rerun this effect if the reports array itself changes.
 
+    const handleDeleteReport = async (reportId: string) => {
+        if (!token) {
+            Alert.alert("Error", "You must be logged in to delete a report.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/reports/${reportId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (response.ok) {
+                // On successful deletion, remove the report from the local state
+                setReports(prevReports => prevReports.filter(report => report.reportId !== reportId));
+                setSelectedReport(null); // Close the modal
+                Alert.alert("Success", "Report deleted successfully.");
+            } else {
+                const errorData = await response.text();
+                throw new Error(errorData || 'Failed to delete the report.');
+            }
+        } catch (err: any) {
+            console.error("Delete report failed:", err);
+            Alert.alert("Error", err.message || "An error occurred while deleting the report.");
+        }
+    };
+
+
     // Show a loading screen while checking authentication or fetching data
     if (isLoading) {
         return (
@@ -246,15 +244,10 @@ export default function ProfilePage() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <Header
-                title="ClimateTrack"
-                rightComponent={
-                    <TouchableOpacity onPress={logout} style={styles.logoutButton}>
-                        <Ionicons name="log-out-outline" size={26} color="#d9534f" />
-                    </TouchableOpacity>}
-            />
             {loading && <ActivityIndicator size="large" style={{ marginTop: 20 }} />}
             {error && <Text style={{ textAlign: 'center', color: 'red', marginTop: 20 }}>{error}</Text>}
+            <Header title="ClimateTrack"/>
+
             <ScrollView
                 contentContainerStyle={styles.listContainer}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -317,6 +310,11 @@ export default function ProfilePage() {
                             style={styles.settingsItem}
                             onPress={() => {
                                 if (item.id === '1') { router.push('/screens/ChatbotScreen'); } // Navigate to ChatbotScreen for 'Ai Chatbot'
+                                else if (item.id === '5') { Alert.alert(
+                                    "Sign Out",
+                                    "Are you sure you want to sign out?",
+                                    [ { text: "Cancel", style: "cancel" }, { text: "Sign out", style: "destructive", onPress: logout }]
+                                )}
                                 else { setSelectedSetting(item); } // For other settings, open the modal
                             }}>
                             <Image
@@ -348,11 +346,22 @@ export default function ProfilePage() {
                             <Text style={styles.modalTitle}>{selectedReport.title}</Text>
                             <Text style={styles.modalMeta}>{`${selectedReport.disasterType} • ${new Date(selectedReport.reportedAt).toLocaleDateString()}`}</Text>
                             <ScrollView>
-                                <Text style={styles.modalDescription}>{selectedReport.description}</Text>
+                                <Text numberOfLines={100} style={styles.modalDescription}>{selectedReport.description}</Text>
                             </ScrollView>
-                            <TouchableOpacity style={styles.closeButton} onPress={() => setSelectedReport(null)}>
-                                <Text style={styles.closeButtonText}>Close</Text>
-                            </TouchableOpacity>
+                            <View style={styles.modalButtonContainer}>
+                                <TouchableOpacity style={styles.modalCloseButton} onPress={() => setSelectedReport(null)}>
+                                    <Text style={styles.closeButtonText}>Close</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.deleteReportButton}
+                                    onPress={() => Alert.alert(
+                                        "Delete Report",
+                                        "Are you sure you want to delete this report? This action cannot be undone.",
+                                        [ { text: "Cancel", style: "cancel" }, { text: "Delete", style: "destructive", onPress: () => handleDeleteReport(selectedReport.reportId) } ]
+                                    )}>
+                                    <Text style={styles.deleteReportButtonText}>Delete</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
                 </Modal>
@@ -368,7 +377,7 @@ export default function ProfilePage() {
                 >
                     <View style={styles.modalOverlay}>
                         <View style={styles.modalContent}>
-                            <Text style={styles.modalTitle}>{selectedSetting.label}</Text>
+                            <Text style={styles.modalTitle}>{selectedSetting.id === '5' ? 'Sign out from your account?' : selectedSetting.label }</Text>
 
                             {/* Conditionally render content based on selected setting */}
                             {selectedSetting.id === '2' ? (
