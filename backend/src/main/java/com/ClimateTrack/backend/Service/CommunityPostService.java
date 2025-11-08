@@ -2,6 +2,7 @@ package com.ClimateTrack.backend.Service;
 
 import com.ClimateTrack.backend.Entity.CommunityPost;
 import com.ClimateTrack.backend.Repository.CommunityPostRepository;
+import com.ClimateTrack.backend.dto.PostRequestDto;
 import com.ClimateTrack.backend.dto.PostResponseDto; // <-- 1. IMPORT YOUR DTO
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint; // <-- 2. IMPORT GeoJsonPoint
@@ -20,8 +21,8 @@ public class CommunityPostService {
     @Autowired
     private CommunityPostRepository communityPostRepository;
 
-    @Autowired
-    private S3Service s3Service;
+//    @Autowired
+//    private S3Service s3Service;
 
     @Autowired
     private UploadService uploadService; // <-- 5. INJECT UPLOAD SERVICE (like in ReportService)
@@ -46,7 +47,7 @@ public class CommunityPostService {
             longitude = post.getLocation().getX();
         }
 
-        // 3. Build the DTO based on your provided class
+        // 3. Build the DTO based on your PostResponseDto
         return PostResponseDto.builder()
                 .id(post.getId())
                 .title(post.getTitle())
@@ -81,40 +82,49 @@ public class CommunityPostService {
      * before returning the DTO.
      */
     public PostResponseDto createPost(
-            String title, String content,
-            String postedByUserId, String postedByUsername,
-            Double latitude, Double longitude,
-            MultipartFile image) throws IOException {
+            PostRequestDto postRequest, // <-- 5. Use the DTO
+            String postedByUserId,
+            String postedByUsername
+            // Double latitude, Double longitude // These should be in the DTO if needed
+    ) throws IOException { // <-- IOException is no longer needed but safe to keep
 
         CommunityPost post = CommunityPost.builder()
-                .title(title)
-                .content(content)
+                .title(postRequest.getTitle())
+                .content(postRequest.getContent())
                 .postedByUserId(postedByUserId)
                 .postedByUsername(postedByUsername)
                 .postedAt(new Date())
                 .build();
 
-        // Handle location
-        if (latitude != null && longitude != null) {
-            post.setLocation(new GeoJsonPoint(longitude, latitude));
-        }
+        // --- 6. Set the Photo KEY (not the file) ---
+        // We assume the frontend has already uploaded the image to /api/upload
+        // and is passing the returned key (e.g., "uploads/image.jpg")
+        // in the postRequest.photoUrl field.
+        post.setPhotoKey(postRequest.getPhotoUrl());
 
-        // Handle image upload
-        if (image != null && !image.isEmpty()) {
-            // s3Service.uploadFile returns the private KEY. This is correct.
-            String imageKey = s3Service.uploadFile(image);
-            post.setPhotoKey(imageKey); // We save the KEY
-        }
+        // --- 7. Handle location (if it's in the DTO) ---
+        // Assuming you add latitude/longitude to PostRequestDto
+        // if (postRequest.getLatitude() != null && postRequest.getLongitude() != null) {
+        //     post.setLocation(new GeoJsonPoint(postRequest.getLongitude(), postRequest.getLatitude()));
+        // }
+
+
+        // --- 8. NO UPLOAD LOGIC HERE ---
+        // We are no longer doing the upload. We are just saving the key.
+        // --- END OF FIX ---
 
         CommunityPost savedPost = communityPostRepository.save(post);
-
-        // Return the DTO so the frontend can display the new post immediately
         return mapToDto(savedPost);
     }
 
     public PostResponseDto addComment(String postId, CommunityPost.Comment comment) {
         CommunityPost post = communityPostRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("Post not found"));
+
+        // Add comment logic (from controller)
+        comment.setCommentId(java.util.UUID.randomUUID().toString());
+        comment.setPostedAt(new Date());
+
         post.getComments().add(comment);
         CommunityPost updatedPost = communityPostRepository.save(post);
         // Return the DTO

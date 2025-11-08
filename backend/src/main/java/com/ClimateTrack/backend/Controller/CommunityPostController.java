@@ -2,6 +2,7 @@ package com.ClimateTrack.backend.Controller;
 
 import com.ClimateTrack.backend.Entity.CommunityPost;
 import com.ClimateTrack.backend.Service.CommunityPostService;
+import com.ClimateTrack.backend.dto.PostRequestDto;
 import com.ClimateTrack.backend.dto.PostResponseDto; // <-- 1. IMPORT YOUR DTO
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -10,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Date;
+import java.util.Date; // <-- Import Date
 import java.util.List;
 import java.util.Optional;
 
@@ -39,40 +40,37 @@ public class CommunityPostController {
     // --- 4. REVISED to call new service method ---
     @PostMapping
     public ResponseEntity<PostResponseDto> createPost(
-            @RequestParam("title") String title,
-            @RequestParam("content") String content,
-            @RequestParam(value = "image", required = false) MultipartFile image,
-            @RequestParam("postedByUserId") String postedByUserId,
-            @RequestParam("postedByUsername") String postedByUsername,
-            @RequestParam(value = "latitude", required = false) Double latitude,
-            @RequestParam(value = "longitude", required = false) Double longitude
+            @RequestBody PostRequestDto postRequest, // <-- 4. Use the DTO
+            @RequestHeader("X-User-Id") String postedByUserId,
+            @RequestHeader("X-Username") String postedByUsername
     ) {
         try {
-            // Pass all params to the service, which now handles object creation
+            // Pass the DTO and user info to the service
             PostResponseDto createdPost = communityPostService.createPost(
-                    title, content,
-                    postedByUserId, postedByUsername,
-                    latitude, longitude,
-                    image);
+                    postRequest,
+                    postedByUserId,
+                    postedByUsername
+            );
 
             return new ResponseEntity<>(createdPost, HttpStatus.CREATED);
         } catch (IOException e) {
+            // This IOException is no longer thrown, but we'll leave the catch
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
-    // --- 5. CHANGED Return Type ---
+    // --- 5. CHANGED Return Type & Logic ---
     @PostMapping("/{postId}/comments")
     public ResponseEntity<PostResponseDto> addComment(
             @PathVariable String postId,
-            @RequestBody CommunityPost.Comment comment,
+            @RequestBody CommunityPost.Comment comment, // Only pass the comment body
             @RequestHeader("X-User-Id") String userId,
             @RequestHeader("X-Username") String username
     ) {
-        comment.setCommentId(java.util.UUID.randomUUID().toString());
+        // Set user details from headers (safer)
         comment.setUserId(userId);
         comment.setUsername(username);
-        comment.setPostedAt(new Date());
+
         PostResponseDto updatedPost = communityPostService.addComment(postId, comment);
         return new ResponseEntity<>(updatedPost, HttpStatus.OK);
     }

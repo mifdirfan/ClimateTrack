@@ -8,5 +8,5 @@ public class PostRequestDto {
     private String content;
     private double latitude;
     private double longitude;
-    private String photoKey;
+    private String photoUrl;
 }

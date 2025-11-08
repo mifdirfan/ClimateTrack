@@ -24,8 +24,8 @@ export default function WritePostPage() {
     const { token, user } = useAuth();
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
-    const [image, setImage] = useState<string | null>(null);
-    const [location, setLocation] = useState<Location.LocationObject | null>(null);
+    // --- FIX 1: Store image as an object (like in ReportPage) ---
+    const [image, setImage] = useState<{ uri: string; mimeType?: string } | null>(null);    const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -49,10 +49,12 @@ export default function WritePostPage() {
         });
 
         if (!result.canceled) {
-            setImage(result.assets[0].uri);
+            const asset = result.assets[0];
+            setImage({ uri: asset.uri, mimeType: asset.mimeType });
         }
     };
 
+    // --- FIX 3: THIS IS THE REBUILT FUNCTION (from ReportPage.tsx) ---
     const handlePost = async () => {
         if (!title.trim() || !content.trim()) {
             Alert.alert("Empty Fields", "Please enter a title and content for your post.");
@@ -60,47 +62,90 @@ export default function WritePostPage() {
         }
 
         setLoading(true);
+        let imageKey: string | null = null;
 
-        const formData = new FormData();
-        formData.append('title', title);
-        formData.append('content', content);
-        formData.append('postedByUserId', user?.uid || '');
-        formData.append('postedByUsername', user?.email || 'Anonymous');
-
-        if (location) {
-            formData.append('latitude', String(location.coords.latitude));
-            formData.append('longitude', String(location.coords.longitude));
-        }
-
+        // --- STEP 1: UPLOAD IMAGE (if one is selected) ---
         if (image) {
-            const uriParts = image.split('.');
-            const fileType = uriParts[uriParts.length - 1];
-            formData.append('image', {
-                uri: image,
-                name: `photo.${fileType}`,
-                type: `image/${fileType}`,
-            } as any);
+            try {
+                // --- Step 1a: Get filename and filetype from state ---
+                const filename = image.uri.split('/').pop() || `community-image-${Date.now()}`;
+                const filetype = image.mimeType || 'image/jpeg'; // Use mimeType from state
+
+                // --- Step 1b: Get the Presigned URL from our backend ---
+                // (Matches /api/upload/url in UploadController, like ReportPage)
+                const presignResponse = await fetch(`${API_BASE_URL}/api/upload/url?filename=${filename}&filetype=${filetype}`, {
+                    method: 'GET', // <-- Use GET
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+
+                if (!presignResponse.ok) {
+                    const errorText = await presignResponse.text();
+                    throw new Error(`Failed to get upload URL: ${errorText}`);
+                }
+
+                const { uploadUrl, key } = await presignResponse.json();
+                imageKey = key; // Save the key for Step 3
+
+                // --- Step 1c: Get the image blob ---
+                const response = await fetch(image.uri);
+                const blob = await response.blob();
+
+                // --- Step 1d: Upload the image blob directly to S3 ---
+                const s3Response = await fetch(uploadUrl, {
+                    method: 'PUT',
+                    body: blob,
+                    headers: {
+                        'Content-Type': filetype, // Use the correct filetype
+                    },
+                });
+
+                if (!s3Response.ok) {
+                    throw new Error('Failed to upload image to S3');
+                }
+
+            } catch (error) {
+                console.error("Image Upload Error:", error);
+                Alert.alert("Error", "Could not upload your image.");
+                setLoading(false);
+                return;
+            }
         }
+
+        // --- STEP 2: CREATE THE POST (with JSON) ---
+        // (Matches /api/posts in CommunityPostController)
+
+        const postData = {
+            title: title,
+            content: content,
+            photoUrl: imageKey, // Pass the key from Step 1 (or null)
+            latitude: location?.coords.latitude,
+            longitude: location?.coords.longitude,
+        };
 
         try {
             const response = await fetch(`${API_BASE_URL}/api/posts`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'multipart/form-data',
+                    'Content-Type': 'application/json', // <-- IMPORTANT
+                    'X-User-Id': user?.uid || '',
+                    'X-Username': user?.email || 'Anonymous',
                 },
-                body: formData,
+                body: JSON.stringify(postData), // <-- Send the JSON PostRequestDto
             });
 
             if (!response.ok) {
-                throw new Error('Failed to create post');
+                const errorText = await response.text();
+                throw new Error(`Failed to create post. Server says: ${errorText}`);
             }
 
             Alert.alert("Post Submitted", "Your post has been submitted successfully.", [
                 { text: "OK", onPress: () => router.back() }
             ]);
         } catch (error) {
-            console.error(error);
+            console.error("Post Creation Error:", error);
             Alert.alert("Error", "Could not submit your post.");
         } finally {
             setLoading(false);
@@ -143,7 +188,7 @@ export default function WritePostPage() {
                         onChangeText={setContent}
                         multiline
                     />
-                    {image && <Image source={{ uri: image }} style={styles.imagePreview} />}
+                    {image && <Image source={{ uri: image.uri }} style={styles.imagePreview} />}
                 </View>
 
                 <View style={styles.footer}>
