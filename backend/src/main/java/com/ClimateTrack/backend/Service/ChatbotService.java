@@ -1,16 +1,24 @@
 package com.ClimateTrack.backend.Service;
 
+import com.ClimateTrack.backend.Controller.ChatbotController;
+import com.ClimateTrack.backend.Entity.DisasterEvent;
+import com.ClimateTrack.backend.Entity.NewsArticle;
+import com.ClimateTrack.backend.Repository.DisasterEventRepository;
+import com.ClimateTrack.backend.Repository.NewsArticleRepository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import com.ClimateTrack.backend.Controller.ChatbotController.ChatMessage;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -26,6 +34,12 @@ public class ChatbotService {
     private final ObjectMapper objectMapper;
     private final VectorStoreService vectorStoreService;
     private final EmbeddingService embeddingService;
+
+    @Autowired
+    private DisasterEventRepository disasterEventRepository;
+
+    @Autowired
+    private NewsArticleRepository newsArticleRepository;
 
     @Value("${ollama.api.base.url}${ollama.api.chat.endpoint}")
     private String ollamaChatUrl;
@@ -44,7 +58,7 @@ public class ChatbotService {
      * @param userMessage The message input from the user.
      * @return The chatbot's generated reply.
      */
-    public String getChatbotResponse(String userMessage) {
+    public String getChatbotResponse(String userMessage, List<ChatMessage> history) {
         if (userMessage == null || userMessage.trim().isEmpty()) {
             return "Please provide a message to the chatbot.";
         }
@@ -60,12 +74,48 @@ public class ChatbotService {
             List<String> relevantChunks = vectorStoreService.findSimilarChunks(queryEmbedding, 3); // Retrieve top 3
             logger.debug("Retrieved {} relevant chunks.", relevantChunks.size());
 
+            StringBuilder liveDataContext = new StringBuilder();
+            String userMessageLower = userMessage.toLowerCase();
+
+            // ONLY fetch and add live data if the user's query contains relevant keywords
+            if (userMessageLower.contains("news") || userMessageLower.contains("alert") ||
+                    userMessageLower.contains("warning") || userMessageLower.contains("latest") ||
+                    userMessageLower.contains("typhoon") || userMessageLower.contains("disaster") ||
+                    userMessageLower.contains("earthquake"))
+            {
+                logger.info("User query contains keywords. Fetching live data...");
+                List<DisasterEvent> alerts = disasterEventRepository.findAll();
+                List<NewsArticle> news = newsArticleRepository.findAll();
+
+                liveDataContext.append("--- START CURRENT ALERTS ---\n");
+                if (alerts.isEmpty()) {
+                    liveDataContext.append("No active alerts reported.\n");
+                } else {
+                    alerts.stream().limit(5).forEach(alert -> {
+                        liveDataContext.append(String.format("Alert: %s. Location: %s. Description: %s\n",
+                                alert.getDisasterType(), alert.getLocationName(), alert.getDescription()));
+                    });
+                }
+                liveDataContext.append("--- END CURRENT ALERTS ---\n\n");
+
+                liveDataContext.append("--- START LATEST NEWS ---\n");
+                if (news.isEmpty()) {
+                    liveDataContext.append("No recent news found.\n");
+                } else {
+                    news.stream().limit(5).forEach(article -> {
+                        liveDataContext.append(String.format("News: %s. Source: %s\n",
+                                article.getTitle(), article.getSourceName()));
+                    });
+                }
+                liveDataContext.append("--- END LATEST NEWS ---\n");
+            }
+
             // 3. Construct the prompt for the LLM
             String context = String.join("\n\n---\n\n", relevantChunks); // Join chunks with separators
-            String systemPrompt = "You are a helpful assistant for ClimateTrack, specializing in flood preparedness and shelter information based ONLY on the provided context. " +
-                    "Answer the user's question concisely using only the information given in the 'CONTEXT' section below. " +
-                    "If the answer cannot be found in the context, clearly state that you do not have that specific information in your documents. Do not make up answers or use external knowledge.\n\n" +
-                    "CONTEXT:\n" + (context.isEmpty() ? "No relevant context found." : context); // Handle empty context
+            String systemPrompt = "You are a helpful assistant for ClimateTrack... (rest of your prompt) ...\n\n" +
+                    "CONTEXT:\n" +
+                    liveDataContext.toString() + // This will now be EMPTY unless the user asked for news/alerts
+                    (context.isEmpty() ? "No relevant context found." : context);
 
             logger.debug("Constructed system prompt (Context length: {} chars). Sending to LLM.", context.length());
 
@@ -74,17 +124,28 @@ public class ChatbotService {
             headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
 
-            // Structure according to Ollama /api/chat format
             Map<String, Object> requestBody = new HashMap<>();
             requestBody.put("model", chatModel);
-            requestBody.put("stream", false); // Get the full response at once
-            requestBody.put("messages", List.of(
-                    Map.of("role", "system", "content", systemPrompt),
-                    Map.of("role", "user", "content", userMessage)
-            ));
-            // Optional: Add Ollama options like temperature
-            // Map<String, Object> options = Map.of("temperature", 0.7);
-            // requestBody.put("options", options);
+            requestBody.put("stream", false);
+
+            // This is the key fix. We are now sending the full conversation.
+
+            List<Map<String, String>> messageList = new ArrayList<>();
+
+            // Add the system prompt first
+            messageList.add(Map.of("role", "system", "content", systemPrompt));
+
+            // Add all previous messages from history
+            if (history != null) {
+                for (ChatMessage msg : history) {
+                    messageList.add(Map.of("role", msg.role(), "content", msg.content()));
+                }
+            }
+
+            // Add the new, current message from the user
+            messageList.add(Map.of("role", "user", "content", userMessage));
+
+            requestBody.put("messages", messageList);
 
 
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);

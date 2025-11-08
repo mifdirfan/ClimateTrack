@@ -2,6 +2,8 @@ package com.ClimateTrack.backend.Controller;
 
 import com.ClimateTrack.backend.Entity.CommunityPost;
 import com.ClimateTrack.backend.Service.CommunityPostService;
+import com.ClimateTrack.backend.dto.PostRequestDto;
+import com.ClimateTrack.backend.dto.PostResponseDto; // <-- 1. IMPORT YOUR DTO
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -9,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Date;
+import java.util.Date; // <-- Import Date
 import java.util.List;
 import java.util.Optional;
 
@@ -20,74 +22,66 @@ public class CommunityPostController {
     @Autowired
     private CommunityPostService communityPostService;
 
+    // --- 2. CHANGED Return Type ---
     @GetMapping
-    public ResponseEntity<List<CommunityPost>> getAllPosts() {
-        List<CommunityPost> posts = communityPostService.getAllPosts();
+    public ResponseEntity<List<PostResponseDto>> getAllPosts() {
+        List<PostResponseDto> posts = communityPostService.getAllPosts();
         return new ResponseEntity<>(posts, HttpStatus.OK);
     }
 
+    // --- 3. CHANGED Return Type ---
     @GetMapping("/{id}")
-    public ResponseEntity<CommunityPost> getPostById(@PathVariable String id) {
-        Optional<CommunityPost> post = communityPostService.getPostById(id);
+    public ResponseEntity<PostResponseDto> getPostById(@PathVariable String id) {
+        Optional<PostResponseDto> post = communityPostService.getPostById(id);
         return post.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
+    // --- 4. REVISED to call new service method ---
     @PostMapping
-    public ResponseEntity<CommunityPost> createPost(
-            @RequestParam("title") String title,
-            @RequestParam("content") String content,
-            @RequestParam(value = "image", required = false) MultipartFile image,
-            @RequestParam("postedByUserId") String postedByUserId,
-            @RequestParam("postedByUsername") String postedByUsername,
-            @RequestParam(value = "latitude", required = false) Double latitude,
-            @RequestParam(value = "longitude", required = false) Double longitude
+    public ResponseEntity<PostResponseDto> createPost(
+            @RequestBody PostRequestDto postRequest, // <-- 4. Use the DTO
+            @RequestHeader("X-User-Id") String postedByUserId,
+            @RequestHeader("X-Username") String postedByUsername
     ) {
         try {
-            CommunityPost post = CommunityPost.builder()
-                    .title(title)
-                    .content(content)
-                    .postedByUserId(postedByUserId)
-                    .postedByUsername(postedByUsername)
-                    .postedAt(new Date())
-                    .build();
+            // Pass the DTO and user info to the service
+            PostResponseDto createdPost = communityPostService.createPost(
+                    postRequest,
+                    postedByUserId,
+                    postedByUsername
+            );
 
-            // Handle location if provided
-            if (latitude != null && longitude != null) {
-                // Assuming GeoJsonPoint constructor is (longitude, latitude)
-                // post.setLocation(new GeoJsonPoint(longitude, latitude));
-                // For simplicity, let's just store them as separate fields if GeoJsonPoint is complex
-                // Or, if GeoJsonPoint is already handled in the service/entity, remove this part
-            }
-
-            CommunityPost createdPost = communityPostService.createPost(post, image);
             return new ResponseEntity<>(createdPost, HttpStatus.CREATED);
         } catch (IOException e) {
+            // This IOException is no longer thrown, but we'll leave the catch
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
+    // --- 5. CHANGED Return Type & Logic ---
     @PostMapping("/{postId}/comments")
-    public ResponseEntity<CommunityPost> addComment(
+    public ResponseEntity<PostResponseDto> addComment(
             @PathVariable String postId,
-            @RequestBody CommunityPost.Comment comment,
-            @RequestHeader("X-User-Id") String userId, // Assuming userId from Firebase token
-            @RequestHeader("X-Username") String username // Assuming username from Firebase token
+            @RequestBody CommunityPost.Comment comment, // Only pass the comment body
+            @RequestHeader("X-User-Id") String userId,
+            @RequestHeader("X-Username") String username
     ) {
-        comment.setCommentId(java.util.UUID.randomUUID().toString());
+        // Set user details from headers (safer)
         comment.setUserId(userId);
         comment.setUsername(username);
-        comment.setPostedAt(new Date());
-        CommunityPost updatedPost = communityPostService.addComment(postId, comment);
+
+        PostResponseDto updatedPost = communityPostService.addComment(postId, comment);
         return new ResponseEntity<>(updatedPost, HttpStatus.OK);
     }
 
+    // --- 6. CHANGED Return Type ---
     @PostMapping("/{postId}/like")
-    public ResponseEntity<CommunityPost> likePost(
+    public ResponseEntity<PostResponseDto> likePost(
             @PathVariable String postId,
-            @RequestHeader("X-User-Id") String userId // Assuming userId from Firebase token
+            @RequestHeader("X-User-Id") String userId
     ) {
-        CommunityPost updatedPost = communityPostService.likePost(postId, userId);
+        PostResponseDto updatedPost = communityPostService.likePost(postId, userId);
         return new ResponseEntity<>(updatedPost, HttpStatus.OK);
     }
 }
