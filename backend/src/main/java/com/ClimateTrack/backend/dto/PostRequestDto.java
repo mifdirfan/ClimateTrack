@@ -6,7 +6,7 @@ import lombok.Data;
 public class PostRequestDto {
     private String title;
     private String content;
-    private double latitude;
-    private double longitude;
+    private Double latitude;
+    private Double longitude;
     private String photoUrl;
 }

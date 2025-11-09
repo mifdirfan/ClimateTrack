@@ -2,7 +2,7 @@
   <library name="Gradle: org.mongodb:bson:5.4.0" type="java-imported" external-system-id="GRADLE">
     <properties groupId="org.mongodb" artifactId="bson" version="5.4.0" baseVersion="5.4.0" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../Journotes/backend/.gradle/caches/modules-2/files-2.1/org.mongodb/bson/5.4.0/cf10fa61c22e8b2e292388020295669470b3ee23/bson-5.4.0.jar!/" />
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.mongodb/bson/5.4.0/cf10fa61c22e8b2e292388020295669470b3ee23/bson-5.4.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

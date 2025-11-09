@@ -11,34 +11,42 @@ import {
     Alert,
     Image,
     ActivityIndicator,
+    Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useAuth } from '@/context/AuthContext';
-import API_BASE_URL from '../../constants/ApiConfig';
+import API_BASE_URL from '@/constants/ApiConfig';
 
 export default function WritePostPage() {
     const router = useRouter();
     const { token, user } = useAuth();
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
-    // --- FIX 1: Store image as an object (like in ReportPage) ---
-    const [image, setImage] = useState<{ uri: string; mimeType?: string } | null>(null);    const [location, setLocation] = useState<Location.LocationObject | null>(null);
+    const [image, setImage] = useState<{ uri: string; mimeType?: string } | null>(null);
+    const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         (async () => {
             let { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
-                Alert.alert('Permission denied', 'Permission to access location was denied');
+                Alert.alert(
+                    'Permission Denied',
+                    'Location access is required to create a post. Please enable it in your settings.',
+                    [
+                        { text: 'Cancel', onPress: () => router.back(), style: 'cancel' },
+                        { text: 'Open Settings', onPress: () => Linking.openSettings() },
+                    ]
+                );
                 return;
             }
             let location = await Location.getCurrentPositionAsync({});
             setLocation(location);
         })();
-    }, []);
+    }, [router]);
 
     const handleChooseImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -54,27 +62,28 @@ export default function WritePostPage() {
         }
     };
 
-    // --- FIX 3: THIS IS THE REBUILT FUNCTION (from ReportPage.tsx) ---
     const handlePost = async () => {
         if (!title.trim() || !content.trim()) {
             Alert.alert("Empty Fields", "Please enter a title and content for your post.");
             return;
         }
 
+        if (!location) {
+            Alert.alert("Location Required", "Location is mandatory for creating a post. Please ensure location services are enabled.");
+            return;
+        }
+
         setLoading(true);
         let imageKey: string | null = null;
 
-        // --- STEP 1: UPLOAD IMAGE (if one is selected) ---
         if (image) {
             try {
-                // --- Step 1a: Get filename and filetype from state ---
                 const filename = image.uri.split('/').pop() || `community-image-${Date.now()}`;
-                const filetype = image.mimeType || 'image/jpeg'; // Use mimeType from state
+                const filetype = image.mimeType || 'image/jpeg';
 
-                // --- Step 1b: Get the Presigned URL from our backend ---
-                // (Matches /api/upload/url in UploadController, like ReportPage)
+                console.log('Requesting presigned URL for:', { filename, filetype });
                 const presignResponse = await fetch(`${API_BASE_URL}/api/upload/url?filename=${filename}&filetype=${filetype}`, {
-                    method: 'GET', // <-- Use GET
+                    method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     },
@@ -82,28 +91,37 @@ export default function WritePostPage() {
 
                 if (!presignResponse.ok) {
                     const errorText = await presignResponse.text();
-                    throw new Error(`Failed to get upload URL: ${errorText}`);
+                    console.error("Failed to get presigned URL:", errorText);
+                    Alert.alert("Error", "Could not get upload URL.");
+                    setLoading(false);
+                    return;
                 }
 
                 const { uploadUrl, key } = await presignResponse.json();
-                imageKey = key; // Save the key for Step 3
+                imageKey = key;
+                console.log('Got presigned URL:', uploadUrl);
+                console.log('Got S3 key:', key);
 
-                // --- Step 1c: Get the image blob ---
                 const response = await fetch(image.uri);
                 const blob = await response.blob();
 
-                // --- Step 1d: Upload the image blob directly to S3 ---
+                console.log('Uploading image to S3...');
                 const s3Response = await fetch(uploadUrl, {
                     method: 'PUT',
                     body: blob,
                     headers: {
-                        'Content-Type': filetype, // Use the correct filetype
+                        'Content-Type': filetype,
                     },
                 });
 
                 if (!s3Response.ok) {
-                    throw new Error('Failed to upload image to S3');
+                    const errorText = await s3Response.text();
+                    console.error("Failed to upload image to S3:", errorText);
+                    Alert.alert("Error", "Could not upload image to S3.");
+                    setLoading(false);
+                    return;
                 }
+                console.log('Image uploaded successfully to S3.');
 
             } catch (error) {
                 console.error("Image Upload Error:", error);
@@ -113,34 +131,36 @@ export default function WritePostPage() {
             }
         }
 
-        // --- STEP 2: CREATE THE POST (with JSON) ---
-        // (Matches /api/posts in CommunityPostController)
-
         const postData = {
             title: title,
             content: content,
-            photoUrl: imageKey, // Pass the key from Step 1 (or null)
-            latitude: location?.coords.latitude,
-            longitude: location?.coords.longitude,
+            photoUrl: imageKey,
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
         };
 
         try {
+            console.log('Creating post with data:', postData);
             const response = await fetch(`${API_BASE_URL}/api/posts`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json', // <-- IMPORTANT
+                    'Content-Type': 'application/json',
                     'X-User-Id': user?.uid || '',
-                    'X-Username': user?.username || 'Anonymous',
+                    'X-Username': user?.email || 'Anonymous',
                 },
-                body: JSON.stringify(postData), // <-- Send the JSON PostRequestDto
+                body: JSON.stringify(postData),
             });
 
             if (!response.ok) {
                 const errorText = await response.text();
-                throw new Error(`Failed to create post. Server says: ${errorText}`);
+                console.error("Post Creation Error:", errorText);
+                Alert.alert("Error", "Could not submit your post.");
+                setLoading(false);
+                return;
             }
 
+            console.log('Post created successfully.');
             Alert.alert("Post Submitted", "Your post has been submitted successfully.", [
                 { text: "OK", onPress: () => router.back() }
             ]);
