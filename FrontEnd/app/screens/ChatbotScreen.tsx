@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import { GiftedChat, IMessage, Bubble } from 'react-native-gifted-chat';
+import { GiftedChat, IMessage, Bubble, BubbleProps } from 'react-native-gifted-chat';
 import {SafeAreaView, StyleSheet, ActivityIndicator, View, Text, Alert, TouchableOpacity} from 'react-native';
 import { useAuth } from '@/context/AuthContext'; // Adjust path if needed
 import API_BASE_URL from '../../constants/ApiConfig'; // Adjust path if needed
@@ -22,6 +22,7 @@ const BOT_USER = {
 export default function ChatbotScreen() {
     const [messages, setMessages] = useState<ChatMessage[]>([]);
     const [isLoading, setIsLoading] = useState(false); // For typing indicator / loading state
+    const [inputText, setInputText] = useState(''); // State for the input text
     const { token, uid } = useAuth(); // Get token and user ID (uid) from context
     const router = useRouter();
 
@@ -29,8 +30,8 @@ export default function ChatbotScreen() {
     useEffect(() => {
         setMessages([
             {
-                _id: Math.random().toString(36).substring(7), // Unique ID
-                text: 'Hello! I am the ClimateTrack AI assistant. Ask me about flood preparedness or shelter information based on our documents.',
+                _id: 1, // Use a consistent initial ID
+                text: 'Hello! I am the ClimateTrack AI assistant. Ask me about flood preparedness or shelter information.',
                 createdAt: new Date(),
                 user: BOT_USER,
             },
@@ -55,6 +56,7 @@ export default function ChatbotScreen() {
         );
 
         const userMessageText = newMessages[0].text;
+        setInputText(''); // Clear the input field manually
         setIsLoading(true); // Show typing indicator
 
         // Send message to your backend chatbot endpoint
@@ -79,7 +81,7 @@ export default function ChatbotScreen() {
         .then(data => {
             // Create the bot's response message object
             const botMessage: ChatMessage = {
-                _id: Math.random().toString(36).substring(7), // Generate a random ID
+                _id: new Date().getTime(), // Use timestamp for a more unique ID
                 text: data.reply || "Sorry, I received an empty response.", // Use reply field from backend
                 createdAt: new Date(),
                 user: BOT_USER,
@@ -93,7 +95,7 @@ export default function ChatbotScreen() {
             console.error("Chatbot API Error:", error);
              // Create an error message to display in the chat
              const errorMessage: ChatMessage = {
-                _id: Math.random().toString(36).substring(7),
+                _id: new Date().getTime(), // Use timestamp for a more unique ID
                 text: `Error: ${error.message || 'Could not reach the chatbot.'}`,
                 createdAt: new Date(),
                 user: BOT_USER, // Show error as if it's from the bot
@@ -127,24 +129,29 @@ export default function ChatbotScreen() {
     return (
          <SafeAreaView style={styles.container}>
             {/* Simple Header with Back Button */}
-            <View style={styles.header}>
-                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="arrow-back" size={24} color="#007AFF" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>ClimateTrack AI</Text>
-                 <View style={styles.backButton} /> {/* Placeholder for balance */}
-            </View>
+             <Header
+                 leftComponent={
+                     <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                         <Ionicons name="arrow-back" size={24} color="#007AFF" />
+                     </TouchableOpacity>}
+                 title="ClimateTrack"
+                 rightComponent={
+                     <TouchableOpacity style={styles.backButton}>
+                     </TouchableOpacity>}
+             />
 
              <GiftedChat
                 messages={messages}
-                onSend={newMessages => onSend(newMessages)}
+                text={inputText} // Control the input text
+                onInputTextChanged={setInputText} // Update the input text state
+                onSend={onSend}
                 user={{
                     _id: uid, // Use the logged-in user's ID from AuthContext
                 }}
-                isLoadingEarlier={isLoading} // Shows typing indicator when true
-                placeholder="Ask about flood preparedness..."
+                isTyping={isLoading} // Correct prop for the typing indicator
+                placeholder="Ask the chatbot..."
                 alwaysShowSend // Show send button always
-                renderBubble={props => { // Custom bubble styling (optional)
+                renderBubble={(props: BubbleProps<IMessage>) => { // Custom bubble styling (optional)
                     return (
                         <Bubble
                             {...props}

@@ -79,7 +79,7 @@ export const styles = StyleSheet.create({
         position: 'absolute',
         right: 24,
         bottom: 100,
-        backgroundColor: '#f2f2f2',
+        backgroundColor: '#000000',
         borderRadius: 30,
         flexDirection: 'row',
         alignItems: 'center',
@@ -93,10 +93,10 @@ export const styles = StyleSheet.create({
     },
     pencilIcon: {
         marginRight: 6,
-        color: '#8B0000',
+        color: '#f2f2f2',
     },
     writeText: {
-        color: '#8B0000',
+        color: '#f2f2f2',
         fontSize: 16,
         fontWeight: '600',
         letterSpacing: 1,

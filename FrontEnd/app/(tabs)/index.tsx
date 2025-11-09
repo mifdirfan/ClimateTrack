@@ -56,6 +56,7 @@ export default function Index() {
     const [showDisasters, setShowDisasters] = useState(true);
     const [showReports, setShowReports] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
+    const [centerOnUser, setCenterOnUser] = useState(true); // NEW: State to control map centering
     const { token, username, isLoading } = useAuth();
     // placeholder for testing:
     // const { token, username } = { token: "your_jwt_token", username: "testuser" }; // Replace with your real auth state
@@ -93,19 +94,26 @@ export default function Index() {
 
     const handleGetLocation = useCallback(async () => {
         const location = await requestLocation();
-        if (location) {
-            setUserLocation({
-                latitude: location.coords.latitude,
-                longitude: location.coords.longitude,
-            });
-            // Only send location if the user is authenticated
-            if (token && username) {
-                await sendLocationToBackend(location);
-            }
-        } else if (errorMsg) {
-            alert(errorMsg);
+        // Fetch location and data in parallel for a faster experience
+        if (!location) {
+            if (errorMsg) alert(errorMsg);
+            return;
+        }
+
+        setUserLocation({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+        });
+        setCenterOnUser(true); // Tell the map to center on the user
+
+        if (token && username) {
+            await sendLocationToBackend(location);
         }
     }, [requestLocation, errorMsg, sendLocationToBackend, token, username]);
+
+    const handleGetLocationAndData = useCallback(async () => {
+        await Promise.all([handleGetLocation(), fetchData()]);
+    }, [handleGetLocation]);
 
     const handleSearch = useCallback(async () => {
         if (!searchQuery.trim()) {
@@ -169,11 +177,8 @@ export default function Index() {
     useEffect(() => {
         const initialLoad = async () => {
             setDataLoading(true);
-            // Fetch data and location in parallel
-            await Promise.all([
-                fetchData(),
-                handleGetLocation()
-            ]);
+            // Get user location and fetch map data in parallel for a fast start.
+            await Promise.all([handleGetLocation(), fetchData()]);
             setDataLoading(false);
         };
         initialLoad();
@@ -185,11 +190,12 @@ export default function Index() {
     const onRefresh = useCallback(async () => {
         setIsRefreshing(true);
         await Promise.all([
-            fetchData(),
-            handleGetLocation()
+            fetchData()
+            // Do NOT call handleGetLocation() here to prevent re-centering.
+            // The user can manually re-center with the location button if needed.
         ]);
         setIsRefreshing(false);
-    }, [fetchData, handleGetLocation]);
+    }, [fetchData]);
 
     if (isLoading) {
         // Show a loading screen while checking for a saved session
@@ -225,18 +231,20 @@ export default function Index() {
                         reports={filteredReports}
                         userLocation={userLocation} // This is always the user's actual location
                         searchedLocation={searchedLocation} // Pass the searched location separately
+                        centerOnUser={centerOnUser} // Pass the centering flag
+                        onMapCentered={() => setCenterOnUser(false)} // Callback to reset the flag
                     />
                 )}
                 {/* --- Reset User Location Button --- */}
-                <TouchableOpacity style={styles.locationButton} onPress={handleGetLocation}>
-                    <MaterialIcons name="my-location" size={24} color="#007AFF" />
+                <TouchableOpacity style={styles.locationButton} onPress={handleGetLocationAndData}>
+                    <MaterialIcons name="my-location" size={24} color="#fff" />
                 </TouchableOpacity>
                 {/* --- Refresh Button --- */}
                 <TouchableOpacity style={styles.refreshButton} onPress={onRefresh} disabled={isRefreshing}>
                     {isRefreshing ? (
                         <ActivityIndicator color="#007AFF" />
                     ) : (
-                        <MaterialIcons name="refresh" size={24} color="#007AFF" />
+                        <MaterialIcons name="refresh" size={24} color="#fff" />
                     )}
                 </TouchableOpacity>
 
@@ -258,7 +266,7 @@ export default function Index() {
                     <TouchableOpacity
                         style={[
                             homepageStyles.filterButton,
-                            showDisasters ? homepageStyles.filterButtonActive : homepageStyles.filterButtonInactive
+                            showDisasters ? homepageStyles.filterButtonDisasterActive : homepageStyles.filterButtonInactive
                         ]}
                         onPress={() => setShowDisasters(!showDisasters)}
                     >
@@ -269,7 +277,7 @@ export default function Index() {
                     <TouchableOpacity
                         style={[
                             homepageStyles.filterButton,
-                            showReports ? homepageStyles.filterButtonActive : homepageStyles.filterButtonInactive
+                            showReports ? homepageStyles.filterButtonReportActive : homepageStyles.filterButtonInactive
                         ]}
                         onPress={() => setShowReports(!showReports)}
                     >
@@ -293,7 +301,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 70,
         left: 20,
-        backgroundColor: '#fff',
+        backgroundColor: '#000',
         borderRadius: 30,
         padding: 12,
         elevation: 5,
@@ -308,7 +316,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 130, // Position it higher than the location button
         left: 20,   // Align it to the left side
-        backgroundColor: '#fff',
+        backgroundColor: '#000',
         borderRadius: 30,
         padding: 12,
         elevation: 5,

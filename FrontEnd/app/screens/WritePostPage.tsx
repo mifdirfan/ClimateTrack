@@ -131,7 +131,7 @@ export default function WritePostPage() {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json', // <-- IMPORTANT
                     'X-User-Id': user?.uid || '',
-                    'X-Username': user?.email || 'Anonymous',
+                    'X-Username': user?.username || 'Anonymous',
                 },
                 body: JSON.stringify(postData), // <-- Send the JSON PostRequestDto
             });

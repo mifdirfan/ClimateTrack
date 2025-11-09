@@ -40,13 +40,20 @@ const styles = StyleSheet.create({
         marginRight: 8,
         borderWidth: 1.5,
     },
-    filterButtonActive: {
-        borderColor: '#007AFF',
-        backgroundColor: '#007AFF',
+    filterButtonDisasterActive: {
+        borderColor: '#B0B0B0',
+        backgroundColor: '#cb0000',
+        opacity: .9,
+    },
+    filterButtonReportActive: {
+        borderColor: '#B0B0B0',
+        backgroundColor: '#E6AF00',
+        opacity: .9,
     },
     filterButtonInactive: {
         borderColor: '#B0B0B0',
         backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        opacity: .8,
     },
     filterButtonText: {
         fontSize: 14,

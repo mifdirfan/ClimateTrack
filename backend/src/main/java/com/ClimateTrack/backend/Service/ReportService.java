@@ -86,4 +86,23 @@ public class ReportService {
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }
+
+    public void deleteReport(String reportId, String userId) {
+        // 1. Find the report by its ID
+        Report report = reportRepository.findById(reportId)
+                .orElseThrow(() -> new RuntimeException("Report not found with id: " + reportId)); // Or a custom exception
+
+        // 2. Verify that the user requesting the deletion is the one who posted it
+        if (!report.getPostedByUserId().equals(userId)) {
+            throw new SecurityException("User not authorized to delete this report");
+        }
+
+        // 3. If there's a photo associated with the report, delete it from cloud storage
+        String photoUrl = report.getPhotoUrl();
+        if (photoUrl != null && !photoUrl.isEmpty()) {
+            uploadService.deleteFile(photoUrl);
+        }
+        // 4. Delete the report from the database
+        reportRepository.delete(report);
+    }
 }

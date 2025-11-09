@@ -91,16 +91,40 @@ public class ReportController {
     }
 
     @GetMapping("/my-reports")
-    public ResponseEntity<List<ReportResponseDto>> getMyReports(@RequestHeader("Authorization") String authorizationHeader) {
-        String token = authorizationHeader.substring(7);
-        if (!jwtTokenProvider.validateToken(token)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-        }
-
-        // Get username from token
-        String username = jwtTokenProvider.getUsername(token);
+    public ResponseEntity<List<ReportResponseDto>> getMyReports(Principal principal) {
+        // Get username from the security context
+        String username = principal.getName();
         List<ReportResponseDto> userReports = reportService.getReportsByUsername(username);
         return ResponseEntity.ok(userReports);
+    }
+
+    @DeleteMapping("/{reportId}")
+    public ResponseEntity<?> deleteReport(@PathVariable String reportId, Authentication authentication) {
+        // Get the authenticated user's details from the Authentication object
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        Optional<User> userOptional = userRepository.findByUsername(userDetails.getUsername());
+
+        if (userOptional.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found.");
+        }
+        String userId = userOptional.get().getId();
+
+        try {
+            reportService.deleteReport(reportId, userId);
+            // Return 200 OK with a success message
+            return ResponseEntity.ok().body("Report deleted successfully.");
+        } catch (SecurityException e) {
+            // User not authorized to delete
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
+        } catch (Exception e) {
+            // Catch any other unexpected errors (like from S3) and log the full stack trace
+            e.printStackTrace(); // This will print the detailed error to your server console
+            // Check if the cause is a "not found" exception to return a more specific status
+            if (e.getMessage().toLowerCase().contains("not found")) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+            }
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An internal server error occurred during deletion: " + e.getMessage());
+        }
     }
 
     /**

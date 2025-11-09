@@ -119,7 +119,7 @@ export default function PostPage() {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`,
                     'X-User-Id': user.uid,
-                    'X-Username': user.email || 'Anonymous',
+                    'X-Username': user.username || 'Anonymous',
                 },
                 body: JSON.stringify(newComment),
             });
