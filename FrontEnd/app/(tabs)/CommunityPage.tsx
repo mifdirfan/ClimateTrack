@@ -16,6 +16,7 @@ type Post = {
     comments: any[];
     likes: string[];
     postedByUsername: string;
+    postedAt: string; // Add the creation date field
 };
 
 export default function CommunityScreen() {
@@ -44,7 +45,9 @@ export default function CommunityScreen() {
                 return res.json();
             })
             .then((data: Post[]) => {
-                setPosts(data);
+                // Sort posts by date in descending order (newest first)
+                const sortedPosts = data.sort((a, b) => new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime());
+                setPosts(sortedPosts);
             })
             .catch(err => {
                 console.error(err);
@@ -89,12 +92,12 @@ export default function CommunityScreen() {
                 </Text>
                 <View style={styles.metaRow}>
                     <View style={styles.metaItem}>
-                        <Feather name="message-circle" size={14} color="#d12a2a" />
-                        <Text style={styles.metaText}>{item.comments.length}</Text>
+                        <Ionicons name="heart-outline" size={14} color="#d12a2a" />
+                        <Text style={styles.metaText}>{item.likes.length}</Text>
                     </View>
                     <View style={styles.metaItem}>
-                        <Ionicons name="heart-outline" size={14} color="#c0c0c0" />
-                        <Text style={styles.metaText}>{item.likes.length}</Text>
+                        <Feather name="message-circle" size={14} color="#c0c0c0" />
+                        <Text style={styles.metaText}>{item.comments.length}</Text>
                     </View>
                     <Text style={[styles.metaText, { marginLeft: 6 }]}>{item.postedByUsername}</Text>
                 </View>

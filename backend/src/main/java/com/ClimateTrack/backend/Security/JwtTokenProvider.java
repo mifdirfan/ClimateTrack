@@ -13,8 +13,8 @@ public class JwtTokenProvider {
     // IMPORTANT: Use a strong, secret key for production
     private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
 
-    // Set token expiration to 1 hour
-    private final long validityInMilliseconds = 3600000;
+    // Set token expiration to 7 days (in milliseconds)
+    private final long validityInMilliseconds = 604800000;
 
     public String createToken(String username) {
         Date now = new Date();

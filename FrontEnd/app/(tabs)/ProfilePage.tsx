@@ -110,11 +110,16 @@ export default function ProfilePage() {
                 setUserProfile(profileData);
                 setReports(reportsData);
             })
-            .catch(err => setError(err.message || 'An unexpected error occurred.'))
-            /*.catch(err =>  {
-                console.error('Failed to fetch data:', err);
-                Alert.alert("Error", "Could not load profile data. Please try again.");
-            })*/
+            .catch(err => {
+                // If fetching the profile fails, it's likely an expired session.
+                if (err.message === 'Failed to fetch profile') {
+                    console.log("Session expired or invalid. Logging out and redirecting.");
+                    logout(); // Clear the expired token from context/storage
+                    router.replace('/screens/LoginScreen'); // Redirect to login
+                } else {
+                    setError(err.message || 'An unexpected error occurred.');
+                }
+            })
             .finally(() => {
                 setLoading(false);
                 setRefreshing(false);
