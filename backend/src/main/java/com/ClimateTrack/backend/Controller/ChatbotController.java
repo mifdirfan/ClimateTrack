@@ -1,5 +1,7 @@
 package com.ClimateTrack.backend.Controller;
 
+import com.ClimateTrack.backend.Entity.User;
+import com.ClimateTrack.backend.Repository.UserRepository;
 import com.ClimateTrack.backend.Service.ChatbotService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -7,9 +9,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.security.Principal;
 import java.util.List; // <-- 1. IMPORT LIST
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/chatbot")
@@ -18,6 +22,9 @@ public class ChatbotController {
 
     private static final Logger logger = LoggerFactory.getLogger(ChatbotController.class);
     private final ChatbotService chatbotService;
+
+    @Autowired // <-- 5. INJECT the UserRepository
+    private UserRepository userRepository;
 
     // --- START CHANGES ---
 
@@ -58,7 +65,10 @@ public class ChatbotController {
 
         try {
             // 3. Call Service (--- 5. PASS THE HISTORY ---)
-            String reply = chatbotService.getChatbotResponse(request.message(), request.history());
+            Optional<User> userOptional = userRepository.findByUsername(username);
+            User user = userOptional.orElse(null); // Get the user, or null if not found
+
+            String reply = chatbotService.getChatbotResponse(request.message(), request.history(), user);
 
             // 4. Return Response
             logger.info("Sending chatbot reply to user {}.", username);
