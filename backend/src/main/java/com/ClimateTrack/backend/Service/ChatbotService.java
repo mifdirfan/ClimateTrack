@@ -1,8 +1,8 @@
 package com.ClimateTrack.backend.Service;
 
-import com.ClimateTrack.backend.Controller.ChatbotController;
 import com.ClimateTrack.backend.Entity.DisasterEvent;
 import com.ClimateTrack.backend.Entity.NewsArticle;
+import com.ClimateTrack.backend.Entity.User;
 import com.ClimateTrack.backend.Repository.DisasterEventRepository;
 import com.ClimateTrack.backend.Repository.NewsArticleRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 import com.ClimateTrack.backend.Controller.ChatbotController.ChatMessage;
+import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,9 +57,10 @@ public class ChatbotService {
      * 5. Parses and returns the AI's response.
      *
      * @param userMessage The message input from the user.
+     * @param user
      * @return The chatbot's generated reply.
      */
-    public String getChatbotResponse(String userMessage, List<ChatMessage> history) {
+    public String getChatbotResponse(String userMessage, List<ChatMessage> history, User user) {
         if (userMessage == null || userMessage.trim().isEmpty()) {
             return "Please provide a message to the chatbot.";
         }
@@ -110,14 +112,32 @@ public class ChatbotService {
                 liveDataContext.append("--- END LATEST NEWS ---\n");
             }
 
+            StringBuilder locationContext = new StringBuilder();
+            if (user != null && user.getLastKnownLocation() != null) {
+                GeoJsonPoint location = user.getLastKnownLocation();
+                // GeoJsonPoint stores (X, Y) which is (Longitude, Latitude)
+                locationContext.append("--- START USER LOCATION ---\n");
+                locationContext.append(String.format(
+                        "The user's current location is: (Latitude: %f, Longitude: %f)\n",
+                        location.getY(), location.getX()
+                ));
+                locationContext.append("--- END USER LOCATION ---\n\n");
+            } else {
+                locationContext.append("--- START USER LOCATION ---\n");
+                locationContext.append("User location is not available.\n");
+                locationContext.append("--- END USER LOCATION ---\n\n");
+            }
+            // --- END: Build User Location Context ---
+
             // 3. Construct the prompt for the LLM
             String context = String.join("\n\n---\n\n", relevantChunks); // Join chunks with separators
-            String systemPrompt = "You are a helpful assistant for ClimateTrack... (rest of your prompt) ...\n\n" +
+            String systemPrompt = "You are a helpful assistant for ClimateTrack... (your prompt) ...\n\n" +
                     "CONTEXT:\n" +
-                    liveDataContext.toString() + // This will now be EMPTY unless the user asked for news/alerts
+                    locationContext.toString() +   // <-- ADDED
+                    liveDataContext.toString() +   // <-- This is your live news/alerts
                     (context.isEmpty() ? "No relevant context found." : context);
 
-            logger.debug("Constructed system prompt (Context length: {} chars). Sending to LLM.", context.length());
+            logger.debug("Constructed system prompt. Sending to LLM.");
 
             // 4. Call Ollama Chat API
             HttpHeaders headers = new HttpHeaders();
@@ -128,28 +148,17 @@ public class ChatbotService {
             requestBody.put("model", chatModel);
             requestBody.put("stream", false);
 
-            // This is the key fix. We are now sending the full conversation.
-
             List<Map<String, String>> messageList = new ArrayList<>();
-
-            // Add the system prompt first
             messageList.add(Map.of("role", "system", "content", systemPrompt));
-
-            // Add all previous messages from history
             if (history != null) {
                 for (ChatMessage msg : history) {
                     messageList.add(Map.of("role", msg.role(), "content", msg.content()));
                 }
             }
-
-            // Add the new, current message from the user
             messageList.add(Map.of("role", "user", "content", userMessage));
-
             requestBody.put("messages", messageList);
 
-
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
-
             ResponseEntity<String> response = restTemplate.postForEntity(ollamaChatUrl, entity, String.class);
 
             // 5. Parse the response
