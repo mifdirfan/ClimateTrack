@@ -4,7 +4,6 @@ export const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#FFFFFF',
-        paddingLeft: 10
     },
     listContainer: {
         paddingBottom: 20,
@@ -76,11 +75,11 @@ export const styles = StyleSheet.create({
     // Reports Section
     reportsHeader: {
         color: '#000000',
-        fontSize: 24,
+        fontSize: 26,
         fontWeight: 'bold',
         marginBottom: 12,
         paddingHorizontal: 27,
-        paddingTop: 50
+        paddingTop: 40
     },
     reportsContainer: {
         // Use paddingHorizontal for the first and last item's spacing
@@ -97,7 +96,7 @@ export const styles = StyleSheet.create({
         borderWidth: 1,
         padding: 16,
         // Give each card a defined width to work in a horizontal scroll
-        width: 220,
+        width: 260,
         minHeight: 180,
         // Add margin to the right for spacing between cards
         marginRight: 12,
@@ -124,7 +123,7 @@ export const styles = StyleSheet.create({
         color: '#000000',
         fontSize: 20,
         fontWeight: 'bold',
-        marginBottom: 4,
+        marginBottom: 8,
     },
     reportDescription: {
         color: '#000000',
@@ -137,21 +136,23 @@ export const styles = StyleSheet.create({
     settingsContainer: {
         top: 20,
         paddingHorizontal: 16,
+        marginBottom: 60,
+        marginLeft: 10,
     },
     settingsItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: 26,
+        marginBottom: 25,
     },
     settingsIcon: {
-        width: 34,
-        height: 34,
-        marginRight: 12,
+        width: 30,
+        height: 30,
+        marginRight: 20,
     },
     settingsText: {
         color: '#000000',
-        fontSize: 15,
-        fontWeight: 'bold',
+        fontSize: 16,
+        fontWeight: "600",
     },
     // Footer
     footerImage: {
@@ -160,8 +161,24 @@ export const styles = StyleSheet.create({
     logoutButton: {
         padding: 0,
         margin: 0,
+        display: 'flex',
+        justifyContent: 'center',
+        backgroundColor: '#DD0000',
+        borderRadius: 8,
+        paddingVertical: 12,
+        marginTop: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 5,
     },
-
+    logoutText: {
+        paddingLeft: 10,
+        textAlign: 'center',
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
     // Modal Styles for Report Details
     modalOverlay: {
         flex: 1,
@@ -202,12 +219,21 @@ export const styles = StyleSheet.create({
         fontSize: 16,
         lineHeight: 24,
         color: '#333',
+        maxHeight: 60,
+        marginBottom: 10,
+    },
+    modalCloseButton: {
+        flex: 1, // Make button flexible
+        marginRight: 5, // Add space between buttons
+        backgroundColor: '#000000',
+        borderRadius: 8,
+        paddingVertical: 12,
     },
     closeButton: {
         backgroundColor: '#000000',
         borderRadius: 8,
         paddingVertical: 12,
-        marginTop: 20,
+        marginTop: 10,
     },
     closeButtonText: {
         color: '#FFFFFF',
@@ -268,5 +294,23 @@ export const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
-
+    deleteReportButton: {
+        marginLeft: 5, // Add space between buttons
+        maxWidth: 70,
+        flex: 1, // Make button flexible
+        backgroundColor: '#DD0000',
+        borderRadius: 8,
+        paddingVertical: 12,
+    },
+    deleteReportButtonText: {
+        color: '#FFFFFF',
+        textAlign: 'center',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    modalButtonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        marginTop: 20,
+    },
 });

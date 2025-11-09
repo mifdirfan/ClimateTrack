@@ -11,20 +11,21 @@ import {
     Alert,
     Image,
     ActivityIndicator,
+    Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { useAuth } from '@/context/AuthContext';
-import API_BASE_URL from '../../constants/ApiConfig';
+import API_BASE_URL from '@/constants/ApiConfig';
 
 export default function WritePostPage() {
     const router = useRouter();
     const { token, user } = useAuth();
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
-    const [image, setImage] = useState<string | null>(null);
+    const [image, setImage] = useState<{ uri: string; mimeType?: string } | null>(null);
     const [location, setLocation] = useState<Location.LocationObject | null>(null);
     const [loading, setLoading] = useState(false);
 
@@ -32,13 +33,20 @@ export default function WritePostPage() {
         (async () => {
             let { status } = await Location.requestForegroundPermissionsAsync();
             if (status !== 'granted') {
-                Alert.alert('Permission denied', 'Permission to access location was denied');
+                Alert.alert(
+                    'Permission Denied',
+                    'Location access is required to create a post. Please enable it in your settings.',
+                    [
+                        { text: 'Cancel', onPress: () => router.back(), style: 'cancel' },
+                        { text: 'Open Settings', onPress: () => Linking.openSettings() },
+                    ]
+                );
                 return;
             }
             let location = await Location.getCurrentPositionAsync({});
             setLocation(location);
         })();
-    }, []);
+    }, [router]);
 
     const handleChooseImage = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
@@ -49,7 +57,8 @@ export default function WritePostPage() {
         });
 
         if (!result.canceled) {
-            setImage(result.assets[0].uri);
+            const asset = result.assets[0];
+            setImage({ uri: asset.uri, mimeType: asset.mimeType });
         }
     };
 
@@ -59,48 +68,104 @@ export default function WritePostPage() {
             return;
         }
 
-        setLoading(true);
-
-        const formData = new FormData();
-        formData.append('title', title);
-        formData.append('content', content);
-        formData.append('postedByUserId', user?.uid || '');
-        formData.append('postedByUsername', user?.email || 'Anonymous');
-
-        if (location) {
-            formData.append('latitude', String(location.coords.latitude));
-            formData.append('longitude', String(location.coords.longitude));
+        if (!location) {
+            Alert.alert("Location Required", "Location is mandatory for creating a post. Please ensure location services are enabled.");
+            return;
         }
+
+        setLoading(true);
+        let imageKey: string | null = null;
 
         if (image) {
-            const uriParts = image.split('.');
-            const fileType = uriParts[uriParts.length - 1];
-            formData.append('image', {
-                uri: image,
-                name: `photo.${fileType}`,
-                type: `image/${fileType}`,
-            } as any);
+            try {
+                const filename = image.uri.split('/').pop() || `community-image-${Date.now()}`;
+                const filetype = image.mimeType || 'image/jpeg';
+
+                console.log('Requesting presigned URL for:', { filename, filetype });
+                const presignResponse = await fetch(`${API_BASE_URL}/api/upload/url?filename=${filename}&filetype=${filetype}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+
+                if (!presignResponse.ok) {
+                    const errorText = await presignResponse.text();
+                    console.error("Failed to get presigned URL:", errorText);
+                    Alert.alert("Error", "Could not get upload URL.");
+                    setLoading(false);
+                    return;
+                }
+
+                const { uploadUrl, key } = await presignResponse.json();
+                imageKey = key;
+                console.log('Got presigned URL:', uploadUrl);
+                console.log('Got S3 key:', key);
+
+                const response = await fetch(image.uri);
+                const blob = await response.blob();
+
+                console.log('Uploading image to S3...');
+                const s3Response = await fetch(uploadUrl, {
+                    method: 'PUT',
+                    body: blob,
+                    headers: {
+                        'Content-Type': filetype,
+                    },
+                });
+
+                if (!s3Response.ok) {
+                    const errorText = await s3Response.text();
+                    console.error("Failed to upload image to S3:", errorText);
+                    Alert.alert("Error", "Could not upload image to S3.");
+                    setLoading(false);
+                    return;
+                }
+                console.log('Image uploaded successfully to S3.');
+
+            } catch (error) {
+                console.error("Image Upload Error:", error);
+                Alert.alert("Error", "Could not upload your image.");
+                setLoading(false);
+                return;
+            }
         }
 
+        const postData = {
+            title: title,
+            content: content,
+            photoUrl: imageKey,
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+        };
+
         try {
+            console.log('Creating post with data:', postData);
             const response = await fetch(`${API_BASE_URL}/api/posts`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'multipart/form-data',
+                    'Content-Type': 'application/json',
+                    'X-User-Id': user?.uid || '',
+                    'X-Username': user?.email || 'Anonymous',
                 },
-                body: formData,
+                body: JSON.stringify(postData),
             });
 
             if (!response.ok) {
-                throw new Error('Failed to create post');
+                const errorText = await response.text();
+                console.error("Post Creation Error:", errorText);
+                Alert.alert("Error", "Could not submit your post.");
+                setLoading(false);
+                return;
             }
 
+            console.log('Post created successfully.');
             Alert.alert("Post Submitted", "Your post has been submitted successfully.", [
                 { text: "OK", onPress: () => router.back() }
             ]);
         } catch (error) {
-            console.error(error);
+            console.error("Post Creation Error:", error);
             Alert.alert("Error", "Could not submit your post.");
         } finally {
             setLoading(false);
@@ -143,7 +208,7 @@ export default function WritePostPage() {
                         onChangeText={setContent}
                         multiline
                     />
-                    {image && <Image source={{ uri: image }} style={styles.imagePreview} />}
+                    {image && <Image source={{ uri: image.uri }} style={styles.imagePreview} />}
                 </View>
 
                 <View style={styles.footer}>

@@ -1,29 +1,42 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Image, ActivityIndicator, Alert } from 'react-native';
-import { styles } from '../../constants/CommunityPageStyles';
+import { styles } from '@/constants/CommunityPageStyles';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialIcons, Feather } from '@expo/vector-icons';
 import { useAuth } from '@/context/AuthContext';
-import { Header } from '../../components/Header';
-import API_BASE_URL from '../../constants/ApiConfig';
+import { Header } from '@/components/Header';
+import API_BASE_URL from '@/constants/ApiConfig';
 import { useRouter } from 'expo-router';
+import * as Location from 'expo-location';
 
 type Post = {
     id: string;
     title: string;
     content: string;
-    photoKey?: string; // Match backend field
+    photoUrl?: string;
     comments: any[];
     likes: string[];
     postedByUsername: string;
+    postedAt: string;
 };
 
+// eslint-disable-next-line import/no-unused-modules
 export default function CommunityScreen() {
     const router = useRouter();
     const { token, isLoading: isAuthLoading } = useAuth();
     const [posts, setPosts] = useState<Post[]>([]);
     const [loading, setLoading] = useState(true);
-    const [search, setSearch] = useState('');
+    const [userLocation, setUserLocation] = useState<Location.LocationObject | null>(null);
+
+    useEffect(() => {
+        (async () => {
+            let { status } = await Location.requestForegroundPermissionsAsync();
+            if (status === 'granted') {
+                let location = await Location.getCurrentPositionAsync({});
+                setUserLocation(location);
+            }
+        })();
+    }, []);
 
     const fetchPosts = useCallback(() => {
         if (!token) {
@@ -32,7 +45,12 @@ export default function CommunityScreen() {
         }
 
         setLoading(true);
-        fetch(`${API_BASE_URL}/api/posts`, { // Corrected API endpoint
+        let url = `${API_BASE_URL}/api/posts`;
+        if (userLocation) {
+            url += `?latitude=${userLocation.coords.latitude}&longitude=${userLocation.coords.longitude}`;
+        }
+
+        fetch(url, {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -53,7 +71,7 @@ export default function CommunityScreen() {
             .finally(() => {
                 setLoading(false);
             });
-    }, [token]);
+    }, [token, userLocation]);
 
     useEffect(() => {
         if (!isAuthLoading) {
@@ -74,12 +92,6 @@ export default function CommunityScreen() {
         router.push(`/screens/PostPage?id=${postId}`);
     };
 
-    const filteredPosts = posts.filter(
-        (post) =>
-            post.title.toLowerCase().includes(search.toLowerCase()) ||
-            post.content.toLowerCase().includes(search.toLowerCase())
-    );
-
     const renderPost = ({ item }: { item: Post }) => (
         <TouchableOpacity style={styles.postCard} onPress={() => handlePostPress(item.id)}>
             <View style={styles.postInfo}>
@@ -89,23 +101,21 @@ export default function CommunityScreen() {
                 </Text>
                 <View style={styles.metaRow}>
                     <View style={styles.metaItem}>
-                        <Feather name="message-circle" size={14} color="#d12a2a" />
-                        <Text style={styles.metaText}>{item.comments.length}</Text>
+                        <Ionicons name="heart-outline" size={14} color="#d12a2a" />
+                        <Text style={styles.metaText}>{item.likes.length}</Text>
                     </View>
                     <View style={styles.metaItem}>
-                        <Ionicons name="heart-outline" size={14} color="#c0c0c0" />
-                        <Text style={styles.metaText}>{item.likes.length}</Text>
+                        <Feather name="message-circle" size={14} color="#c0c0c0" />
+                        <Text style={styles.metaText}>{item.comments.length}</Text>
                     </View>
                     <Text style={[styles.metaText, { marginLeft: 6 }]}>{item.postedByUsername}</Text>
                 </View>
             </View>
-            {item.photoKey && (
-                <Image
-                    source={{ uri: item.photoKey }}
-                    style={styles.postImage}
-                    resizeMode="cover"
-                />
-            )}
+            <Image
+                source={item.photoUrl ? { uri: item.photoUrl } : require('@/assets/images/defaultReportPhoto.png')}
+                style={styles.postImage}
+                resizeMode="cover"
+            />
         </TouchableOpacity>
     );
 
@@ -119,7 +129,7 @@ export default function CommunityScreen() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <Header title="Community" />
+            <Header title="ClimateTrack" />
 
             {!token ? (
                 <View style={styles.loginPromptContainer}>
@@ -130,7 +140,7 @@ export default function CommunityScreen() {
                 </View>
             ) : (
                 <FlatList
-                    data={filteredPosts}
+                    data={posts}
                     keyExtractor={(item) => item.id}
                     renderItem={renderPost}
                     contentContainerStyle={styles.listContent}

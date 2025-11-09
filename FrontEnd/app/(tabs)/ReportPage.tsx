@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 
 // Example list of districts. In a real app, you might fetch this from a server.
 //const DISTRICTS = ['Bukit Bintang', 'Titiwangsa', 'Setiawangsa', 'Wangsa Maju', 'Batu', 'Cheras'];
-const DISASTER_TYPES = ['Flood', 'Landslide', 'Earthquake', 'Wildfire', 'Other'];
+const DISASTER_TYPES = ['Flood', 'Landslide', 'Cyclone/Typhoon/Tornado', 'Wildfire', 'Tsunamis', 'Earthquake', 'Volcanic Eruption', 'Drought', 'Other'];
 
 export default function ReportPage() {
     const [title, setTitle] = useState('');
@@ -23,22 +23,11 @@ export default function ReportPage() {
     const [isPickerVisible, setIsPickerVisible] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const { requestLocation, errorMsg } = useLocation();
-    //const [selectedDistrict, setSelectedDistrict] = useState('');
-
     const [locationInput, setLocationInput] = useState('');
     const [coordinates, setCoordinates] = useState<{ lat: number; lng: number } | null>(null);
     const [isGeocoding, setIsGeocoding] = useState(false);
-
     const { token, isLoading: isAuthLoading } = useAuth(); // Get the real auth state
     const router = useRouter();
-
-    // useEffect(() => {
-    //     // If the initial auth check is done and there's no token, redirect
-    //     if (!isAuthLoading && !token) {
-    //         Alert.alert("Login Required", "You must be logged in to submit a report.");
-    //         router.replace('/screens/LoginScreen');
-    //     }
-    // }, [isAuthLoading, token, router]);
 
     const handleGeocode = async () => {
         if (!locationInput.trim()) {
@@ -230,7 +219,7 @@ export default function ReportPage() {
     return (
         <SafeAreaView style={styles.root}>
             {/* Sticky header */}
-            <Header title="ClimateTrack" />
+            <Header title="ClimateTrack"/>
 
             {/* Page body (no scroll) */}
             <ScrollView style={styles.pageBody} showsVerticalScrollIndicator={false}>
@@ -306,7 +295,7 @@ export default function ReportPage() {
                 <View style={styles.locationInputContainer}>
                     <TextInput
                         style={styles.locationInput}
-                        placeholder="e.g., Bukit Bintang, Kuala Lumpur"
+                        placeholder="Type the location name (e.g. : Bukit Bintang, Kuala Lumpur)"
                         placeholderTextColor="#9B9B9B"
                         value={locationInput}
                         onChangeText={setLocationInput}

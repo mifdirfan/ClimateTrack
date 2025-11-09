@@ -4,11 +4,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.ClimateTrack.backend.Service.NewsArticleService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 
 @SpringBootApplication
 @EnableScheduling // Enables support for @Scheduled tasks
+@EnableAsync
 public class BackendApplication {
 
 	public static void main(String[] args) {

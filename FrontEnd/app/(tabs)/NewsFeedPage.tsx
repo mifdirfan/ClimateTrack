@@ -4,11 +4,8 @@ import { View, Text, TouchableOpacity, FlatList, Image, Modal, ActivityIndicator
 import React, { useEffect, useState, useCallback } from 'react';
 import { WebView } from 'react-native-webview';
 import styles, { TAB_LABELS } from '../../constants/NewsFeedPageStyles';
-
-import CommunityPage from './CommunityPage';
 import API_BASE_URL from '../../constants/ApiConfig';
 import { Header } from '../../components/Header';
-import {Ionicons} from "@expo/vector-icons";
 
 
 type NewsItem = {
@@ -65,18 +62,6 @@ function formatPublishedDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-US', options);
 }
 
-
-// ----- TABS -----
-type TabKey = 'News';
-
-// function CommunityTab() {
-//   return <CommunityPage />;
-// }
-//
-// function NotificationsTab() {
-//   return <View style={styles.tabContent} />;
-// }
-
 export default function NewsFeedPage() {
   const [webviewUrl, setWebviewUrl] = useState<string | null>(null);
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -125,7 +110,7 @@ export default function NewsFeedPage() {
           activeOpacity={0.88}
       >
         <Image
-            source={{ uri: item.image || 'https://via.placeholder.com/150?text=No+Image' }}
+            source={{ uri: item.image || require('@/assets/images/defaultReportPhoto.png') }}
             style={styles.newsImage}
         />
         <View style={styles.newsContent}>

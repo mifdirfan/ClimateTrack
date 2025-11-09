@@ -42,21 +42,36 @@ public class NewsArticleService {
     @Value("${news.api.query}")
     private String newsApiQuery;
 
+    @Value("${news.api.exclude-domains:#{null}}") // Inject the domains to exclude
+    private String newsApiExcludeDomains;
+
+    @Value("${news.api.include-domains:#{null}}") // Inject the domains to include
+    private String newsApiIncludeDomains;
+
     @Transactional
     public void fetchAndSaveNews() {
-        URI newsApiUri = UriComponentsBuilder.fromUriString(newsApiBaseUrl)
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromUriString(newsApiBaseUrl)
                 .queryParam("qInTitle", newsApiQuery)
                 .queryParam("language", "en")
-                .queryParam("sortBy", "publishedAt")
-                .build()
-                .toUri();
+                .queryParam("sortBy", "publishedAt");
 
-        logger.info("Fetching news from NewsAPI...");
+        // Prioritize including specific domains if configured
+        if (newsApiIncludeDomains != null && !newsApiIncludeDomains.isEmpty()) {
+            uriBuilder.queryParam("domains", newsApiIncludeDomains);
+        }
+        // Otherwise, use the excludeDomains parameter if it's configured
+        else if (newsApiExcludeDomains != null && !newsApiExcludeDomains.isEmpty()) {
+            uriBuilder.queryParam("excludeDomains", newsApiExcludeDomains);
+        }
+
+        URI newsApiUri = uriBuilder.build().toUri();
+
+        logger.info("Fetching news from URL: {}", newsApiUri); // Log the exact URL being called
 
         try {
             // Create headers
             HttpHeaders headers = new HttpHeaders();
-            headers.set("Authorization", "Bearer " + newsApiKey);
+            headers.set("X-Api-Key", newsApiKey); // Correct header for NewsAPI
             headers.set("User-Agent", "ClimateTrackApp/1.0");
 
             // Create HttpEntity with headers
@@ -78,13 +93,16 @@ public class NewsArticleService {
                 return;
             }
 
-            JsonNode articles = root.path("articles");
+            JsonNode articlesNode = root.path("articles");
+            if (articlesNode.isMissingNode() || !articlesNode.isArray()) {
+                logger.warn("News API response is OK but does not contain an 'articles' array.");
+                return;
+            }
 
-            // Clear old news before saving new articles
-            newsArticleRepository.deleteAll();
-
-            for (JsonNode article : articles) {
-                NewsArticle news = NewsArticle.builder()
+            // 1. Process all new articles into a list first
+            List<NewsArticle> newArticles = new java.util.ArrayList<>();
+            for (JsonNode article : articlesNode) {
+                newArticles.add(NewsArticle.builder()
                         .articleId(UUID.randomUUID().toString())
                         .title(article.path("title").asText())
                         .author(article.path("author").asText(null))
@@ -94,10 +112,14 @@ public class NewsArticleService {
                         .publishedAt(Instant.parse(article.path("publishedAt").asText()))
                         .content(article.path("content").asText(null))
                         .sourceName(article.path("source").path("name").asText())
-                        .build();
-                newsArticleRepository.save(news);
+                        .build());
             }
-            logger.info("Successfully fetched and saved {} news articles.", articles.size());
+
+            // 2. If new articles were successfully processed, replace the old ones
+            newsArticleRepository.deleteAll();
+            newsArticleRepository.saveAll(newArticles);
+
+            logger.info("Successfully fetched and saved {} news articles.", newArticles.size());
         } catch (Exception e) {
             logger.error("Failed to fetch and save news", e);
         }

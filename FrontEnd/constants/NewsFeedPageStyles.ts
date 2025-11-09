@@ -79,10 +79,11 @@ export default StyleSheet.create({
         marginHorizontal: 2,
         elevation: 2,
         overflow: 'hidden',
+        minHeight: 350,
     },
     newsImage: {
         width: '100%',
-        height: 190,
+        height: 200,
         borderRadius: 12,
     },
     newsContent: {

@@ -70,6 +70,9 @@ export default function RootLayout() {
                 {/* These are your login/signup screens. */}
                 <Stack.Screen name="screens/LoginScreen" options={{ presentation: 'modal', headerShown: false }} />
                 <Stack.Screen name="screens/SignUpScreen" options={{ presentation: 'modal', headerShown: false }} />
+                <Stack.Screen name="screens/PostPage" options={{ headerShown: false }} />
+                <Stack.Screen name="screens/WritePostPage" options={{ headerShown: false }} />
+                <Stack.Screen name="screens/ChatbotScreen" options={{ headerShown: false }} />
             </Stack>
         </AuthProvider>
     );

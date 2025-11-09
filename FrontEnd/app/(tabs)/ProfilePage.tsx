@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useCallback  } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, Alert, RefreshControl, FlatList, Modal, Switch } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, ActivityIndicator, RefreshControl, FlatList, Modal, Switch, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons, Feather } from '@expo/vector-icons';
-import { styles } from '../../constants/ProfilePageStyles';
+import { Ionicons} from '@expo/vector-icons';
+import { styles } from '@/constants/ProfilePageStyles';
 import API_BASE_URL from '../../constants/ApiConfig';
 import GOOGLE_MAPS_API_KEY from '../../constants/GoogleAPI'; // Import the API Key
 import { useAuth } from '@/context/AuthContext';
-import { Header } from '../../components/Header';
+import { Header } from '@/components/Header';
 import { useRouter } from 'expo-router';
 
 type UserProfile = {
@@ -36,24 +36,34 @@ type Report = {
 type SettingItem = {
     id: string;
     label: string;
-    icon: string;
+    icon: number; // `require` returns a number (asset reference)
 };
 
 const settingsItems = [
     {
         id: '1',
-        label: 'Privacy & Security',
-        icon: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/u2F1jVXr2j/v8ynwpry_expires_30_days.png',
+        label: 'Ai Chatbot',
+        icon: require('@/assets/images/chatbotIcon.png'),
     },
     {
         id: '2',
-        label: 'Notification Preference',
-        icon: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/u2F1jVXr2j/oqmpfarw_expires_30_days.png',
+        label: 'Privacy & Security',
+        icon: require('@/assets/images/privacySettingIcon.png'),
     },
     {
         id: '3',
+        label: 'Notification Preference',
+        icon: require('@/assets/images/notificationSettingIcon.png'),
+    },
+    {
+        id: '4',
         label: 'Language',
-        icon: 'https://storage.googleapis.com/tagjs-prod.appspot.com/v1/u2F1jVXr2j/q2g4o5vh_expires_30_days.png',
+        icon: require('@/assets/images/languageSettingIcon.png'),
+    },
+    {
+        id: '5',
+        label: 'Sign Out',
+        icon: require('@/assets/images/signOutSettingIcon.png'),
     },
 ];
 
@@ -61,7 +71,6 @@ export default function ProfilePage() {
 
     const { token, username, isLoading, logout } = useAuth(); // Use the real auth state
     const router = useRouter();
-
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [reports, setReports] = useState<Report[]>([]);
     const [loading, setLoading] = useState(true);
@@ -70,41 +79,6 @@ export default function ProfilePage() {
     const [selectedSetting, setSelectedSetting] = useState<SettingItem | null>(null);
     const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(true); // State for the toggle
     const [error, setError] = useState<string | null>(null);
-
-    // const fetchUserReports = () => {
-    //     // FOR TESTING: Use the insecure endpoint to fetch reports by username directly.
-    //     // In production, you would switch back to the secure '/my-reports' endpoint.
-    //     const testUsername = userData.username;
-    //     fetch(`${API_BASE_URL}/api/reports/user/${testUsername}`)
-    //     // // In a real app, you would get this token from secure storage after login
-    //     // // TODO: Replace this with a dynamic token from your auth context or secure storage
-    //     // const authToken = "YOUR_JWT_TOKEN_HERE";
-    //     //
-    //     // fetch(`${API_BASE_URL}/api/reports/my-reports`, {
-    //     //     headers: {
-    //     //         'Authorization': `Bearer ${authToken}`
-    //     //     }
-    //     // })
-    //         .then(res => {
-    //             if (!res.ok) {
-    //                 throw new Error('Failed to fetch reports');
-    //             }
-    //             return res.json();
-    //         })
-    //         .then((data: Report[]) => {
-    //             // The backend already sorts by date, so we can use the data directly
-    //             setReports(data);
-    //         })
-    //         .catch(err => {
-    //             console.error('Failed to fetch user reports:', err);
-    //             Alert.alert("Error", "Could not load your reports. Please try again later.");
-    //         })
-    //         .finally(() => {
-    //             setLoading(false);
-    //             setRefreshing(false);
-    //         });
-    // };
-
     const fetchData = useCallback(() => {
         if (!token || !username){
             setLoading(false); // Not logged in, so don't show a loader
@@ -136,11 +110,16 @@ export default function ProfilePage() {
                 setUserProfile(profileData);
                 setReports(reportsData);
             })
-            .catch(err => setError(err.message || 'An unexpected error occurred.'))
-            /*.catch(err =>  {
-                console.error('Failed to fetch data:', err);
-                Alert.alert("Error", "Could not load profile data. Please try again.");
-            })*/
+            .catch(err => {
+                // If fetching the profile fails, it's likely an expired session.
+                if (err.message === 'Failed to fetch profile') {
+                    console.log("Session expired or invalid. Logging out and redirecting.");
+                    logout(); // Clear the expired token from context/storage
+                    router.replace('/screens/LoginScreen'); // Redirect to login
+                } else {
+                    setError(err.message || 'An unexpected error occurred.');
+                }
+            })
             .finally(() => {
                 setLoading(false);
                 setRefreshing(false);
@@ -215,6 +194,36 @@ export default function ProfilePage() {
         reverseGeocodeReports();
     }, [reports]); // Rerun this effect if the reports array itself changes.
 
+    const handleDeleteReport = async (reportId: string) => {
+        if (!token) {
+            Alert.alert("Error", "You must be logged in to delete a report.");
+            return;
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/reports/${reportId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+
+            if (response.ok) {
+                // On successful deletion, remove the report from the local state
+                setReports(prevReports => prevReports.filter(report => report.reportId !== reportId));
+                setSelectedReport(null); // Close the modal
+                Alert.alert("Success", "Report deleted successfully.");
+            } else {
+                const errorData = await response.text();
+                throw new Error(errorData || 'Failed to delete the report.');
+            }
+        } catch (err: any) {
+            console.error("Delete report failed:", err);
+            Alert.alert("Error", err.message || "An error occurred while deleting the report.");
+        }
+    };
+
+
     // Show a loading screen while checking authentication or fetching data
     if (isLoading) {
         return (
@@ -240,15 +249,10 @@ export default function ProfilePage() {
 
     return (
         <SafeAreaView style={styles.container}>
-            <Header
-                title="ClimateTrack"
-                rightComponent={
-                    <TouchableOpacity onPress={logout} style={styles.logoutButton}>
-                        <Ionicons name="log-out-outline" size={26} color="#d9534f" />
-                    </TouchableOpacity>}
-            />
             {loading && <ActivityIndicator size="large" style={{ marginTop: 20 }} />}
             {error && <Text style={{ textAlign: 'center', color: 'red', marginTop: 20 }}>{error}</Text>}
+            <Header title="ClimateTrack"/>
+
             <ScrollView
                 contentContainerStyle={styles.listContainer}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -283,7 +287,7 @@ export default function ProfilePage() {
                                     style={styles.reportCard}
                                     onPress={() => setSelectedReport(item)}
                                 >
-                                    <Text style={styles.reportTitle} numberOfLines={2}>{item.title}</Text>
+                                    <Text style={styles.reportTitle} numberOfLines={1}>{item.title}</Text>
                                     {item.locationName && (
                                         <Text style={styles.reportLocation} numberOfLines={1}>{item.locationName}</Text>
                                     )}
@@ -299,16 +303,27 @@ export default function ProfilePage() {
                             contentContainerStyle={styles.reportsContainer}
                         />
                     ) : (
-                        <Text style={{ paddingHorizontal: 27, color: '#666' }}>No reports found.</Text>
+                        <Text style={{ color: '#666', height: 180, textAlign: 'center', paddingTop: 80 }}>You have no report.</Text>
                     )
                 )}
 
                 {/* Settings */}
                 <View style={styles.settingsContainer}>
                     {settingsItems.map((item: SettingItem) => (
-                        <TouchableOpacity key={item.id} style={styles.settingsItem} onPress={() => setSelectedSetting(item)}>
+                        <TouchableOpacity
+                            key={item.id}
+                            style={styles.settingsItem}
+                            onPress={() => {
+                                if (item.id === '1') { router.push('/screens/ChatbotScreen'); } // Navigate to ChatbotScreen for 'Ai Chatbot'
+                                else if (item.id === '5') { Alert.alert(
+                                    "Sign Out",
+                                    "Are you sure you want to sign out?",
+                                    [ { text: "Cancel", style: "cancel" }, { text: "Sign out", style: "destructive", onPress: logout }]
+                                )}
+                                else { setSelectedSetting(item); } // For other settings, open the modal
+                            }}>
                             <Image
-                                source={{ uri: item.icon }}
+                                source={item.icon}
                                 resizeMode="contain"
                                 style={styles.settingsIcon}
                             />
@@ -336,11 +351,22 @@ export default function ProfilePage() {
                             <Text style={styles.modalTitle}>{selectedReport.title}</Text>
                             <Text style={styles.modalMeta}>{`${selectedReport.disasterType} • ${new Date(selectedReport.reportedAt).toLocaleDateString()}`}</Text>
                             <ScrollView>
-                                <Text style={styles.modalDescription}>{selectedReport.description}</Text>
+                                <Text numberOfLines={100} style={styles.modalDescription}>{selectedReport.description}</Text>
                             </ScrollView>
-                            <TouchableOpacity style={styles.closeButton} onPress={() => setSelectedReport(null)}>
-                                <Text style={styles.closeButtonText}>Close</Text>
-                            </TouchableOpacity>
+                            <View style={styles.modalButtonContainer}>
+                                <TouchableOpacity style={styles.modalCloseButton} onPress={() => setSelectedReport(null)}>
+                                    <Text style={styles.closeButtonText}>Close</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={styles.deleteReportButton}
+                                    onPress={() => Alert.alert(
+                                        "Delete Report",
+                                        "Are you sure you want to delete this report? This action cannot be undone.",
+                                        [ { text: "Cancel", style: "cancel" }, { text: "Delete", style: "destructive", onPress: () => handleDeleteReport(selectedReport.reportId) } ]
+                                    )}>
+                                    <Text style={styles.deleteReportButtonText}>Delete</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
                 </Modal>
@@ -356,10 +382,10 @@ export default function ProfilePage() {
                 >
                     <View style={styles.modalOverlay}>
                         <View style={styles.modalContent}>
-                            <Text style={styles.modalTitle}>{selectedSetting.label}</Text>
+                            <Text style={styles.modalTitle}>{selectedSetting.id === '5' ? 'Sign out from your account?' : selectedSetting.label }</Text>
 
                             {/* Conditionally render content based on selected setting */}
-                            {selectedSetting.id === '1' ? (
+                            {selectedSetting.id === '2' ? (
                                 <ScrollView>
                                     <Text style={styles.modalSectionTitle}>Data Collection</Text>
                                     <Text style={styles.modalParagraph}>
@@ -374,7 +400,7 @@ export default function ProfilePage() {
                                         You have the right to access and delete your account and associated data at any time. For more information, please contact our support team.
                                     </Text>
                                 </ScrollView>
-                            ) : selectedSetting.id === '2' ? (
+                            ) : selectedSetting.id === '3' ? (
                                 <View style={styles.settingOptionRow}>
                                     <Text style={styles.settingOptionText}>App Notifications</Text>
                                     <Switch
@@ -386,7 +412,7 @@ export default function ProfilePage() {
                                     />
                                 </View>
                             ) : (
-                                <Text style={{ marginVertical: 20, textAlign: 'center', color: '#666' }}>
+                                <Text style={{ marginVertical: 20, textAlign: 'left', color: '#666' }}>
                                     More options for {selectedSetting.label} will be available soon.
                                 </Text>
                             )}

@@ -3,7 +3,8 @@ package com.ClimateTrack.backend.Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
@@ -17,8 +18,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class UploadService {
 
-    //@Autowired
     private final S3Presigner s3Presigner;
+    private final S3Client s3Client; // The standard S3 client for operations like delete
 
     @Value("${application.bucket.name}")
     private String bucketName;
@@ -67,5 +68,30 @@ public class UploadService {
                 .build();
 
         return s3Presigner.presignGetObject(presignRequest).url().toString();
+    }
+
+    /**
+     * Deletes a file from the S3 bucket using its object key.
+     * @param objectKey The key of the object to delete (e.g., "uploads/my-image.jpg").
+     */
+    public void deleteFile(String objectKey) {
+        if (objectKey == null || objectKey.isBlank()) {
+            System.out.println("Skipping deletion for null or empty objectKey.");
+            return; // Do nothing if the key is invalid
+        }
+
+        try {
+            DeleteObjectRequest deleteObjectRequest = DeleteObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(objectKey)
+                    .build();
+
+            s3Client.deleteObject(deleteObjectRequest);
+            System.out.println("Successfully deleted file with key: " + objectKey);
+        } catch (Exception e) {
+            // Log the error and re-throw it as a runtime exception
+            System.err.println("Failed to delete file from S3. Key: " + objectKey);
+            throw new RuntimeException("S3 file deletion failed for key: " + objectKey, e);
+        }
     }
 }

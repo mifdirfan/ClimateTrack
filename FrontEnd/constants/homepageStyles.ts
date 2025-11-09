@@ -10,19 +10,54 @@ const styles = StyleSheet.create({
     searchBar: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginTop: 15,
-        marginHorizontal: 10,
+        position: 'absolute', // Position it over the map
+        top: 10,
+        left: 10,
+        right: 10,
         backgroundColor: '#F5F6FA',
         borderRadius: 12,
         paddingHorizontal: 12,
         height: 40,
         elevation: 2,
-        zIndex: 10,
+        zIndex: 10, // Make sure it's on top of the map and other controls
     },
     searchInput: {
         flex: 1,
         fontSize: 16,
-        color: '#333',
+        color: '#000',
+    },
+    filterContainer: {
+        position: 'absolute',
+        top: 60, // Position it below the search bar
+        left: 10,
+        flexDirection: 'row',
+        zIndex: 10,
+    },
+    filterButton: {
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 20,
+        marginRight: 8,
+        borderWidth: 1.5,
+    },
+    filterButtonDisasterActive: {
+        borderColor: '#B0B0B0',
+        backgroundColor: '#cb0000',
+        opacity: .9,
+    },
+    filterButtonReportActive: {
+        borderColor: '#B0B0B0',
+        backgroundColor: '#E6AF00',
+        opacity: .9,
+    },
+    filterButtonInactive: {
+        borderColor: '#B0B0B0',
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        opacity: .8,
+    },
+    filterButtonText: {
+        fontSize: 14,
+        fontWeight: '600',
     },
     filterRow: {
         flexDirection: 'row',
@@ -63,51 +98,6 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         borderColor: '#fff',
         borderWidth: 2,
-    },
-    newsSection: {
-        position: 'absolute',
-        bottom: 70,
-        left: 0,
-        right: 0,
-        paddingHorizontal: 15,
-        paddingTop: 20,
-        paddingBottom: 20,
-        backgroundColor: 'rgba(255,255,255,0.95)',
-        borderTopLeftRadius: 22,
-        borderTopRightRadius: 22,
-        elevation: 10,
-        minHeight: 120,
-        maxHeight: 200,
-
-    },
-    newsItem: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        marginBottom: 12,
-        borderBottomColor: '#eee',
-        borderBottomWidth: 1,
-        paddingBottom: 6,
-    },
-    newsImage: {
-        width: 60,
-        height: 45,
-        borderRadius: 8,
-        marginRight: 10,
-    },
-    newsTitle: {
-        fontWeight: 'bold',
-        fontSize: 15,
-        color: '#222',
-        marginBottom: 2,
-    },
-    newsDesc: {
-        fontSize: 13,
-        color: '#555',
-    },
-    newsDate: {
-        fontSize: 11,
-        color: '#999',
-        marginTop: 3,
     },
     webviewCloseBtn: {
         padding: 16,

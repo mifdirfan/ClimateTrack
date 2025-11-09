@@ -2,6 +2,8 @@ package com.ClimateTrack.backend.Controller;
 
 import com.ClimateTrack.backend.Entity.CommunityPost;
 import com.ClimateTrack.backend.Service.CommunityPostService;
+import com.ClimateTrack.backend.dto.PostRequestDto;
+import com.ClimateTrack.backend.dto.PostResponseDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,46 +23,34 @@ public class CommunityPostController {
     private CommunityPostService communityPostService;
 
     @GetMapping
-    public ResponseEntity<List<CommunityPost>> getAllPosts() {
-        List<CommunityPost> posts = communityPostService.getAllPosts();
+    public ResponseEntity<List<PostResponseDto>> getAllPosts(
+            @RequestParam(required = false) Double latitude,
+            @RequestParam(required = false) Double longitude
+    ) {
+        List<PostResponseDto> posts = communityPostService.getAllPosts(latitude, longitude);
         return new ResponseEntity<>(posts, HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CommunityPost> getPostById(@PathVariable String id) {
-        Optional<CommunityPost> post = communityPostService.getPostById(id);
+    public ResponseEntity<PostResponseDto> getPostById(@PathVariable String id) {
+        Optional<PostResponseDto> post = communityPostService.getPostById(id);
         return post.map(value -> new ResponseEntity<>(value, HttpStatus.OK))
                 .orElseGet(() -> new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
 
     @PostMapping
-    public ResponseEntity<CommunityPost> createPost(
-            @RequestParam("title") String title,
-            @RequestParam("content") String content,
-            @RequestParam(value = "image", required = false) MultipartFile image,
-            @RequestParam("postedByUserId") String postedByUserId,
-            @RequestParam("postedByUsername") String postedByUsername,
-            @RequestParam(value = "latitude", required = false) Double latitude,
-            @RequestParam(value = "longitude", required = false) Double longitude
+    public ResponseEntity<PostResponseDto> createPost(
+            @RequestBody PostRequestDto postRequest,
+            @RequestHeader("X-User-Id") String postedByUserId,
+            @RequestHeader("X-Username") String postedByUsername
     ) {
         try {
-            CommunityPost post = CommunityPost.builder()
-                    .title(title)
-                    .content(content)
-                    .postedByUserId(postedByUserId)
-                    .postedByUsername(postedByUsername)
-                    .postedAt(new Date())
-                    .build();
+            PostResponseDto createdPost = communityPostService.createPost(
+                    postRequest,
+                    postedByUserId,
+                    postedByUsername
+            );
 
-            // Handle location if provided
-            if (latitude != null && longitude != null) {
-                // Assuming GeoJsonPoint constructor is (longitude, latitude)
-                // post.setLocation(new GeoJsonPoint(longitude, latitude));
-                // For simplicity, let's just store them as separate fields if GeoJsonPoint is complex
-                // Or, if GeoJsonPoint is already handled in the service/entity, remove this part
-            }
-
-            CommunityPost createdPost = communityPostService.createPost(post, image);
             return new ResponseEntity<>(createdPost, HttpStatus.CREATED);
         } catch (IOException e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -68,26 +58,25 @@ public class CommunityPostController {
     }
 
     @PostMapping("/{postId}/comments")
-    public ResponseEntity<CommunityPost> addComment(
+    public ResponseEntity<PostResponseDto> addComment(
             @PathVariable String postId,
             @RequestBody CommunityPost.Comment comment,
-            @RequestHeader("X-User-Id") String userId, // Assuming userId from Firebase token
-            @RequestHeader("X-Username") String username // Assuming username from Firebase token
+            @RequestHeader("X-User-Id") String userId,
+            @RequestHeader("X-Username") String username
     ) {
-        comment.setCommentId(java.util.UUID.randomUUID().toString());
         comment.setUserId(userId);
         comment.setUsername(username);
-        comment.setPostedAt(new Date());
-        CommunityPost updatedPost = communityPostService.addComment(postId, comment);
+
+        PostResponseDto updatedPost = communityPostService.addComment(postId, comment);
         return new ResponseEntity<>(updatedPost, HttpStatus.OK);
     }
 
     @PostMapping("/{postId}/like")
-    public ResponseEntity<CommunityPost> likePost(
+    public ResponseEntity<PostResponseDto> likePost(
             @PathVariable String postId,
-            @RequestHeader("X-User-Id") String userId // Assuming userId from Firebase token
+            @RequestHeader("X-User-Id") String userId
     ) {
-        CommunityPost updatedPost = communityPostService.likePost(postId, userId);
+        PostResponseDto updatedPost = communityPostService.likePost(postId, userId);
         return new ResponseEntity<>(updatedPost, HttpStatus.OK);
     }
 }
