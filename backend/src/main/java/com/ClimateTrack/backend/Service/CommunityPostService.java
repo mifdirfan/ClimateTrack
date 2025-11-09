@@ -4,6 +4,7 @@ import com.ClimateTrack.backend.Entity.CommunityPost;
 import com.ClimateTrack.backend.Repository.CommunityPostRepository;
 import com.ClimateTrack.backend.dto.PostRequestDto;
 import com.ClimateTrack.backend.dto.PostResponseDto;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.geo.Distance;
@@ -19,6 +20,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class CommunityPostService {
 
     @Autowired
@@ -26,6 +28,8 @@ public class CommunityPostService {
 
     @Autowired
     private UploadService uploadService;
+
+    private final NotificationService notificationService;
 
     private PostResponseDto mapToDto(CommunityPost post) {
         String viewablePhotoUrl = null;
@@ -96,6 +100,14 @@ public class CommunityPostService {
         }
 
         CommunityPost savedPost = communityPostRepository.save(post);
+
+        notificationService.sendProximityNotification(
+                savedPost.getLocation(),
+                savedPost.getPostedByUserId(),
+                "New Community Post Nearby",
+                "A new post '" + savedPost.getTitle() + "' was posted near you."
+        );
+
         return mapToDto(savedPost);
     }
 
