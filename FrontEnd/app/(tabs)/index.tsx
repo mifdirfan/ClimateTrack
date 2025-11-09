@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, TouchableOpacity, ActivityIndicator, StyleSheet, TextInput, Alert } from 'react-native';
 import { MaterialIcons, FontAwesome5 } from '@expo/vector-icons';
+import { useFocusEffect } from 'expo-router'; // 1. Import useFocusEffect
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import GoogleMapWeb from "@/components/GoogleMap";
@@ -173,18 +174,21 @@ export default function Index() {
         }
     }, []);
 
-    // This useEffect runs only ONCE when the component first mounts
-    useEffect(() => {
-        const initialLoad = async () => {
-            setDataLoading(true);
-            // Get user location and fetch map data in parallel for a fast start.
-            await Promise.all([handleGetLocation(), fetchData()]);
-            setDataLoading(false);
-        };
-        initialLoad();
-        // We only want this to run once, so we disable the exhaustive-deps warning for this specific effect.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    // This effect runs when the screen comes into focus.
+    // It's a more reliable way to handle initial data loading in a tab navigator.
+    useFocusEffect(
+        useCallback(() => {
+            const initialLoad = async () => {
+                // Only run if data hasn't been loaded yet to prevent re-fetching on every tab switch.
+                if (disasters.length === 0 && reports.length === 0) {
+                    setDataLoading(true);
+                    await Promise.all([handleGetLocation(), fetchData()]);
+                    setDataLoading(false);
+                }
+            };
+            initialLoad();
+        }, [handleGetLocation, fetchData, disasters.length, reports.length]) // Dependencies for the initial load logic
+    );
 
     // This function is called when the user presses the refresh button
     const onRefresh = useCallback(async () => {
