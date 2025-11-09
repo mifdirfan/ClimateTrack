@@ -2,7 +2,7 @@
   <library name="Gradle: org.springframework.data:spring-data-mongodb:4.5.0" type="java-imported" external-system-id="GRADLE">
     <properties groupId="org.springframework.data" artifactId="spring-data-mongodb" version="4.5.0" baseVersion="4.5.0" />
     <CLASSES>
-      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.springframework.data/spring-data-mongodb/4.5.0/a9c6a13394831079e2659e77e01e319d83a1bdd7/spring-data-mongodb-4.5.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/../Journotes/backend/.gradle/caches/modules-2/files-2.1/org.springframework.data/spring-data-mongodb/4.5.0/a9c6a13394831079e2659e77e01e319d83a1bdd7/spring-data-mongodb-4.5.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
